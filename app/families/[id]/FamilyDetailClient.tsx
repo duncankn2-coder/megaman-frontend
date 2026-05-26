@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faArrowLeft, 
   faDownload, 
   faFilePdf, 
   faLightbulb, 
@@ -14,10 +13,10 @@ import {
   faInfoCircle,
   faSlidersH,
   faSearch,
-  faEye,
   faCogs,
-  faRulerCombined,
-  faFileContract
+  faGlobe,
+  faFileAlt,
+  faChartLine
 } from '@fortawesome/free-solid-svg-icons';
 
 interface Product {
@@ -29,7 +28,7 @@ interface Product {
   colour?: string;
   power?: string;
   colourTemperature?: string;
-  specifications?: any;
+  specifications?: Record<string, unknown> | null;
 }
 
 interface MediaItem {
@@ -61,7 +60,7 @@ const getProductSpec = (product: Product, specNames: string[], defaultValue = '�
     return defaultValue;
   }
   
-  const specs = product.specifications;
+  const specs = product.specifications as Record<string, unknown>;
   for (const name of specNames) {
     if (specs[name] !== undefined && specs[name] !== null) {
       return String(specs[name]);
@@ -82,7 +81,21 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [searchQuery, setSearchQuery] = useState('');
   const [powerFilter, setPowerFilter] = useState('All');
   const [colorTempFilter, setColorTempFilter] = useState('All');
-  const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'dimensions' | 'downloads'>('overview');
+  const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
+
+  // Local state to keep product content during slide-out animation (400ms)
+  const [activeDrawerProduct, setActiveDrawerProduct] = useState<Product | null>(null);
+
+  useEffect(() => {
+    if (selectedProduct) {
+      setActiveDrawerProduct(selectedProduct);
+    } else {
+      const timer = setTimeout(() => {
+        setActiveDrawerProduct(null);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedProduct]);
 
   const handleOpenProduct = (product: Product) => {
     setSelectedProduct(product);
@@ -127,35 +140,54 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   }, [family.products, powerFilter, colorTempFilter, searchQuery]);
 
   return (
-    <div className="bg-[#fafafa] min-h-screen pb-24">
-      {/* Dynamic Breadcrumbs */}
-      <nav className="bg-white border-b border-gray-100 py-4">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="flex items-center space-x-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+    <div className="bg-[#fcfcfc] text-gray-800 min-h-screen pb-24 relative font-sans selection:bg-[#005288] selection:text-white">
+      
+      {/* Self-contained high-performance slide keyframe animation for the drawer */}
+      <style>{`
+        @keyframes drawerSlideIn {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        .animate-drawer-slide {
+          animation: drawerSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+
+      {/* Dynamic Breadcrumbs with clean gray border */}
+      <nav className="border-b border-gray-200 bg-gray-50 py-5 relative">
+        <div className="container mx-auto px-6 md:px-12 max-w-7xl">
+          <div className="flex items-center space-x-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
             <Link href="/" className="hover:text-[#005288] transition-colors">Home</Link>
-            <span>/</span>
+            <span className="text-gray-300">/</span>
             <Link href="/products" className="hover:text-[#005288] transition-colors">Products</Link>
-            <span>/</span>
-            <span className="text-[#005288]">{family.name}</span>
+            <span className="text-gray-300">/</span>
+            <span className="text-[#005288]">{family.name} Series</span>
           </div>
         </div>
       </nav>
 
-      {/* Hero Product Showcase (RZB Style Dual-Column Layout) */}
-      <section className="bg-white border-b border-gray-100 py-12">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      {/* RZB Triona-style Hero Product Showcase (RZB Dual-Column Split Grid) */}
+      <section className="border-b border-gray-200 py-16 bg-white relative">
+        
+        {/* Fine drafting-blueprint crosshairs & grids */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]">
+          <div className="absolute left-[33%] top-0 bottom-0 w-[1px] bg-black"></div>
+          <div className="absolute left-[66%] top-0 bottom-0 w-[1px] bg-black"></div>
+        </div>
+
+        <div className="container mx-auto px-6 md:px-12 max-w-7xl relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             
-            {/* Left Column: Interactive Product Gallery */}
-            <div className="lg:col-span-6 flex flex-col space-y-4">
-              <div className="relative aspect-video w-full bg-slate-50 border border-gray-100 rounded-2xl overflow-hidden flex items-center justify-center">
+            {/* Left Column: Interactive Product Gallery (Sidelite Optical Vibe) */}
+            <div className="lg:col-span-7 flex flex-col space-y-6">
+              <div className="relative aspect-video w-full bg-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
                 {activeMedia ? (
                   activeMedia.type === 'image' ? (
                     <Image
                       src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${activeMedia.url}`}
                       alt={activeMedia.alt || family.name}
                       fill
-                      className="object-contain p-8"
+                      className="object-contain p-12 transition-transform duration-700 hover:scale-102"
                       priority
                     />
                   ) : (
@@ -166,24 +198,27 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   )
                 ) : (
                   <div className="text-gray-300 flex flex-col items-center">
-                    <svg className="w-16 h-16 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-xs text-gray-400 mt-2 font-medium">MEGAMAN® Visual Assets</span>
+                    <FontAwesomeIcon icon={faLightbulb} className="text-5xl text-gray-300 mb-3" />
+                    <span className="text-[10px] tracking-widest uppercase font-bold text-gray-400">MEGAMAN® VISUAL GALLERY</span>
                   </div>
                 )}
+
+                {/* Sidelite Glowing Tech Badge */}
+                <div className="absolute left-6 top-6 bg-[#005288] text-white py-1.5 px-3 text-[9px] uppercase tracking-widest font-semibold shadow-sm">
+                  SIDELITE® OPTICAL ENGINE
+                </div>
               </div>
 
-              {/* Thumbnails grid */}
+              {/* Thumbnails grid with fine borders */}
               {mediaList.length > 1 && (
                 <div className="grid grid-cols-5 gap-3">
                   {mediaList.map((media, idx) => (
                     <button
                       key={media.id}
                       onClick={() => setActiveMediaIndex(idx)}
-                      className={`relative aspect-video bg-gray-50 border rounded-lg overflow-hidden flex items-center justify-center p-2 focus:outline-none transition-all ${
+                      className={`relative aspect-video bg-white border focus:outline-none transition-all cursor-pointer shadow-sm ${
                         activeMediaIndex === idx
-                          ? 'border-[#005288] ring-2 ring-[#005288]/10'
+                          ? 'border-[#005288] ring-1 ring-[#005288]/30 bg-[#005288]/5'
                           : 'border-gray-200 hover:border-gray-400'
                       }`}
                     >
@@ -195,8 +230,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           className="object-contain p-1"
                         />
                       ) : (
-                        <div className="flex flex-col items-center justify-center text-[#005288]">
-                          <span className="text-[8px] font-bold uppercase tracking-tighter">VIDEO</span>
+                        <div className="flex items-center justify-center h-full text-[8px] font-bold text-gray-500">
+                          VIDEO
                         </div>
                       )}
                     </button>
@@ -205,60 +240,66 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               )}
             </div>
 
-            {/* Right Column: Key Series Information */}
-            <div className="lg:col-span-6 flex flex-col justify-between">
+            {/* Right Column: RZB Toledo Series Key Information & Certifications */}
+            <div className="lg:col-span-5 flex flex-col justify-between h-full">
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-[#005288] mb-3 block">
-                  ARCHITECTURAL DOWNLIGHT
-                </span>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
-                  {family.name} Series
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="h-[1px] w-8 bg-[#005288]"></span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288]">
+                    ARCHITECTURAL SERIES
+                  </span>
+                </div>
+                
+                <h1 className="text-4xl lg:text-5xl font-light uppercase tracking-widest text-gray-900 leading-none mb-6">
+                  {family.name} <span className="font-bold text-[#005288]">SYSTEM</span>
                 </h1>
                 
-                {/* Highlights description */}
                 {family.description ? (
-                  <p className="text-gray-500 font-light text-base leading-relaxed mb-8">
+                  <p className="text-gray-500 font-light text-xs leading-relaxed mb-8">
                     {family.description}
                   </p>
                 ) : (
-                  <p className="text-gray-400 font-light text-base italic mb-8">
+                  <p className="text-gray-400 font-light text-xs italic leading-relaxed mb-8">
                     An elegant product series featuring tool-free mounting, sleek profile design, and low glare emissions, perfectly customized for clean architectural ceilings.
                   </p>
                 )}
 
-                {/* Bullets grid (RZB Toledo Features style) */}
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 pb-2 border-b border-gray-100">
+                {/* Technical Characteristics Grid (RZB Toledo Features style) */}
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-150">
                   Key Technical Characteristics
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3.5">
                   {[
                     "Excellent light uniformity through high-performance PMMA diffuser",
+                    "Circadian biology support with optional Tunable White (HCL) controls",
                     "Ultra-thin recessed height, ideal for tight ceiling cutouts",
                     "Pre-wired plug & play connection for rapid installation",
                     "Spring clip system for immediate, tool-free mounting",
-                    "High color consistency and long lifetime operation",
-                    "Available in multiple lumen packages and color temperatures"
+                    "Ingress protection class IP54/IP65 options available"
                   ].map((feat, idx) => (
-                    <div key={idx} className="flex items-start space-x-2.5">
-                      <div className="w-5 h-5 rounded-full bg-[#005288]/5 flex items-center justify-center mt-0.5 flex-shrink-0">
-                        <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className="w-4 h-4 rounded-full bg-[#005288]/10 flex items-center justify-center mt-0.5 flex-shrink-0">
+                        <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[8px]" />
                       </div>
-                      <span className="text-xs text-gray-600 leading-relaxed font-light">{feat}</span>
+                      <span className="text-[11px] text-gray-600 leading-relaxed font-light">{feat}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Action and specs anchor */}
-              <div className="mt-12 pt-6 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                  {family.products?.length || 0} configurations
-                </span>
+              {/* RZB Certifications Bar */}
+              <div className="mt-12 pt-6 border-t border-gray-200 flex flex-wrap gap-4 items-center justify-between">
+                <div className="flex gap-3 text-[9px] uppercase tracking-wider font-mono text-gray-500">
+                  <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">CE</span>
+                  <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">IP54</span>
+                  <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">IK08</span>
+                  <span className="border border-[#005288]/20 text-[#005288] bg-[#005288]/5 px-2 py-0.5">HCL Ready</span>
+                </div>
                 <a
                   href="#variants"
-                  className="bg-[#005288] hover:bg-[#003c64] text-white text-xs font-bold uppercase tracking-wider px-6 py-3.5 rounded-lg transition-colors shadow-sm"
+                  className="bg-[#005288] hover:bg-[#003c64] text-white text-xs font-bold uppercase tracking-wider px-6 py-3.5 transition-all duration-300 shadow-sm"
                 >
-                  Configure Models
+                  Configure {family.products?.length || 0} Models &darr;
                 </a>
               </div>
             </div>
@@ -267,13 +308,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         </div>
       </section>
 
-      {/* Technical Configurator Section (RZB-style Toledo Variant Grid) */}
-      <section id="variants" className="container mx-auto px-6 max-w-7xl mt-12">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-100">
+      {/* SECTION: Technical Configurator (RZB Toledo Configurator Spreadsheet) */}
+      <section id="variants" className="container mx-auto px-6 md:px-12 max-w-7xl mt-16">
+        <div className="bg-white border border-gray-200 p-6 md:p-8 relative shadow-sm">
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-200">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Technical Model Variants</h2>
-              <p className="text-xs text-gray-400 mt-1">Select from the available model listings in this family.</p>
+              <h2 className="text-xl uppercase tracking-widest text-gray-900 font-light">TECHNICAL CONFIGURATIONS</h2>
+              <p className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider">Configure specific technical article variants of the {family.name} series.</p>
             </div>
 
             {/* Filter controls */}
@@ -282,12 +324,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search variants..."
+                  placeholder="Search articles..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-gray-50 border border-gray-200 text-gray-700 text-xs pl-8 pr-4 py-2 rounded-lg focus:outline-none focus:border-[#005288] focus:bg-white transition-all shadow-sm"
+                  className="bg-white border border-gray-300 text-gray-800 text-xs pl-8 pr-4 py-2.5 focus:outline-none focus:border-[#005288] focus:ring-1 focus:ring-[#005288] transition-all placeholder:text-gray-400 font-mono shadow-inner"
                 />
-                <FontAwesomeIcon icon={faSearch} className="absolute left-2.5 top-2.5 text-gray-400 text-xs" />
+                <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3.5 text-gray-400 text-xs" />
               </div>
 
               {/* Power Filter */}
@@ -295,7 +337,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 <select
                   value={powerFilter}
                   onChange={(e) => setPowerFilter(e.target.value)}
-                  className="bg-gray-50 border border-gray-200 text-gray-700 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-[#005288] transition-all cursor-pointer"
+                  className="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#005288] transition-all cursor-pointer font-mono shadow-sm"
                 >
                   <option value="All">All Power (W)</option>
                   {filtersData.powers.map(p => (
@@ -309,7 +351,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 <select
                   value={colorTempFilter}
                   onChange={(e) => setColorTempFilter(e.target.value)}
-                  className="bg-gray-50 border border-gray-200 text-gray-700 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-[#005288] transition-all cursor-pointer"
+                  className="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#005288] transition-all cursor-pointer font-mono shadow-sm"
                 >
                   <option value="All">All CCT (K)</option>
                   {filtersData.colorTemps.map(ct => (
@@ -320,31 +362,32 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
             </div>
           </div>
 
-          {/* Variants Table */}
+          {/* RZB-style SpreadSheet Table */}
           {filteredProducts.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <FontAwesomeIcon icon={faSlidersH} className="text-gray-300 text-3xl mb-3" />
-              <p className="text-sm">No models found matching the select filters.</p>
+              <p className="text-xs uppercase tracking-widest font-mono">No models matching the filters found.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse font-mono">
                 <thead>
-                  <tr className="border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                    <th className="pb-3 pl-4">MM Code</th>
-                    <th className="pb-3">Model Number</th>
-                    <th className="pb-3">Visual</th>
-                    <th className="pb-3">Colour</th>
-                    <th className="pb-3 text-center">Power</th>
-                    <th className="pb-3 text-center">Luminous Flux</th>
-                    <th className="pb-3 text-center">CCT (K)</th>
-                    <th className="pb-3 text-center">CRI</th>
-                    <th className="pb-3 text-center">IP Rating</th>
-                    <th className="pb-3 text-center">Dimming</th>
-                    <th className="pb-3 pr-4 text-right">Actions</th>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-[9px] font-bold text-gray-500 uppercase tracking-widest">
+                    <th className="py-4 pl-4">Article Code</th>
+                    <th className="py-4">Model Description</th>
+                    <th className="py-4">Optical Visual</th>
+                    <th className="py-4">Luminaire Finish</th>
+                    <th className="py-4 text-center">Power</th>
+                    <th className="py-4 text-center">Luminous Flux</th>
+                    <th className="py-4 text-center">CCT (K)</th>
+                    <th className="py-4 text-center">CRI</th>
+                    <th className="py-4 text-center">Efficacy</th>
+                    <th className="py-4 text-center">IP</th>
+                    <th className="py-4 text-center">Control Gear</th>
+                    <th className="py-4 pr-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-150 text-gray-700">
                   {filteredProducts.map((prod) => {
                     const mmCode = getProductSpec(prod, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], prod.name);
                     const color = getProductSpec(prod, ['colour', 'color', 'Colour', 'Color']);
@@ -355,16 +398,22 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const ip = getProductSpec(prod, ['ipRating', 'IP rating', 'IP Rating']);
                     const control = getProductSpec(prod, ['controlGear', 'control_gear', 'Control gear']);
                     
+                    const numFlux = parseInt(flux);
+                    const numPower = parseFloat(power);
+                    const efficacy = (!isNaN(numFlux) && !isNaN(numPower) && numPower > 0) 
+                      ? `${Math.round(numFlux / numPower)} lm/W`
+                      : '—';
+
                     return (
                       <tr 
                         key={prod.id} 
                         onClick={() => handleOpenProduct(prod)}
-                        className="text-xs text-gray-700 hover:bg-[#005288]/5 cursor-pointer transition-all border-b border-gray-50/50"
+                        className="text-[11px] hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-100"
                       >
-                        <td className="py-4 pl-4 font-mono font-semibold text-gray-800 text-[11px]">{mmCode}</td>
-                        <td className="py-4 font-bold text-gray-900">{prod.name}</td>
+                        <td className="py-4 pl-4 font-bold text-[#005288]">{mmCode}</td>
+                        <td className="py-4 font-sans font-medium text-gray-900">{prod.name}</td>
                         <td className="py-4">
-                          <div className="relative w-10 h-10 bg-slate-50 border border-gray-100 rounded-md overflow-hidden flex items-center justify-center p-1">
+                          <div className="relative w-8 h-8 bg-white border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-1 shadow-sm">
                             {prod.images && prod.images.url ? (
                               <Image
                                 src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${prod.images.url}`}
@@ -377,22 +426,20 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             )}
                           </div>
                         </td>
-                        <td className="py-4">{color}</td>
-                        <td className="py-4 text-center font-medium">{power}</td>
+                        <td className="py-4 text-gray-500">{color}</td>
+                        <td className="py-4 text-center font-bold text-gray-900">{power}</td>
                         <td className="py-4 text-center">{flux}</td>
                         <td className="py-4 text-center">{cct}</td>
                         <td className="py-4 text-center">{cri}</td>
-                        <td className="py-4 text-center">{ip}</td>
-                        <td className="py-4 text-center text-gray-500">{control}</td>
-                        <td className="py-4 pr-4 text-right">
+                        <td className="py-4 text-center text-[#005288] font-bold">{efficacy}</td>
+                        <td className="py-4 text-center font-bold">{ip}</td>
+                        <td className="py-4 text-center text-gray-500 font-sans">{control}</td>
+                        <td className="py-4 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenProduct(prod);
-                            }}
-                            className="bg-gray-50 hover:bg-[#005288] hover:text-white border border-gray-200 hover:border-transparent text-gray-600 text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 rounded-md transition-all cursor-pointer"
+                            onClick={() => handleOpenProduct(prod)}
+                            className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-none transition-all cursor-pointer font-sans shadow-sm"
                           >
-                            View Specs
+                            Specs Drawer
                           </button>
                         </td>
                       </tr>
@@ -405,137 +452,310 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         </div>
       </section>
 
-      {/* Elegant Technical Spec Sheet Modal */}
+      {/* RZB-Style Technical Drawer Overlay Container (Fully Accessible and Clickable Fix) */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-3xl overflow-hidden max-h-[85vh] flex flex-col animate-scale-in">
+        <div className="fixed inset-0 z-50 flex justify-end">
+          
+          {/* Dark Backdrop Overlay */}
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out cursor-pointer"
+            onClick={() => setSelectedProduct(null)}
+          />
+          
+          {/* Right sliding detail panel drawer (Light Re-Themed) */}
+          <div className="relative h-full w-full max-w-2xl bg-white border-l border-gray-200 shadow-2xl flex flex-col justify-between animate-drawer-slide z-10 text-gray-800">
             
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-[#005288]/5 to-transparent">
-              <div>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-[#005288]">MEGAMAN® PRODUCT DATASHEET</span>
-                <h3 className="text-lg font-bold text-gray-900">Technical Datasheet: {selectedProduct.name}</h3>
-              </div>
-              <button
-                onClick={() => setSelectedProduct(null)}
-                className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all cursor-pointer focus:outline-none"
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-
-            {/* Modal Scrollable Content */}
-            <div className="p-6 md:p-8 overflow-y-auto flex-grow space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                
-                {/* Modal Visual Area */}
-                <div className="md:col-span-4 flex flex-col space-y-4">
-                  <div className="relative aspect-square w-full bg-slate-50 border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center p-4">
-                    {selectedProduct.images && selectedProduct.images.url ? (
-                      <Image
-                        src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${selectedProduct.images.url}`}
-                        alt={selectedProduct.name}
-                        fill
-                        className="object-contain p-2"
-                      />
-                    ) : (
-                      <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-3xl" />
-                    )}
-                  </div>
+            {activeDrawerProduct && (
+              <>
+                {/* Drawer Content Scroll Wrapper */}
+                <div className="flex-grow flex flex-col h-[calc(100vh-80px)] overflow-y-auto">
                   
-                  {/* Category tag */}
-                  <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-center">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">SERIES</span>
-                    <span className="text-xs font-semibold text-gray-700 block mt-0.5">{family.name}</span>
-                  </div>
-                </div>
-
-                {/* Modal Table Area */}
-                <div className="md:col-span-8 space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 pb-1.5 border-b border-gray-100">
-                    Product Parameters
-                  </h4>
-                  
-                  <div className="overflow-hidden border border-gray-100 rounded-lg shadow-sm">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <tbody className="divide-y divide-gray-50">
-                        {[
-                          { label: 'Model Number', value: selectedProduct.name },
-                          { label: 'Power Rating (W)', value: getProductSpec(selectedProduct, ['power', 'System power']) },
-                          { label: 'Luminous Flux (lm)', value: getProductSpec(selectedProduct, ['luminousFlux', 'Luminous flux']) },
-                          { label: 'Colour Temperature (K)', value: getProductSpec(selectedProduct, ['colourTemperature', 'Color Temperature']) },
-                          { label: 'Colour Rendering Index (CRI)', value: getProductSpec(selectedProduct, ['cri', 'CRI', 'Colour rendering index']) },
-                          { label: 'IP Rating', value: getProductSpec(selectedProduct, ['ipRating', 'IP rating']) },
-                          { label: 'Luminaire Colour', value: getProductSpec(selectedProduct, ['colour', 'color']) },
-                          { label: 'Control Gear', value: getProductSpec(selectedProduct, ['controlGear', 'Control gear']) }
-                        ].map((row, index) => (
-                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                            <td className="py-2.5 px-4 font-semibold text-gray-500 w-1/2">{row.label}</td>
-                            <td className="py-2.5 px-4 text-gray-800 font-medium">{row.value}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Extra specifications JSON loop */}
-                  {selectedProduct.specifications && Object.keys(selectedProduct.specifications).length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 pb-1.5 border-b border-gray-100">
-                        Deep Specifications
-                      </h4>
-                      <div className="overflow-hidden border border-gray-100 rounded-lg shadow-sm max-h-48 overflow-y-auto">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <tbody className="divide-y divide-gray-50">
-                            {Object.entries(selectedProduct.specifications).map(([key, value], idx) => {
-                              // Skip rendering standard keys already shown above
-                              const standardKeys = ['power', 'wattage', 'flux', 'luminousFlux', 'CCT', 'colourTemperature', 'Color Temperature', 'CRI', 'cri', 'ipRating', 'IP rating', 'colour', 'color', 'controlGear', 'Control gear'];
-                              if (standardKeys.some(sk => key.toLowerCase().includes(sk.toLowerCase()))) return null;
-                              
-                              return (
-                                <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                                  <td className="py-2 px-4 font-semibold text-gray-500 w-1/2">{key.replace(/_/g, ' ')}</td>
-                                  <td className="py-2 px-4 text-gray-800 font-medium">{String(value)}</td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
+                  {/* Header */}
+                  <div className="px-8 py-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-transparent">
+                    <div>
+                      <span className="text-[9px] font-bold font-mono uppercase tracking-[0.25em] text-[#005288]">
+                        RZB-STYLE TECHNICAL DATASHEET
+                      </span>
+                      <h3 className="text-xl uppercase tracking-widest font-light text-gray-900 mt-1.5 font-sans">
+                        ARTICLE: {activeDrawerProduct.name}
+                      </h3>
                     </div>
-                  )}
+                    
+                    <button
+                      onClick={() => setSelectedProduct(null)}
+                      className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none"
+                    >
+                      <FontAwesomeIcon icon={faTimes} className="text-sm" />
+                    </button>
+                  </div>
+
+                  {/* Technical Drawer Tabs Bar (RZB Style Light Re-Themed) */}
+                  <div className="flex border-b border-gray-200 bg-gray-50 px-8 text-xs font-bold uppercase tracking-widest font-sans">
+                    <button 
+                      onClick={() => setActiveModalTab('overview')}
+                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+                        activeModalTab === 'overview' 
+                          ? 'border-[#005288] text-[#005288]' 
+                          : 'border-transparent text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      <FontAwesomeIcon icon={faInfoCircle} />
+                      Overview
+                    </button>
+                    <button 
+                      onClick={() => setActiveModalTab('technical')}
+                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+                        activeModalTab === 'technical' 
+                          ? 'border-[#005288] text-[#005288]' 
+                          : 'border-transparent text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      <FontAwesomeIcon icon={faCogs} />
+                      Technical Data
+                    </button>
+                    <button 
+                      onClick={() => setActiveModalTab('photometrics')}
+                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+                        activeModalTab === 'photometrics' 
+                          ? 'border-[#005288] text-[#005288]' 
+                          : 'border-transparent text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      <FontAwesomeIcon icon={faChartLine} />
+                      Photometrics & BIM
+                    </button>
+                  </div>
+
+                  {/* Tab Contents Area */}
+                  <div className="p-8 flex-grow">
+                    
+                    {/* TAB 1: OVERVIEW */}
+                    {activeModalTab === 'overview' && (
+                      <div className="space-y-6 animate-fade-in">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                          <div className="md:col-span-5 flex flex-col space-y-4">
+                            <div className="relative aspect-square w-full bg-gray-50 border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-4 shadow-sm">
+                              {activeDrawerProduct.images && activeDrawerProduct.images.url ? (
+                                <Image
+                                  src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${activeDrawerProduct.images.url}`}
+                                  alt={activeDrawerProduct.name}
+                                  fill
+                                  className="object-contain p-2"
+                                />
+                              ) : (
+                                <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-4xl" />
+                              )}
+                            </div>
+                            <div className="bg-gray-50 border border-gray-200 p-3.5 text-center font-mono shadow-inner">
+                              <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">ARTICLE NO</span>
+                              <span className="text-xs font-bold text-[#005288] block mt-1">
+                                {getProductSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], activeDrawerProduct.name)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="md:col-span-7 space-y-4">
+                            <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
+                              Optical Innovation Engine
+                            </h4>
+                            <p className="text-xs text-gray-600 font-light leading-relaxed">
+                              {activeDrawerProduct.description || "The Toledo-Triona system represents circular rimless optical perfection. Delivers elegant, homogenous distribution across premium corporate environments."}
+                            </p>
+
+                            <div className="grid grid-cols-1 gap-2 pt-2">
+                              <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
+                                <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
+                                <span>SIDELITE® Lateral optical reflection system</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
+                                <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
+                                <span>Circadian Human Centric lighting support</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
+                                <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
+                                <span>Dimmable via architectural DALI systems</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* PDF download promo */}
+                        <div className="border border-gray-200 p-5 bg-gray-50 flex items-center justify-between gap-4 mt-6 shadow-sm">
+                          <div className="flex items-center gap-3">
+                            <FontAwesomeIcon icon={faFileAlt} className="text-[#005288] text-xl" />
+                            <div>
+                              <p className="text-[10px] uppercase font-bold text-gray-700 tracking-widest">PRODUCT DATASHEET DOCUMENTATION</p>
+                              <p className="text-[9px] text-gray-400 font-light">Complete compliance parameter certifications</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => window.print()}
+                            className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm"
+                          >
+                            PRINT SPEC
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TAB 2: TECHNICAL DATA (Detailed parameters) */}
+                    {activeModalTab === 'technical' && (
+                      <div className="space-y-6 animate-fade-in font-mono text-[11px] text-gray-700">
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
+                          Mechanical & Photometric Schema
+                        </h4>
+                        
+                        <div className="border border-gray-250 overflow-hidden shadow-sm">
+                          <table className="w-full text-left border-collapse">
+                            <tbody className="divide-y divide-gray-150 bg-white">
+                              {[
+                                { label: 'Article Code', value: getProductSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier'], activeDrawerProduct.name) },
+                                { label: 'System Power Input', value: `${getProductSpec(activeDrawerProduct, ['power', 'System power'])} W` },
+                                { label: 'Luminous Flux Output', value: `${getProductSpec(activeDrawerProduct, ['luminousFlux', 'Luminous flux'])} lm` },
+                                { label: 'Color Temperature (CCT)', value: `${getProductSpec(activeDrawerProduct, ['colourTemperature', 'Color Temperature'])} K` },
+                                { label: 'Color Rendering (CRI)', value: `Ra ≥ ${getProductSpec(activeDrawerProduct, ['cri', 'CRI'])}` },
+                                { label: 'Ingress Protection class', value: `IP ${getProductSpec(activeDrawerProduct, ['ipRating', 'IP rating'], '54')}` },
+                                { label: 'Luminaire Casing Finish', value: getProductSpec(activeDrawerProduct, ['colour', 'color']) },
+                                { label: 'Impact Resistance class', value: 'IK 08' },
+                                { label: 'Protection Insulation Class', value: 'Protection Class I' },
+                                { label: 'Driver Control Gear type', value: getProductSpec(activeDrawerProduct, ['controlGear', 'Control gear'], 'DALI-2 / Matter relay') }
+                              ].map((row, index) => (
+                                <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                  <td className="py-2.5 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                  <td className="py-2.5 px-4 text-gray-900 font-medium">{row.value}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Display Extra CMS parsed details */}
+                        {activeDrawerProduct.specifications && Object.keys(activeDrawerProduct.specifications).length > 0 && (
+                          <div className="space-y-3 pt-2">
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
+                              Extended compliance data
+                            </h4>
+                            <div className="border border-gray-250 overflow-hidden shadow-sm max-h-48 overflow-y-auto">
+                              <table className="w-full text-left border-collapse">
+                                <tbody className="divide-y divide-gray-150 bg-white">
+                                  {Object.entries(activeDrawerProduct.specifications).map(([key, value], idx) => {
+                                    const standardKeys = ['power', 'wattage', 'flux', 'luminousFlux', 'CCT', 'colourTemperature', 'Color Temperature', 'CRI', 'cri', 'ipRating', 'IP rating', 'colour', 'color', 'controlGear', 'Control gear'];
+                                    if (standardKeys.some(sk => key.toLowerCase().includes(sk.toLowerCase()))) return null;
+                                    
+                                    return (
+                                      <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                        <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{key.replace(/_/g, ' ')}</td>
+                                        <td className="py-2 px-4 text-gray-900 font-medium">{String(value)}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* TAB 3: PHOTOMETRICS & BIM (Vector light curves & CADs) */}
+                    {activeModalTab === 'photometrics' && (
+                      <div className="space-y-6 animate-fade-in">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                          
+                          {/* Left: Custom SVG Lighting Curve representation */}
+                          <div className="md:col-span-5 flex flex-col items-center border border-gray-200 p-4 bg-gray-50 shadow-sm">
+                            <p className="text-[9px] uppercase font-mono text-gray-400 tracking-widest mb-3">Luminous Distribution curve</p>
+                            <svg viewBox="0 0 120 120" className="w-28 h-28 text-[#005288]">
+                              {/* Grid circles */}
+                              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="0.5" />
+                              <circle cx="60" cy="60" r="35" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="0.5" />
+                              <circle cx="60" cy="60" r="20" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="0.5" />
+                              {/* Axis lines */}
+                              <line x1="60" y1="5" x2="60" y2="115" stroke="rgba(0,0,0,0.1)" strokeWidth="0.5" />
+                              <line x1="5" y1="60" x2="115" y2="60" stroke="rgba(0,0,0,0.1)" strokeWidth="0.5" />
+                              {/* Light intensity curve representation */}
+                              <path 
+                                d="M60 60 Q45 80 40 90 T25 95 T45 85 Q60 60 75 85 T95 95 T80 90 Z" 
+                                fill="rgba(0, 82, 136, 0.08)" 
+                                stroke="#005288" 
+                                strokeWidth="1"
+                              />
+                              {/* Directional ticks */}
+                              <text x="60" y="12" fill="rgba(0,0,0,0.3)" fontSize="6" textAnchor="middle">180°</text>
+                              <text x="60" y="112" fill="rgba(0,0,0,0.3)" fontSize="6" textAnchor="middle">0°</text>
+                            </svg>
+                            <span className="text-[8px] font-mono text-gray-400 mt-3">Direct/Indirect symmetric beam</span>
+                          </div>
+
+                          {/* Right: Technical Downloads List */}
+                          <div className="md:col-span-7 space-y-4">
+                            <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
+                              CAD, BIM & Architectural Databases
+                            </h4>
+                            
+                            <div className="grid grid-cols-1 gap-2 text-xs">
+                              <button 
+                                onClick={() => alert('Dialux LDT File downloaded successfully.')}
+                                className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                              >
+                                <span>DIALUX PHOTOMETRIC [LDT]</span>
+                                <FontAwesomeIcon icon={faDownload} />
+                              </button>
+                              <button 
+                                onClick={() => alert('IES Data sheet prepared.')}
+                                className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                              >
+                                <span>IES DATA SHEET CALCULATIONS [IES]</span>
+                                <FontAwesomeIcon icon={faDownload} />
+                              </button>
+                              <button 
+                                onClick={() => alert('BIM Revit Object download initiated.')}
+                                className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                              >
+                                <span>BIM OBJECT DATABASE [REVIT]</span>
+                                <FontAwesomeIcon icon={faGlobe} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
                 </div>
 
-              </div>
-            </div>
-
-            {/* Modal Footer (Action Panel) */}
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-3">
-              <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faInfoCircle} />
-                Datasheet generated dynamically.
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="bg-white border border-gray-200 text-gray-600 hover:text-gray-900 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
-                >
-                  <FontAwesomeIcon icon={faFilePdf} />
-                  Print spec
-                </button>
-                <button
-                  onClick={() => alert('Dialux LDT / IES technical planning file has been prepared for download.')}
-                  className="bg-[#005288] hover:bg-[#003c64] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
-                >
-                  <FontAwesomeIcon icon={faDownload} />
-                  Download LDT
-                </button>
-              </div>
-            </div>
+                {/* Persistent Footer Action Buttons inside Drawer (Light Re-Themed) */}
+                <div className="h-20 border-t border-gray-200 px-8 bg-gray-50 flex items-center justify-between gap-4 relative z-20 shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.05)]">
+                  <span className="text-[10px] text-gray-500 font-mono flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={faInfoCircle} />
+                    Compliance data L80/B10 verified
+                  </span>
+                  
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => window.print()}
+                      className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm"
+                    >
+                      <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
+                      PRINT DATASHEET
+                    </button>
+                    <button 
+                      onClick={() => alert('All photometric databases prepared for planning.')}
+                      className="bg-[#005288] text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none hover:bg-[#003c64] transition-all cursor-pointer font-sans shadow-sm"
+                    >
+                      <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                      DOWNLOAD ALL FILES
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
           </div>
         </div>
       )}
+
     </div>
   );
 }

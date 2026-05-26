@@ -10,7 +10,7 @@ interface Product {
   colour?: string;
   power?: string;
   colourTemperature?: string;
-  specifications?: any;
+  specifications?: Record<string, unknown> | null;
 }
 
 interface MediaItem {

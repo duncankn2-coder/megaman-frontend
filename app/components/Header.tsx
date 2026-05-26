@@ -12,10 +12,7 @@ import {
   faArrowRight
 } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
-import { Montserrat } from 'next/font/google';
 import { useState, useEffect, useRef } from 'react';
-
-const montserrat = Montserrat({ weight: '700', subsets: ['latin'] });
 
 interface SubmenuItem {
   name: string;
