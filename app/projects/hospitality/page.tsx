@@ -139,7 +139,7 @@ export default function HospitalityProjectsPage() {
             </h1>
             
             <p className="text-gray-300 font-light text-sm md:text-base leading-relaxed">
-              In premium hotel and hospitality design, light is not merely functional—it shapes the atmospheric identity, reinforces architectural spaces, and orchestrates comfort. Explore how MEGAMAN®\'s state-of-the-art engineering elevates emotional luxury.
+              In premium hotel and hospitality design, light is not merely functional—it shapes the atmospheric identity, reinforces architectural spaces, and orchestrates comfort. Explore how MEGAMAN®&apos;s state-of-the-art engineering elevates emotional luxury.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4 font-mono text-[9px] uppercase tracking-wider">
