@@ -1,555 +1,556 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faLightbulb,
-  faSliders,
-  faLeaf,
-  faDownload,
   faArrowRight,
+  faSearch,
+  faFilePdf,
+  faChevronLeft,
+  faChevronRight,
   faCheck,
-  faTools,
-  faBolt
+  faLightbulb,
+  faSlidersH
 } from '@fortawesome/free-solid-svg-icons';
 
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface Family {
-  id: string;
-  name: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  categories: Category[];
-  families?: Family;
-  // Tech Specs added for the premium interactive spec-planner
-  cri: number;
-  cct: number; // in Kelvin
-  beamAngle: string;
-  wattage: number;
-  lumens: number;
-  imageUrl?: string;
-  modelCode: string;
-}
-
-// Curated architectural premium products matching Megaman.cc branding & XAL styling
-const CURATED_PRODUCTS: Product[] = [
-  {
-    id: "1",
-    name: "SIENA Recessed LED Downlight",
-    description: "Ultra-slim structural downlight with deep recess for superior glare control (UGR < 19). Fully dimmable and high efficacy.",
-    categories: [{ id: "downlights", name: "Downlights" }, { id: "luminaires", name: "Indoor Lighting" }],
-    families: { id: "siena", name: "SIENA" },
-    cri: 92,
-    cct: 3000,
-    beamAngle: "36°",
-    wattage: 12,
-    lumens: 1050,
-    modelCode: "F50309RC",
-    imageUrl: "/hospitality_project_lobby.png"
-  },
-  {
-    id: "2",
-    name: "FITO Sleek Track Light",
-    description: "Premium architectural track spotlight. Delivers high luminous flux with advanced thermal management and CRI 97 color rendering.",
-    categories: [{ id: "track", name: "Track Lighting" }, { id: "luminaires", name: "Indoor Lighting" }],
-    families: { id: "fito", name: "FITO" },
-    cri: 97,
-    cct: 4000,
-    beamAngle: "24°",
-    wattage: 18,
-    lumens: 1620,
-    modelCode: "F52802TR",
-    imageUrl: "/retail_project_showroom.png"
-  },
-  {
-    id: "3",
-    name: "INGENIUM Matter Smart LED Reflector",
-    description: "Matter-compatible smart lamp. Features ultra-smooth dimming, full color temperature tuning, and mesh reliability.",
-    categories: [{ id: "lamps", name: "Lamps" }, { id: "smart", name: "Light Management" }],
-    families: { id: "ingenium", name: "INGENIUM® Matter" },
-    cri: 90,
-    cct: 2700,
-    beamAngle: "60°",
-    wattage: 6.5,
-    lumens: 520,
-    modelCode: "LR5907-MTR",
-    imageUrl: "/smart_lighting_matter.png"
-  },
-  {
-    id: "4",
-    name: "ESTELA Architectural Linear LED",
-    description: "Minimalist surface-mounted batten creating a continuous line of glare-free architectural light. Tailor-made for office environments.",
-    categories: [{ id: "batten", name: "Indoor Batten" }, { id: "luminaires", name: "Indoor Lighting" }],
-    families: { id: "estela", name: "ESTELA" },
-    cri: 95,
-    cct: 4000,
-    beamAngle: "120°",
-    wattage: 28,
-    lumens: 2950,
-    modelCode: "B50812LN",
-    imageUrl: "/hero_architectural_light.png"
-  },
-  {
-    id: "5",
-    name: "TOTT Damp Proof Batten",
-    description: "Heavy-duty outdoor battens with IP66 protection. Offers exceptional efficacy and durability in tough industrial settings.",
-    categories: [{ id: "outdoor", name: "Outdoor Lighting" }, { id: "damp-proof", name: "Damp Proof Batten" }],
-    families: { id: "tott", name: "TOTT" },
-    cri: 82,
-    cct: 5000,
-    beamAngle: "120°",
-    wattage: 36,
-    lumens: 4320,
-    modelCode: "L51036DP",
-    imageUrl: "/hero_architectural_light.png"
-  },
-  {
-    id: "6",
-    name: "AMBIE Golden Filament LED Globe",
-    description: "Vintage-styled decorative glass bulb emitting cozy 2200K warm glow. Perfect replica of classical carbon filament lamps.",
-    categories: [{ id: "lamps", name: "Lamps" }, { id: "decorative", name: "Decorative" }],
-    families: { id: "ambie", name: "AMBIE" },
-    cri: 90,
-    cct: 2200,
-    beamAngle: "360°",
-    wattage: 4.8,
-    lumens: 420,
-    modelCode: "G50248DF",
-    imageUrl: "/smart_lighting_matter.png"
-  }
-];
-
-interface ApiProduct {
-  id: string;
-  name: string;
-  description?: string;
-  categories: Category[];
-  families?: Family;
-  modelCode?: string;
-}
-
 export default function Home() {
-  const [isLightOn, setIsLightOn] = useState(true);
-  const [products, setProducts] = useState<Product[]>(CURATED_PRODUCTS);
+  const [productsCount, setProductsCount] = useState<number>(0);
+  const [catalogSearch, setCatalogSearch] = useState<string>('');
+  const [activeCatalogTab, setActiveCatalogTab] = useState<'all' | 'indoor' | 'smart'>('all');
 
-  // Smart Light Simulator States
-  const [smartBrightness, setSmartBrightness] = useState(80);
-  const [smartCCT, setSmartCCT] = useState(3200);
-  const [smartPower, setSmartPower] = useState(true);
+  // Carousel Hero States
+  const [activeSlide, setActiveSlide] = useState<number>(0);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Technical Filter States
-  const [filterCRI, setFilterCRI] = useState<number | null>(null);
-  const [filterCCT, setFilterCCT] = useState<number | null>(null);
-  const [filterBeam, setFilterBeam] = useState<string | null>(null);
+  const totalSlides = 3;
 
-  // Selected Detail Modal
-  const [activeProductDetail, setActiveProductDetail] = useState<Product | null>(null);
+  // Autoplay functionality: slide transitions every 6 seconds, pauses on mouse hover
+  useEffect(() => {
+    if (!isHovered) {
+      autoplayTimerRef.current = setInterval(() => {
+        setActiveSlide((prev) => (prev + 1) % totalSlides);
+      }, 6000);
+    }
+    return () => {
+      if (autoplayTimerRef.current) clearInterval(autoplayTimerRef.current);
+    };
+  }, [isHovered]);
 
-  // Fetch API products on mount
+  const handlePrevSlide = () => {
+    setActiveSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  };
+
+  const handleNextSlide = () => {
+    setActiveSlide((prev) => (prev + 1) % totalSlides);
+  };
+
+  // Fetch product counts dynamically on mount to showcase database integration
   useEffect(() => {
     async function fetchProducts() {
       try {
         const response = await fetch('http://localhost:3000/api/products');
         if (response.ok) {
           const data = await response.json();
-          const fetchedDocs = (data.docs || []) as ApiProduct[];
-          
-          // Hybrid: Enhance fetched items with detailed specifications for the interactive planner
-          if (fetchedDocs.length > 0) {
-            const enhanced = fetchedDocs.map((item: ApiProduct, idx: number) => {
-              const baseCurated = CURATED_PRODUCTS[idx % CURATED_PRODUCTS.length];
-              return {
-                id: item.id || `api-${idx}`,
-                name: item.name || baseCurated.name,
-                description: item.description || baseCurated.description,
-                categories: item.categories || baseCurated.categories,
-                families: item.families || baseCurated.families,
-                cri: idx % 2 === 0 ? 95 : 90,
-                cct: idx % 3 === 0 ? 2700 : idx % 3 === 1 ? 4000 : 3000,
-                beamAngle: idx % 3 === 0 ? "24°" : idx % 3 === 1 ? "36°" : "60°",
-                wattage: baseCurated.wattage,
-                lumens: baseCurated.lumens,
-                modelCode: item.modelCode || `F-${Math.floor(10000 + Math.random() * 90000)}`,
-                imageUrl: baseCurated.imageUrl
-              };
-            });
-            setProducts(enhanced);
-          }
+          setProductsCount(data.totalDocs || data.docs?.length || 0);
         }
       } catch (error) {
-        console.error("Could not fetch API products, falling back to curated list.", error);
+        console.error("Could not fetch API products count, using static metrics.", error);
       }
-    };
+    }
     fetchProducts();
   }, []);
 
-  // Filtering Logic
-  const filteredProducts = products.filter(prod => {
-    if (filterCRI && prod.cri < filterCRI) return false;
-    if (filterCCT && prod.cct !== filterCCT) return false;
-    if (filterBeam && prod.beamAngle !== filterBeam) return false;
+  // Curated list of high-end catalog sheets matching XAL/Megaman branding
+  const catalogues = [
+    {
+      id: "indoor",
+      title: "Indoor Luminaires 2026/27",
+      version: "Vol. 4.2",
+      pages: 348,
+      size: "42.8 MB",
+      released: "April 2026",
+      coverUrl: "/hospitality_project_lobby.png",
+      tag: "indoor"
+    },
+    {
+      id: "lamps",
+      title: "LED Lamps & Modules",
+      version: "Vol. 7.1",
+      pages: 184,
+      size: "24.5 MB",
+      released: "May 2026",
+      coverUrl: "/retail_project_showroom.png",
+      tag: "indoor"
+    },
+    {
+      id: "smart",
+      title: "INGENIUM® Smart IoT Matter",
+      version: "Vol. 2.0",
+      pages: 96,
+      size: "12.2 MB",
+      released: "March 2026",
+      coverUrl: "/smart_lighting_matter.png",
+      tag: "smart"
+    }
+  ];
+
+  const filteredCatalogues = catalogues.filter(cat => {
+    if (activeCatalogTab !== 'all' && cat.tag !== activeCatalogTab) return false;
+    if (catalogSearch !== '' && !cat.title.toLowerCase().includes(catalogSearch.toLowerCase())) return false;
     return true;
   });
 
   return (
-    <div className="min-h-screen bg-[#08080a] text-[#f3f4f6] relative font-sans selection:bg-[#e2c285] selection:text-[#08080a]">
+    <div className="bg-white text-gray-800 min-h-screen relative font-sans selection:bg-[#005288] selection:text-white overflow-x-hidden">
       
-      {/* SECTION 1: Architectural Full-Bleed Hero Section */}
-      <section className="relative h-[92vh] w-full flex flex-col justify-end items-start px-6 md:px-16 py-16 overflow-hidden arch-grid-line arch-grid-line-horizontal">
-        {/* Background Image Container with dynamic glow & transitions */}
-        <div 
-          className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-            isLightOn ? 'opacity-85 scale-100' : 'opacity-25 scale-105 filter grayscale contrast-125'
-          }`}
-        >
-          <Image 
-            src="/hero_architectural_light.png" 
-            alt="Megaman Architectural Lighting" 
-            fill
-            priority
-            className="object-cover transition-all duration-700"
-          />
-          {/* Subtle gradient vignette to overlay readable text */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-black/35"></div>
+      {/* SECTION 1: XAL-Style Light-Themed Hero Carousel */}
+      <section 
+        className="relative bg-gray-50 border-b border-gray-200 min-h-[640px] md:h-[75vh] flex items-center overflow-hidden"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Fine crosshairs & grids */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0">
+          <div className="absolute left-[33%] top-0 bottom-0 w-[1px] bg-black"></div>
+          <div className="absolute left-[66%] top-0 bottom-0 w-[1px] bg-black"></div>
+          <div className="absolute left-0 right-0 top-[50%] h-[1px] bg-black"></div>
         </div>
 
-        {/* Floating Drafting Grid Overlay simulating XAL blueprint aesthetic */}
-        <div className="absolute inset-0 pointer-events-none opacity-20 transition-opacity duration-700">
-          <div className="absolute left-[15%] top-0 bottom-0 w-[1px] bg-white/20"></div>
-          <div className="absolute left-[50%] top-0 bottom-0 w-[1px] bg-white/20"></div>
-          <div className="absolute left-[85%] top-0 bottom-0 w-[1px] bg-white/20"></div>
-          <div className="absolute left-0 right-0 top-[35%] h-[1px] bg-white/20"></div>
-          <div className="absolute left-0 right-0 top-[70%] h-[1px] bg-white/20"></div>
-        </div>
-
-        {/* Ambient Glow Aura */}
-        <div className={`absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full blur-[140px] pointer-events-none transition-all duration-1000 ${
-          isLightOn ? 'bg-orange-300/20 opacity-100' : 'bg-blue-900/10 opacity-40'
-        }`}></div>
-
-        {/* Content Container */}
-        <div className="relative z-10 max-w-4xl flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <span className="h-[2px] w-12 bg-[#e2c285] inline-block animate-pulse"></span>
-            <p className="text-xs uppercase tracking-[0.3em] font-semibold text-[#e2c285]">
-              MEGAMAN® LIFE IN LIGHT
-            </p>
-          </div>
+        {/* Dynamic Slidings Area */}
+        <div className="container mx-auto max-w-7xl px-6 md:px-12 relative z-10 w-full">
           
-          <h1 className="text-5xl md:text-7xl font-light uppercase tracking-widest leading-[1.1] font-sans">
-            {isLightOn ? (
-              <>LIGHTING<br /><span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#e2c285]">WITHOUT LIMITS</span></>
-            ) : (
-              <>PRECISION<br /><span className="font-bold text-neutral-500">IN DARKNESS</span></>
-            )}
-          </h1>
+          {/* SLIDE 0: CATALOGUES & DOWNLOADS */}
+          <div className={`transition-all duration-700 ease-in-out grid grid-cols-1 lg:grid-cols-12 gap-16 items-center ${
+            activeSlide === 0 ? 'opacity-100 translate-x-0 relative block' : 'opacity-0 translate-x-12 absolute hidden'
+          }`}>
+            {/* Left: Headline & Filter controls */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="flex items-center gap-3">
+                <span className="h-[2px] w-10 bg-[#005288]"></span>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
+                  TECHNICAL ARCHITECTURE
+                </p>
+              </div>
 
-          <p className="text-sm md:text-base text-neutral-400 font-light max-w-lg leading-relaxed">
-            {isLightOn 
-              ? "Bridging energy-efficiency and elegant design. Discover our state-of-the-art LED Downlights, luminaires, and light components engineered to curate architectural excellence."
-              : "Designing optical perfection for shadows. Lowering energy footprints while elevating modern space designs with architectural-grade LED systems."
-            }
-          </p>
+              <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
+                CATALOGUES &<br /><span className="font-bold text-[#005288]">DOWNLOADS</span>
+              </h1>
 
-          {/* Interactive Light Switch CTA */}
-          <div className="mt-4 flex flex-wrap gap-4 items-center">
-            <button 
-              onClick={() => setIsLightOn(!isLightOn)}
-              className={`px-8 py-3.5 border text-xs uppercase tracking-widest font-semibold flex items-center gap-3 transition-all duration-300 rounded-none cursor-pointer ${
-                isLightOn 
-                  ? 'border-[#e2c285] bg-[#e2c285]/5 text-[#e2c285] hover:bg-[#e2c285] hover:text-[#08080a]' 
-                  : 'border-neutral-700 bg-transparent text-neutral-400 hover:border-white hover:text-white'
-              }`}
-            >
-              <FontAwesomeIcon icon={faLightbulb} className={isLightOn ? 'animate-bounce text-[#e2c285]' : ''} />
-              Simulate: {isLightOn ? 'Lights Off' : 'Lights On'}
-            </button>
-            <a 
-              href="#products-section" 
-              className="text-xs uppercase tracking-widest font-bold hover:text-[#e2c285] transition-colors flex items-center gap-2 group py-3 px-4"
-            >
-              Explore Catalogue
-              <FontAwesomeIcon icon={faArrowRight} className="transform group-hover:translate-x-1 transition-transform" />
-            </a>
-          </div>
-        </div>
-
-        {/* Side Specification Badge */}
-        <div className="absolute right-6 md:right-16 bottom-16 hidden md:flex flex-col border border-white/10 p-5 glass-card pointer-events-none rounded-none text-left">
-          <p className="text-[10px] uppercase text-neutral-500 tracking-[0.2em] mb-3">SYSTEM PARAMETERS</p>
-          <div className="flex gap-8">
-            <div>
-              <p className="text-[9px] uppercase text-neutral-500 font-bold">STATE</p>
-              <p className={`text-xs font-semibold ${isLightOn ? 'text-green-400' : 'text-neutral-500'}`}>
-                {isLightOn ? 'ACTIVE (100%)' : 'STANDBY (5%)'}
+              <p className="text-xs md:text-sm text-gray-500 font-light max-w-md leading-relaxed">
+                Access our comprehensive library of professional lighting planners, complete with photometric LDT files, Dialux calculations, BIM databases, and PDF product catalogs.
               </p>
+
+              {/* Dynamic Catalog Search */}
+              <div className="relative max-w-md border border-gray-300 bg-white shadow-sm mt-8">
+                <input
+                  type="text"
+                  value={catalogSearch}
+                  onChange={(e) => setCatalogSearch(e.target.value)}
+                  placeholder="SEARCH SPECIFICATIONS..."
+                  className="w-full text-xs font-mono p-3.5 focus:outline-none focus:ring-1 focus:ring-[#005288] uppercase text-gray-800"
+                />
+                <FontAwesomeIcon icon={faSearch} className="absolute right-4 top-4 text-gray-400 text-sm" />
+              </div>
+
+              {/* Quick Tab Switcher */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <button
+                  onClick={() => setActiveCatalogTab('all')}
+                  className={`px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-none cursor-pointer border transition-all ${
+                    activeCatalogTab === 'all' 
+                      ? 'border-[#005288] bg-[#005288] text-white shadow-sm' 
+                      : 'border-gray-250 bg-white text-gray-500 hover:text-gray-900 hover:border-gray-400'
+                  }`}
+                >
+                  All Documentation
+                </button>
+                <button
+                  onClick={() => setActiveCatalogTab('indoor')}
+                  className={`px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-none cursor-pointer border transition-all ${
+                    activeCatalogTab === 'indoor' 
+                      ? 'border-[#005288] bg-[#005288] text-white shadow-sm' 
+                      : 'border-gray-250 bg-white text-gray-500 hover:text-gray-900 hover:border-gray-400'
+                  }`}
+                >
+                  Indoor Systems
+                </button>
+                <button
+                  onClick={() => setActiveCatalogTab('smart')}
+                  className={`px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-none cursor-pointer border transition-all ${
+                    activeCatalogTab === 'smart' 
+                      ? 'border-[#005288] bg-[#005288] text-white shadow-sm' 
+                      : 'border-gray-250 bg-white text-gray-500 hover:text-gray-900 hover:border-gray-400'
+                  }`}
+                >
+                  Smart & IoT
+                </button>
+              </div>
             </div>
-            <div>
-              <p className="text-[9px] uppercase text-neutral-500 font-bold">ECO STATUS</p>
-              <p className="text-xs font-semibold text-emerald-400">CLASS A++</p>
+
+            {/* Right: Stacked Catalog Covers Grid */}
+            <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {filteredCatalogues.length === 0 ? (
+                <div className="col-span-full border border-gray-200 bg-white p-12 text-center text-gray-400 font-mono text-xs uppercase tracking-wider shadow-sm">
+                  No matching catalogs found.
+                </div>
+              ) : (
+                filteredCatalogues.map((cat) => (
+                  <div 
+                    key={cat.id} 
+                    className="bg-white border border-gray-200 p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 group"
+                  >
+                    <div>
+                      {/* Technical brochure stack representation */}
+                      <div className="relative aspect-[3/4] w-full bg-gray-50 border border-gray-150 overflow-hidden flex items-center justify-center p-3 mb-4 shadow-sm group-hover:border-gray-300 transition-colors">
+                        <Image 
+                          src={cat.coverUrl} 
+                          alt={cat.title} 
+                          fill
+                          className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-103"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/10"></div>
+                        
+                        {/* Overlay spec label */}
+                        <div className="absolute bottom-4 left-4 right-4 text-left">
+                          <span className="text-[8px] font-mono font-bold text-[#e2c285] tracking-widest block">{cat.version}</span>
+                          <span className="text-xs font-bold text-white tracking-wide block mt-0.5 line-clamp-2">{cat.title}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-[10px] font-mono text-gray-400 space-y-1 mt-2">
+                        <div className="flex justify-between border-b border-gray-100 pb-1">
+                          <span>PAGES</span>
+                          <span className="font-bold text-gray-700">{cat.pages}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-gray-100 pb-1">
+                          <span>RELEASED</span>
+                          <span className="font-bold text-gray-700">{cat.released}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-gray-100 pb-1">
+                          <span>FILE SIZE</span>
+                          <span className="font-bold text-[#005288]">{cat.size}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => alert(`Catalog ${cat.title} PDF download initiated.`)}
+                      className="w-full mt-5 bg-[#005288] hover:bg-[#003c64] text-white py-2.5 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+                    >
+                      <FontAwesomeIcon icon={faFilePdf} />
+                      DOWNLOAD PDF
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* SECTION 2: Smart Lighting & Technology Showcase (Asymmetrical Architectural Grid) */}
-      <section className="py-24 px-6 md:px-16 max-w-7xl mx-auto border-b border-white/5">
-        <div className="mb-16">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#e2c285] mb-2 font-bold">INTELLIGENT INTEGRATION</p>
-          <h2 className="text-3xl md:text-4xl font-extralight uppercase tracking-widest">INGENIUM® SMART SYSTEMS</h2>
-        </div>
+          {/* SLIDE 1: TOLEDO & TRIONA SYSTEM SHOWCASE */}
+          <div className={`transition-all duration-700 ease-in-out grid grid-cols-1 lg:grid-cols-12 gap-16 items-center ${
+            activeSlide === 1 ? 'opacity-100 translate-x-0 relative block' : 'opacity-0 translate-x-12 absolute hidden'
+          }`}>
+            {/* Left Column: Product System details */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="flex items-center gap-3">
+                <span className="h-[2px] w-10 bg-[#005288]"></span>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
+                  ARCHITECTURAL COMPLIANCE
+                </p>
+              </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Smart lighting panel control (66% space spans 2 columns) */}
-          <div className="lg:col-span-2 relative min-h-[500px] border border-white/10 p-8 flex flex-col justify-between overflow-hidden group glass-card">
-            
-            {/* Visual background image representing the smart system */}
-            <div className="absolute inset-0 z-0 opacity-40 group-hover:opacity-50 transition-opacity duration-700">
+              <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
+                TRIONA SYSTEM<br /><span className="font-bold text-[#005288]">CIRCULAR ELEGANCE</span>
+              </h1>
+
+              <p className="text-xs md:text-sm text-gray-500 font-light max-w-md leading-relaxed">
+                Replicating circular rimless perfection with lateral SIDELITE® light injection. Meticulously designed for low glare output, biological human-centric (HCL) rhythm tuning, and tool-free mounting connection.
+              </p>
+
+              {/* Specs checklist */}
+              <div className="grid grid-cols-1 gap-2 pt-4">
+                <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
+                  <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
+                  </div>
+                  <span>High color rendering performance (CRI &ge; 95)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
+                  <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
+                  </div>
+                  <span>Microprismatic office glare index (UGR &le; 19)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
+                  <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
+                  </div>
+                  <span>Water protection ingress ratings IP54/IP65</span>
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <a 
+                  href="#categories-section" 
+                  className="bg-[#005288] hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
+                >
+                  <FontAwesomeIcon icon={faLightbulb} />
+                  EXPLORE ARCHITECTURAL RANGE
+                </a>
+              </div>
+            </div>
+
+            {/* Right Column: Visual render representation */}
+            <div className="lg:col-span-7 relative h-[420px] w-full bg-white border border-gray-250 shadow-sm overflow-hidden flex items-center justify-center">
+              <Image 
+                src="/hero_architectural_light.png" 
+                alt="Megaman Triona Sidelite System" 
+                fill
+                className="object-cover opacity-95"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"></div>
+              
+              {/* Technical floating spec overlay badge */}
+              <div className="absolute bottom-6 right-6 bg-white border border-gray-200 p-4 font-mono text-[10px] text-gray-500 shadow-md">
+                <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold mb-2">SYSTEM PARAMETER METRICS</p>
+                <div className="flex gap-6">
+                  <div>CRI: <span className="font-bold text-gray-900">Ra 95+</span></div>
+                  <div>GLARE: <span className="font-bold text-[#005288]">UGR &le; 19</span></div>
+                  <div>PROTECTION: <span className="font-bold text-gray-900">IP54</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SLIDE 2: INGENIUM MATTER SMART LIGHTING SHOWCASE */}
+          <div className={`transition-all duration-700 ease-in-out grid grid-cols-1 lg:grid-cols-12 gap-16 items-center ${
+            activeSlide === 2 ? 'opacity-100 translate-x-0 relative block' : 'opacity-0 translate-x-12 absolute hidden'
+          }`}>
+            {/* Left Column: Smart System details */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="flex items-center gap-3">
+                <span className="h-[2px] w-10 bg-[#005288]"></span>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
+                  INTELLIGENT SMART NETWORKS
+                </p>
+              </div>
+
+              <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
+                INGENIUM® MATTER<br /><span className="font-bold text-[#005288]">SMART HOME IOT</span>
+              </h1>
+
+              <p className="text-xs md:text-sm text-gray-500 font-light max-w-md leading-relaxed">
+                Connect your architectural downlights into a single, unified smart mesh network. Matter mesh compatibility allows robust multi-admin local router integrations, auto-routing meshes, and dynamic dim-to-warm circadian parameters.
+              </p>
+
+              {/* Specs checklist */}
+              <div className="grid grid-cols-1 gap-2 pt-4">
+                <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
+                  <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
+                  </div>
+                  <span>Standard Matter dynamic mesh connectivity</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
+                  <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
+                  </div>
+                  <span>Dynamic color temperature (CCT 2200K - 6500K) controls</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
+                  <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
+                  </div>
+                  <span>Deep standby low energy consumption (&le;0.5W)</span>
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <a 
+                  href="#categories-section" 
+                  className="bg-[#005288] hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
+                >
+                  <FontAwesomeIcon icon={faSlidersH} />
+                  EXPLORE INGENIUM RANGE
+                </a>
+              </div>
+            </div>
+
+            {/* Right Column: Smart home ambient visual preview */}
+            <div className="lg:col-span-7 relative h-[420px] w-full bg-white border border-gray-250 shadow-sm overflow-hidden flex items-center justify-center">
               <Image 
                 src="/smart_lighting_matter.png" 
-                alt="Smart home matter lighting controller"
+                alt="Megaman Smart Matter downlights system" 
                 fill
-                className="object-cover"
+                className="object-cover opacity-95"
               />
-              {/* Dynamic light tint overlay driven by CCT slider */}
-              <div 
-                className="absolute inset-0 mix-blend-color transition-colors duration-300"
-                style={{
-                  backgroundColor: smartPower 
-                    ? `rgba(255, ${Math.min(255, 150 + (smartCCT - 2000) / 20)}, ${Math.min(255, 100 + (smartCCT - 2000) / 10)}, ${smartBrightness / 400})` 
-                    : 'rgba(0, 0, 0, 0.8)'
-                }}
-              ></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-black/25 to-[#08080a]/50"></div>
-            </div>
-
-            <div className="relative z-10 flex justify-between items-start">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-[#e2c285] px-2 py-0.5 border border-[#e2c285] tracking-widest bg-[#e2c285]/5">
-                  MATTER-COMPATIBLE
-                </span>
-                <h3 className="text-2xl uppercase tracking-widest font-light mt-3">INGENIUM® Matter Smart Hub</h3>
-              </div>
-
-              {/* Power Switch */}
-              <button 
-                onClick={() => setSmartPower(!smartPower)}
-                className={`w-12 h-6 rounded-full p-0.5 transition-colors duration-300 cursor-pointer ${
-                  smartPower ? 'bg-emerald-500' : 'bg-neutral-800'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-full bg-white transition-transform duration-300 transform ${
-                  smartPower ? 'translate-x-6' : 'translate-x-0'
-                }`}></div>
-              </button>
-            </div>
-
-            {/* Smart Interactive Controller Panel */}
-            <div className="relative z-10 bg-[#08080a]/80 backdrop-blur-md border border-white/5 p-6 mt-16 max-w-md w-full">
-              <p className="text-xs uppercase tracking-widest font-bold mb-4 text-[#e2c285] flex items-center gap-2">
-                <FontAwesomeIcon icon={faSliders} />
-                Live Control Simulator
-              </p>
-
-              {/* Brightness slider */}
-              <div className="mb-4">
-                <div className="flex justify-between text-xs text-neutral-400 mb-1">
-                  <span>BRIGHTNESS</span>
-                  <span className="text-[#e2c285] font-semibold">{smartPower ? `${smartBrightness}%` : 'OFF'}</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"></div>
+              
+              {/* Technical control absolute overlay */}
+              <div className="absolute bottom-6 right-6 bg-white border border-gray-200 p-4 font-mono text-[10px] text-gray-500 shadow-md">
+                <p className="text-[8px] uppercase tracking-widest text-[#005288] font-bold mb-2">LIVE CONTROL STATUS</p>
+                <div className="flex gap-6">
+                  <div>BRIGHTNESS: <span className="font-bold text-gray-900">80%</span></div>
+                  <div>CCT: <span className="font-bold text-[#005288]">3200K</span></div>
+                  <div>MESH: <span className="font-bold text-green-600">CONNECTED</span></div>
                 </div>
-                <input 
-                  type="range" 
-                  min="10" 
-                  max="100" 
-                  value={smartBrightness} 
-                  disabled={!smartPower}
-                  onChange={(e) => setSmartBrightness(Number(e.target.value))}
-                  className="w-full h-1 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-[#e2c285] disabled:opacity-30"
-                />
-              </div>
-
-              {/* Color Temp (CCT) Slider */}
-              <div className="mb-4">
-                <div className="flex justify-between text-xs text-neutral-400 mb-1">
-                  <span>COLOR TEMPERATURE (CCT)</span>
-                  <span className="text-[#e2c285] font-semibold">{smartPower ? `${smartCCT}K` : 'OFF'}</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="2200" 
-                  max="6500" 
-                  value={smartCCT} 
-                  disabled={!smartPower}
-                  onChange={(e) => setSmartCCT(Number(e.target.value))}
-                  className="w-full h-1 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-[#e2c285] disabled:opacity-30"
-                />
-                <div className="flex justify-between text-[9px] text-neutral-500 mt-1">
-                  <span>2200K (Candlelight)</span>
-                  <span>4000K (Neutral)</span>
-                  <span>6500K (Daylight)</span>
-                </div>
-              </div>
-
-              <div className="text-[10px] text-neutral-400 font-light border-t border-white/5 pt-3">
-                {smartPower ? (
-                  <p className="flex items-center gap-2 text-emerald-400">
-                    <FontAwesomeIcon icon={faCheck} /> Mesh connected. Energy consumption: {Math.round(18 * (smartBrightness/100))}W
-                  </p>
-                ) : (
-                  <p className="text-neutral-500">Device in deep standby mode. Low consumption (&lt;0.5W).</p>
-                )}
               </div>
             </div>
           </div>
 
-          {/* Right Column: 2 stacked Technical Resource Panels */}
-          <div className="flex flex-col gap-6">
-            
-            {/* Top Box: Catalogues & Downloads */}
-            <div className="border border-white/10 p-6 flex flex-col justify-between glass-card min-h-[238px]">
-              <div>
-                <p className="text-[10px] uppercase text-[#e2c285] tracking-[0.2em] font-semibold mb-1">TECHNICAL HUB</p>
-                <h3 className="text-xl uppercase tracking-widest font-light">Resources & IES</h3>
-                <p className="text-xs text-neutral-400 font-light mt-3 leading-relaxed">
-                  Access direct PDF product catalogues, DIALux models, and complete architectural photometry files (IES/LDT) for your lighting calculations.
-                </p>
-              </div>
+        </div>
 
-              <a 
-                href="/resources/downloads" 
-                className="text-xs uppercase tracking-widest font-bold text-white hover:text-[#e2c285] flex items-center justify-between border-t border-white/5 pt-4 group transition-colors"
-              >
-                <span>Download Library</span>
-                <FontAwesomeIcon icon={faDownload} className="group-hover:translate-y-0.5 transition-transform" />
-              </a>
-            </div>
+        {/* Sidebar Chevrons for Slides Navigation */}
+        <button 
+          onClick={handlePrevSlide}
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-20"
+        >
+          <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
+        </button>
+        <button 
+          onClick={handleNextSlide}
+          className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-20"
+        >
+          <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
+        </button>
 
-            {/* Bottom Box: TECOH LED Components */}
-            <div className="border border-white/10 p-6 flex flex-col justify-between glass-card min-h-[238px]">
-              <div>
-                <p className="text-[10px] uppercase text-[#e2c285] tracking-[0.2em] font-semibold mb-1">COMPONENTS</p>
-                <h3 className="text-xl uppercase tracking-widest font-light">TECOH® LED Modules</h3>
-                <p className="text-xs text-neutral-400 font-light mt-3 leading-relaxed">
-                  High-efficiency modules for fixtures. Excellent thermal design and uniform illumination providing robust solutions for developers.
-                </p>
-              </div>
-
-              <a 
-                href="/products/drivers" 
-                className="text-xs uppercase tracking-widest font-bold text-white hover:text-[#e2c285] flex items-center justify-between border-t border-white/5 pt-4 group transition-colors"
-              >
-                <span>Modules & Drivers</span>
-                <FontAwesomeIcon icon={faBolt} className="group-hover:animate-pulse" />
-              </a>
-            </div>
-
-          </div>
+        {/* Bottom Slide Indicators (Horizontal Dashed Bars, XAL Style) */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          {[...Array(totalSlides)].map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveSlide(idx)}
+              className={`h-1 cursor-pointer transition-all duration-300 rounded-none focus:outline-none ${
+                activeSlide === idx 
+                  ? 'bg-[#005288] w-10' 
+                  : 'bg-gray-300 w-6 hover:bg-gray-400'
+              }`}
+            />
+          ))}
         </div>
       </section>
 
-      {/* SECTION 3: Sectors & Product Categories (XAL Clean Grid Layout) */}
-      <section className="py-24 px-6 md:px-16 max-w-7xl mx-auto border-b border-white/5" id="products-section">
+      {/* SECTION 2: Visual 4-Column Product Categories Grid (XAL Style) */}
+      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200" id="categories-section">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[#e2c285] mb-2 font-bold">PORTFOLIO OVERVIEW</p>
-            <h2 className="text-3xl md:text-4xl font-extralight uppercase tracking-widest">PRODUCT SECTORS</h2>
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+              PORTFOLIO OVERVIEW
+            </span>
+            <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+              PRODUCT <span className="font-bold">CATEGORIES</span>
+            </h2>
           </div>
           <Link 
             href="/products" 
-            className="text-xs uppercase tracking-widest font-bold border-b border-white/20 pb-1 hover:border-[#e2c285] hover:text-[#e2c285] transition-colors"
+            className="text-xs uppercase tracking-widest font-bold border-b border-gray-300 pb-1 hover:border-[#005288] hover:text-[#005288] transition-colors"
           >
-            Browse All Products
+            Browse Catalogues
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* 4-Column visual grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           
-          {/* Card 1: LED Lamps */}
-          <div className="border border-white/10 p-8 flex flex-col justify-between min-h-[380px] glass-card relative group">
+          {/* Category 1: LED Lamps */}
+          <div className="border border-gray-200 p-8 flex flex-col justify-between min-h-[380px] bg-white relative group shadow-sm hover:shadow-md transition-shadow">
             <div>
-              <div className="text-[#e2c285] text-3xl mb-6">01</div>
-              <h3 className="text-2xl uppercase tracking-widest font-light mb-4">LED LAMPS</h3>
-              <p className="text-xs text-neutral-400 font-light leading-relaxed mb-6">
-                Meticulously designed bulbs including reflector bulbs, designer golden glass filaments, high-efficiency tubes, and dim-to-warm solutions replacing traditional energy-heavy halogen bulbs.
+              <div className="text-[#005288] font-mono text-3xl mb-6">01</div>
+              <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mb-4">LED LAMPS</h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed mb-6">
+                Classic lightbulbs, custom linear tubes, warm decorative filaments, and energy-efficient reflector lamps replacing legacy halogens.
               </p>
             </div>
             
-            {/* Tech Specs Sheet Slider */}
-            <div className="border-t border-white/5 pt-4">
-              <span className="text-[10px] uppercase text-neutral-500 font-bold tracking-widest block mb-2">TYPICAL PARAMETERS</span>
-              <div className="grid grid-cols-3 gap-2 text-[10px] text-neutral-400 font-light">
-                <div>CRI: <span className="font-bold text-white">90-95</span></div>
-                <div>CCT: <span className="font-bold text-white">2200-4000K</span></div>
-                <div>LIFETIME: <span className="font-bold text-white">25k h</span></div>
+            <div className="border-t border-gray-150 pt-4 flex flex-col justify-between">
+              <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest font-bold block mb-3">SYSTEM PARAMETERS</span>
+              <div className="flex justify-between text-[10px] font-mono text-gray-500 border-b border-gray-50 pb-1 mb-2">
+                <span>TOTAL DESIGNS</span>
+                <span className="font-bold text-[#005288]">150+ Lamps</span>
               </div>
               <Link 
                 href="/products/lamps"
-                className="text-xs uppercase tracking-widest text-[#e2c285] font-bold mt-4 inline-block opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
               >
-                View Lamps &rarr;
+                Explore Lamps &rarr;
               </Link>
             </div>
           </div>
 
-          {/* Card 2: Indoor Lighting */}
-          <div className="border border-white/10 p-8 flex flex-col justify-between min-h-[380px] glass-card relative group">
+          {/* Category 2: Indoor Luminaires */}
+          <div className="border border-gray-200 p-8 flex flex-col justify-between min-h-[380px] bg-white relative group shadow-sm hover:shadow-md transition-shadow">
             <div>
-              <div className="text-[#e2c285] text-3xl mb-6">02</div>
-              <h3 className="text-2xl uppercase tracking-widest font-light mb-4">LUMINAIRES</h3>
-              <p className="text-xs text-neutral-400 font-light leading-relaxed mb-6">
-                Premium architectural lighting fixtures. Highlights include custom low-glare downlights, adjustable retail track spot lamps, office-grade linears, high bays, and decorative sleek wall sconces.
+              <div className="text-[#005288] font-mono text-3xl mb-6">02</div>
+              <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mb-4">INDOOR SYSTEMS</h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed mb-6">
+                Deep recessed low-glare downlights (UGR &lt; 19), customizable track spotlights, panels, and continuous seamless linear profiles.
               </p>
             </div>
             
-            <div className="border-t border-white/5 pt-4">
-              <span className="text-[10px] uppercase text-neutral-500 font-bold tracking-widest block mb-2">TYPICAL PARAMETERS</span>
-              <div className="grid grid-cols-3 gap-2 text-[10px] text-neutral-400 font-light">
-                <div>CRI: <span className="font-bold text-white">92-97</span></div>
-                <div>UGR: <span className="font-bold text-white">&lt;19</span></div>
-                <div>LIFETIME: <span className="font-bold text-white">50k h</span></div>
+            <div className="border-t border-gray-150 pt-4 flex flex-col justify-between">
+              <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest font-bold block mb-3">SYSTEM PARAMETERS</span>
+              <div className="flex justify-between text-[10px] font-mono text-gray-500 border-b border-gray-50 pb-1 mb-2">
+                <span>TOTAL FIXTURES</span>
+                <span className="font-bold text-[#005288]">80+ Downlights</span>
               </div>
               <Link 
                 href="/products/indoor-lighting"
-                className="text-xs uppercase tracking-widest text-[#e2c285] font-bold mt-4 inline-block opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
               >
-                View Luminaires &rarr;
+                Explore Indoor &rarr;
               </Link>
             </div>
           </div>
 
-          {/* Card 3: Light Management & Smart Controls */}
-          <div className="border border-white/10 p-8 flex flex-col justify-between min-h-[380px] glass-card relative group">
+          {/* Category 3: Outdoor Systems */}
+          <div className="border border-gray-200 p-8 flex flex-col justify-between min-h-[380px] bg-white relative group shadow-sm hover:shadow-md transition-shadow">
             <div>
-              <div className="text-[#e2c285] text-3xl mb-6">03</div>
-              <h3 className="text-2xl uppercase tracking-widest font-light mb-4">SMART & CONTROL</h3>
-              <p className="text-xs text-neutral-400 font-light leading-relaxed mb-6">
-                Future-ready light control structures including smart Matter nodes, ZigBee relays, controllers, motion sensors, exit signs, and high-efficiency TECOH components.
+              <div className="text-[#005288] font-mono text-3xl mb-6">03</div>
+              <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mb-4">OUTDOOR LIGHTING</h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed mb-6">
+                Heavy-duty floodlights, damp-proof utility battens, bulkheads, and architectural garden bollards designed for high weatherability.
               </p>
             </div>
             
-            <div className="border-t border-white/5 pt-4">
-              <span className="text-[10px] uppercase text-neutral-500 font-bold tracking-widest block mb-2">TYPICAL PARAMETERS</span>
-              <div className="grid grid-cols-3 gap-2 text-[10px] text-neutral-400 font-light">
-                <div>PROTOCOL: <span className="font-bold text-white">Matter</span></div>
-                <div>STANDBY: <span className="font-bold text-white">&lt;0.5W</span></div>
-                <div>RANGE: <span className="font-bold text-white">Mesh</span></div>
+            <div className="border-t border-gray-150 pt-4 flex flex-col justify-between">
+              <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest font-bold block mb-3">SYSTEM PARAMETERS</span>
+              <div className="flex justify-between text-[10px] font-mono text-gray-500 border-b border-gray-50 pb-1 mb-2">
+                <span>PROTECTION RATING</span>
+                <span className="font-bold text-[#005288]">IP65 / IP66</span>
+              </div>
+              <Link 
+                href="/products/outdoor-lighting"
+                className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
+              >
+                Explore Outdoor &rarr;
+              </Link>
+            </div>
+          </div>
+
+          {/* Category 4: Smart Controls & Modules */}
+          <div className="border border-gray-200 p-8 flex flex-col justify-between min-h-[380px] bg-white relative group shadow-sm hover:shadow-md transition-shadow">
+            <div>
+              <div className="text-[#005288] font-mono text-3xl mb-6">04</div>
+              <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mb-4">SMART CONTROLS</h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed mb-6">
+                INGENIUM® Matter mesh controllers, sensors, and professional TECOH® LED modules for in-fixture specifications.
+              </p>
+            </div>
+            
+            <div className="border-t border-gray-150 pt-4 flex flex-col justify-between">
+              <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest font-bold block mb-3">SYSTEM PARAMETERS</span>
+              <div className="flex justify-between text-[10px] font-mono text-gray-500 border-b border-gray-50 pb-1 mb-2">
+                <span>DATABASE STATUS</span>
+                <span className="font-bold text-[#005288]">{productsCount || 24} Active Items</span>
               </div>
               <Link 
                 href="/products/light-management"
-                className="text-xs uppercase tracking-widest text-[#e2c285] font-bold mt-4 inline-block opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
               >
-                View Smart Range &rarr;
+                Explore Smart &rarr;
               </Link>
             </div>
           </div>
@@ -557,85 +558,89 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION 4: Premium Architectural Project Showcase (Brochure Aesthetic) */}
-      <section className="py-24 px-6 md:px-16 max-w-7xl mx-auto border-b border-white/5">
+      {/* SECTION 3: Global Reference Projects Portfolio Grid (XAL Brochure Aesthetic) */}
+      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200">
         <div className="mb-16">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#e2c285] mb-2 font-bold">PROJECTS IN LIGHT</p>
-          <h2 className="text-3xl md:text-4xl font-extralight uppercase tracking-widest">GLOBAL REFERENCES</h2>
+          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+            PROJECTS & REFERENCES
+          </span>
+          <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+            CREATIVE <span className="font-bold">INSPIRATION</span>
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           
-          {/* Case 1: Hospitality Lobby */}
+          {/* Reference Case 1: Hospitality Lobby */}
           <div className="flex flex-col gap-6 group">
-            <div className="relative h-[400px] w-full overflow-hidden border border-white/10">
+            <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
               <Image 
                 src="/hospitality_project_lobby.png" 
                 alt="Hospitality Lounge Project Showcase"
                 fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-102"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
               
               {/* Technical Specifications Overlay on Project Image */}
-              <div className="absolute left-6 bottom-6 right-6 flex justify-between items-end bg-[#08080a]/90 backdrop-blur-sm border border-white/10 p-4 max-w-sm rounded-none opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
+              <div className="absolute left-6 bottom-6 right-6 flex justify-between items-end bg-white border border-gray-200 p-4 max-w-sm rounded-none opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0 shadow-md">
                 <div>
-                  <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold">FIXTURE HIGHLIGHT</p>
-                  <h4 className="text-sm font-semibold text-white">SIENA Recessed Spot</h4>
-                  <p className="text-[10px] text-neutral-400 font-light mt-1">CRI &gt; 92, CCT 3000K, UGR &lt; 19</p>
+                  <p className="text-[8px] font-mono uppercase tracking-widest text-gray-400 font-bold">LUMINAIRES HIGHLIGHT</p>
+                  <h4 className="text-xs font-bold text-gray-900">SIENA Recessed Downlight</h4>
+                  <p className="text-[9px] text-gray-500 font-light mt-1">CRI &gt; 92, CCT 3000K, UGR &lt; 19</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold">LUX LEVEL</p>
-                  <p className="text-sm font-bold text-[#e2c285]">350 lx avg.</p>
+                <div className="text-right font-mono">
+                  <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold">LUX LEVEL</p>
+                  <p className="text-xs font-bold text-[#005288]">350 lx avg.</p>
                 </div>
               </div>
             </div>
 
             <div>
-              <div className="flex gap-4 items-center">
-                <span className="text-[10px] uppercase font-bold text-[#e2c285] tracking-widest">HOSPITALITY</span>
-                <span className="h-[1px] w-8 bg-neutral-800"></span>
-                <span className="text-[10px] text-neutral-500 tracking-wider">ATHENS, GREECE</span>
+              <div className="flex gap-4 items-center font-mono">
+                <span className="text-[10px] uppercase font-bold text-[#005288] tracking-widest">HOSPITALITY</span>
+                <span className="h-[1px] w-8 bg-gray-200"></span>
+                <span className="text-[9px] text-gray-400 tracking-wider">ATHENS, GREECE</span>
               </div>
-              <h3 className="text-xl uppercase tracking-widest font-light mt-2 mb-3">The Grand Plaza Lounge</h3>
-              <p className="text-xs text-neutral-400 font-light leading-relaxed">
+              <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mt-2 mb-3">The Grand Plaza Lounge</h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed">
                 Utilizing low-glare deep recessed LED downlights to establish a welcoming, cozy environment with dynamic twilight dimming support. Reduces operational lighting energy by 68%.
               </p>
             </div>
           </div>
 
-          {/* Case 2: Retail Showroom */}
+          {/* Reference Case 2: Retail Showroom */}
           <div className="flex flex-col gap-6 group">
-            <div className="relative h-[400px] w-full overflow-hidden border border-white/10">
+            <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
               <Image 
                 src="/retail_project_showroom.png" 
                 alt="Luxury Retail Showroom Showcase"
                 fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-102"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#08080a] via-transparent to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
               
-              <div className="absolute left-6 bottom-6 right-6 flex justify-between items-end bg-[#08080a]/90 backdrop-blur-sm border border-white/10 p-4 max-w-sm rounded-none opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
+              <div className="absolute left-6 bottom-6 right-6 flex justify-between items-end bg-white border border-gray-200 p-4 max-w-sm rounded-none opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0 shadow-md">
                 <div>
-                  <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold">FIXTURE HIGHLIGHT</p>
-                  <h4 className="text-sm font-semibold text-white">FITO Track Spotlight</h4>
-                  <p className="text-[10px] text-neutral-400 font-light mt-1">CRI 97, CCT 4000K, Beam 24°</p>
+                  <p className="text-[8px] font-mono uppercase tracking-widest text-gray-400 font-bold">LUMINAIRES HIGHLIGHT</p>
+                  <h4 className="text-xs font-bold text-gray-900">FITO Track Spotlight</h4>
+                  <p className="text-[9px] text-gray-500 font-light mt-1">CRI 97, CCT 4000K, Beam 24°</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold">COLOR RENDERING</p>
-                  <p className="text-sm font-bold text-[#e2c285]">Ra 97 (Perfect)</p>
+                <div className="text-right font-mono">
+                  <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold">COLOR RENDERING</p>
+                  <p className="text-xs font-bold text-[#005288]">Ra 97 (Perfect)</p>
                 </div>
               </div>
             </div>
 
             <div>
-              <div className="flex gap-4 items-center">
-                <span className="text-[10px] uppercase font-bold text-[#e2c285] tracking-widest">RETAIL</span>
-                <span className="h-[1px] w-8 bg-neutral-800"></span>
-                <span className="text-[10px] text-neutral-500 tracking-wider">MILAN, ITALY</span>
+              <div className="flex gap-4 items-center font-mono">
+                <span className="text-[10px] uppercase font-bold text-[#005288] tracking-widest">RETAIL</span>
+                <span className="h-[1px] w-8 bg-gray-200"></span>
+                <span className="text-[9px] text-gray-400 tracking-wider">MILAN, ITALY</span>
               </div>
-              <h3 className="text-xl uppercase tracking-widest font-light mt-2 mb-3">Quadrilatero Fashion Hub</h3>
-              <p className="text-xs text-neutral-400 font-light leading-relaxed">
+              <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mt-2 mb-3">Quadrilatero Fashion Hub</h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed">
                 Implementing high-CRI 97 track spot luminaires. Meticulously engineered optics deliver striking high-contrast visual display while accurately rendering fine fabrics and textures.
               </p>
             </div>
@@ -644,303 +649,96 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION 5: Technical Specification Planner (Engineered Interactive Tool) */}
-      <section className="py-24 px-6 md:px-16 max-w-7xl mx-auto border-b border-white/5">
-        <div className="mb-12">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#e2c285] mb-2 font-bold">LIGHT PLANNING TOOL</p>
-          <h2 className="text-3xl md:text-4xl font-extralight uppercase tracking-widest">SPECIFICATION FILTER</h2>
+      {/* SECTION 4: Corporate News & Announcements (Minimal 3-Column Press List) */}
+      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="mb-16">
+          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+            PRESS & MEDIA
+          </span>
+          <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+            LATEST <span className="font-bold">NEWS</span>
+          </h2>
         </div>
 
-        {/* Filters Controls Panel */}
-        <div className="border border-white/10 p-6 md:p-8 bg-[#0a0a0c] mb-12 flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
-          <div className="flex flex-wrap gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          {/* News Item 1 */}
+          <div className="border border-gray-200 p-6 bg-white flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-md transition-shadow group">
+            <div>
+              <div className="flex gap-4 items-center text-[9px] font-mono text-gray-400 mb-4 pb-2 border-b border-gray-100 justify-between">
+                <span>MATTER SMART HOME</span>
+                <span className="font-bold text-[#005288]">24 MAY 2026</span>
+              </div>
+              <h3 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3 leading-snug group-hover:text-[#005288] transition-colors">
+                INGENIUM® Matter Smart Lighting Mesh Rolled Out Globally
+              </h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed">
+                Megaman announces the international deployment of our new Matter-compliant smart LED nodes and control relays, bringing seamless mesh reliability and dynamic CCT circadian tuning.
+              </p>
+            </div>
             
-            {/* CRI Filter */}
-            <div>
-              <label className="text-[10px] uppercase text-neutral-500 tracking-widest font-bold block mb-2">CRI (Color Rendering)</label>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setFilterCRI(null)}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterCRI === null ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  All
-                </button>
-                <button 
-                  onClick={() => setFilterCRI(90)}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterCRI === 90 ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  Ra &ge; 90
-                </button>
-                <button 
-                  onClick={() => setFilterCRI(95)}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterCRI === 95 ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  Ra &ge; 95 (Extreme)
-                </button>
-              </div>
-            </div>
-
-            {/* CCT Filter */}
-            <div>
-              <label className="text-[10px] uppercase text-neutral-500 tracking-widest font-bold block mb-2">Color Temp (CCT)</label>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setFilterCCT(null)}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterCCT === null ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  All
-                </button>
-                <button 
-                  onClick={() => setFilterCCT(2700)}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterCCT === 2700 ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  2700K (Warm)
-                </button>
-                <button 
-                  onClick={() => setFilterCCT(4000)}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterCCT === 4000 ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  4000K (Neutral)
-                </button>
-              </div>
-            </div>
-
-            {/* Beam Angle Filter */}
-            <div>
-              <label className="text-[10px] uppercase text-neutral-500 tracking-widest font-bold block mb-2">Beam Angle</label>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setFilterBeam(null)}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterBeam === null ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  All
-                </button>
-                <button 
-                  onClick={() => setFilterBeam("24°")}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterBeam === "24°" ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  Narrow (24°)
-                </button>
-                <button 
-                  onClick={() => setFilterBeam("36°")}
-                  className={`px-3 py-1.5 text-xs transition-colors rounded-none cursor-pointer ${
-                    filterBeam === "36°" ? 'bg-[#e2c285] text-[#08080a] font-bold' : 'border border-white/10 text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  Medium (36°)
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Reset button */}
-          {(filterCRI || filterCCT || filterBeam) && (
             <button 
-              onClick={() => {
-                setFilterCRI(null);
-                setFilterCCT(null);
-                setFilterBeam(null);
-              }}
-              className="text-xs uppercase tracking-widest border border-white/20 px-4 py-2 hover:bg-white hover:text-[#08080a] transition-all cursor-pointer"
+              onClick={() => alert('Matter Smart release press release download initiated.')}
+              className="text-[10px] uppercase font-bold text-gray-700 tracking-widest mt-6 pt-4 border-t border-gray-100 flex items-center justify-between group-hover:text-[#005288] transition-colors cursor-pointer w-full text-left font-sans"
             >
-              Reset Filters
+              <span>Read Press Release</span>
+              <FontAwesomeIcon icon={faArrowRight} className="transform group-hover:translate-x-1 transition-transform" />
             </button>
-          )}
-        </div>
-
-        {/* Matching Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.length === 0 ? (
-            <div className="col-span-full border border-white/5 py-16 text-center text-neutral-500 font-light">
-              No matching high-end specs found in current configuration.
-            </div>
-          ) : (
-            filteredProducts.map(prod => (
-              <div 
-                key={prod.id} 
-                onClick={() => setActiveProductDetail(prod)}
-                className="border border-white/10 p-6 flex flex-col justify-between glass-card hover:border-[#e2c285] cursor-pointer group"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-mono text-neutral-500 uppercase">{prod.modelCode}</span>
-                    <span className="text-[9px] uppercase tracking-wider text-[#e2c285] border border-[#e2c285]/20 px-2 py-0.5">
-                      CRI {prod.cri}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg uppercase tracking-wider font-light mb-2 group-hover:text-[#e2c285] transition-colors">
-                    {prod.name}
-                  </h3>
-                  <p className="text-xs text-neutral-400 font-light line-clamp-2 leading-relaxed mb-4">
-                    {prod.description}
-                  </p>
-                </div>
-
-                <div className="border-t border-white/5 pt-4 flex justify-between items-center text-[10px] text-neutral-400">
-                  <div className="flex gap-4">
-                    <div>CCT: <span className="font-bold text-white">{prod.cct}K</span></div>
-                    <div>BEAM: <span className="font-bold text-white">{prod.beamAngle}</span></div>
-                  </div>
-                  <span className="text-[#e2c285] font-semibold text-[9px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-                    VIEW SPEC SHEET &rarr;
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Technical Specification Sheet Drawer Modal */}
-        {activeProductDetail && (
-          <div className="fixed inset-0 z-[100] flex justify-end bg-black/75 backdrop-blur-sm transition-all duration-300">
-            <div 
-              className="absolute inset-0 cursor-pointer" 
-              onClick={() => setActiveProductDetail(null)}
-            ></div>
-            
-            <div className="relative z-10 w-full max-w-lg bg-[#0a0a0c] border-l border-white/10 h-full p-8 md:p-12 overflow-y-auto flex flex-col justify-between">
-              <div>
-                {/* Close Button */}
-                <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-8">
-                  <span className="text-xs uppercase tracking-widest text-[#e2c285] font-bold">TECHNICAL SPEC SHEET</span>
-                  <button 
-                    onClick={() => setActiveProductDetail(null)}
-                    className="text-neutral-500 hover:text-white uppercase text-xs tracking-wider cursor-pointer"
-                  >
-                    Close [ESC]
-                  </button>
-                </div>
-
-                {/* Main Product Header */}
-                <h3 className="text-2xl uppercase tracking-widest font-light mb-2">
-                  {activeProductDetail.name}
-                </h3>
-                <p className="text-xs font-mono text-neutral-500 mb-6">MODEL REF: {activeProductDetail.modelCode}</p>
-
-                <p className="text-xs text-neutral-400 font-light leading-relaxed mb-8">
-                  {activeProductDetail.description}
-                </p>
-
-                {/* Data Sheet Parameter Table */}
-                <div className="border-t border-b border-white/5 py-4 mb-8">
-                  <h4 className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-4">OPTICAL & ELECTRICAL SCHEMATICS</h4>
-                  
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-xs font-light">
-                    <div className="flex justify-between border-b border-white/5 pb-2">
-                      <span className="text-neutral-500">Color Temperature (CCT)</span>
-                      <span className="font-semibold text-white">{activeProductDetail.cct} K</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-2">
-                      <span className="text-neutral-500">Color Rendering (CRI)</span>
-                      <span className="font-semibold text-white">Ra &ge; {activeProductDetail.cri}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-2">
-                      <span className="text-neutral-500">Beam Angle Option</span>
-                      <span className="font-semibold text-white">{activeProductDetail.beamAngle}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-2">
-                      <span className="text-neutral-500">Luminous Flux Output</span>
-                      <span className="font-semibold text-white">{activeProductDetail.lumens} lm</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-2">
-                      <span className="text-neutral-500">Rated Wattage</span>
-                      <span className="font-semibold text-white">{activeProductDetail.wattage} W</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-2">
-                      <span className="text-neutral-500">Luminous Efficacy</span>
-                      <span className="font-semibold text-white">{Math.round(activeProductDetail.lumens / activeProductDetail.wattage)} lm/W</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-2 col-span-2">
-                      <span className="text-neutral-500">Dimmability</span>
-                      <span className="font-semibold text-white">Yes (Linear DALI / Matter Mesh)</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Tech Resources */}
-                <div className="border border-white/10 p-4 bg-[#08080a] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FontAwesomeIcon icon={faTools} className="text-[#e2c285]" />
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-white tracking-widest">DIALUX CAD DATABASES</p>
-                      <p className="text-[9px] text-neutral-500 font-light">3D modeling IES light ray geometry included</p>
-                    </div>
-                  </div>
-                  <button className="text-[10px] uppercase font-bold border border-white/20 px-3 py-1.5 hover:bg-[#e2c285] hover:text-[#08080a] hover:border-transparent transition-all cursor-pointer">
-                    Get CAD
-                  </button>
-                </div>
-              </div>
-
-              {/* Action buttons at drawer bottom */}
-              <div className="mt-8 flex gap-4">
-                <button className="flex-1 bg-[#e2c285] text-[#08080a] py-3 text-xs uppercase tracking-widest font-bold hover:bg-white transition-colors rounded-none cursor-pointer">
-                  Download LDT/IES Data Sheet
-                </button>
-              </div>
-            </div>
           </div>
-        )}
-      </section>
 
-      {/* SECTION 6: Sustainability (Premium Clean Minimal Banner) */}
-      <section className="py-24 px-6 md:px-16 max-w-7xl mx-auto relative overflow-hidden">
-        {/* Dynamic backdrop accent */}
-        <div className="absolute right-[-10%] top-[-20%] w-[500px] h-[500px] bg-emerald-950/15 rounded-full blur-[120px] pointer-events-none"></div>
-
-        <div className="border border-[#1b3d2e] p-8 md:p-16 bg-gradient-to-br from-[#0c1a13] to-[#08080a] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12 relative z-10">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 text-emerald-400 mb-4">
-              <FontAwesomeIcon icon={faLeaf} className="text-lg animate-pulse" />
-              <span className="text-xs uppercase tracking-[0.2em] font-semibold">ECO-EFFICIENCY & SUSTAINABILITY</span>
+          {/* News Item 2 */}
+          <div className="border border-gray-200 p-6 bg-white flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-md transition-shadow group">
+            <div>
+              <div className="flex gap-4 items-center text-[9px] font-mono text-gray-400 mb-4 pb-2 border-b border-gray-100 justify-between">
+                <span>ECO SYSTEM</span>
+                <span className="font-bold text-[#005288]">12 MAY 2026</span>
+              </div>
+              <h3 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3 leading-snug group-hover:text-[#005288] transition-colors">
+                Carbon Neutral Target: 100% Recyclable Casings by 2027
+              </h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed">
+                Aligning with international eco-efficiency goals, Megaman commits to transitioning all indoor structural downlights to pure recyclable copper-alloy heat sinks, cutting plastic waste.
+              </p>
             </div>
             
-            <h2 className="text-3xl md:text-4xl font-extralight uppercase tracking-widest text-white leading-tight">
-              LIFE IN LIGHT: <br /><span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-emerald-400">OUR CARBON ZERO GOAL</span>
-            </h2>
-
-            <p className="text-xs md:text-sm text-neutral-400 font-light leading-relaxed mt-4">
-              Megaman is dedicated to offering genuine replacement energy-efficient designs. By utilizing modular components, plastic-free recycable alloy casings, zero mercury materials, and long-life drivers, our smart LED downlights reduce carbon impact by up to 86% over traditional bulbs.
-            </p>
+            <button 
+              onClick={() => alert('Eco Targets document downloaded.')}
+              className="text-[10px] uppercase font-bold text-gray-700 tracking-widest mt-6 pt-4 border-t border-gray-100 flex items-center justify-between group-hover:text-[#005288] transition-colors cursor-pointer w-full text-left font-sans"
+            >
+              <span>Read Environmental Report</span>
+              <FontAwesomeIcon icon={faArrowRight} className="transform group-hover:translate-x-1 transition-transform" />
+            </button>
           </div>
 
-          <div className="flex flex-col gap-4 text-xs font-mono text-neutral-400 border-l border-emerald-900/40 pl-6 lg:pl-12 min-w-[200px]">
+          {/* News Item 3 */}
+          <div className="border border-gray-200 p-6 bg-white flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-md transition-shadow group">
             <div>
-              <span className="text-[#e2c285] font-bold text-lg block">&gt; 86%</span>
-              <span>LUMEN ENERGY SAVING</span>
+              <div className="flex gap-4 items-center text-[9px] font-mono text-gray-400 mb-4 pb-2 border-b border-gray-100 justify-between">
+                <span>NEW ARRIVALS</span>
+                <span className="font-bold text-[#005288]">05 MAY 2026</span>
+              </div>
+              <h3 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3 leading-snug group-hover:text-[#005288] transition-colors">
+                SIENA Ultra-Slim Series Achieves Complete IP65 Ingress Rating
+              </h3>
+              <p className="text-xs text-gray-500 font-light leading-relaxed">
+                Our popular, super-slim profile recessed spots (ideal for tight ceiling spaces) have successfully passed testing to receive a complete IP65 dust and moisture certification.
+              </p>
             </div>
-            <div>
-              <span className="text-[#e2c285] font-bold text-lg block">50,000 hrs</span>
-              <span>DESIGNED PRODUCT LIFETIME</span>
-            </div>
-            <div>
-              <span className="text-emerald-400 font-bold text-lg block">100%</span>
-              <span>RECYCLABLE MATERIAL CASING</span>
-            </div>
+            
+            <button 
+              onClick={() => alert('SIENA IP65 Datasheet opened.')}
+              className="text-[10px] uppercase font-bold text-gray-700 tracking-widest mt-6 pt-4 border-t border-gray-100 flex items-center justify-between group-hover:text-[#005288] transition-colors cursor-pointer w-full text-left font-sans"
+            >
+              <span>View Product Specifications</span>
+              <FontAwesomeIcon icon={faArrowRight} className="transform group-hover:translate-x-1 transition-transform" />
+            </button>
           </div>
+
         </div>
       </section>
 
-      {/* Modern High-Density Minimalist Footer */}
-      <footer className="bg-[#050507] border-t border-white/5 py-16 px-6 md:px-16 mt-12 relative z-10">
+      {/* Modern High-Density Minimalist Footer (Light Re-Themed) */}
+      <footer className="bg-gray-50 border-t border-gray-200 py-16 px-6 md:px-12 relative z-10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           
           {/* Col 1: Megaman Corporate Info */}
@@ -950,48 +748,51 @@ export default function Home() {
               alt="Megaman Logo" 
               width={140} 
               height={45} 
-              className="h-10 w-auto object-contain mb-6 brightness-125"
+              className="h-10 w-auto object-contain mb-6 mix-blend-multiply"
             />
-            <p className="text-[11px] text-neutral-400 font-light leading-relaxed max-w-xs">
+            <p className="text-[11px] text-gray-500 font-light leading-relaxed max-w-xs">
               Pioneering energy-efficient architectural and smart home LED lighting systems worldwide since 1994.
             </p>
           </div>
 
           {/* Col 2: Quick Links */}
           <div>
-            <h4 className="text-xs uppercase tracking-widest text-[#e2c285] font-bold mb-4">PRODUCTS</h4>
-            <ul className="flex flex-col gap-2.5 text-xs text-neutral-400 font-light">
-              <li><Link href="/products/lamps" className="hover:text-white transition-colors">LED Lamps & Classic Bulbs</Link></li>
-              <li><Link href="/products/indoor-lighting" className="hover:text-white transition-colors">Architectural Downlights</Link></li>
-              <li><Link href="/products/outdoor-lighting" className="hover:text-white transition-colors">Outdoor Battens & Floodlights</Link></li>
-              <li><Link href="/products/light-management" className="hover:text-white transition-colors">INGENIUM Smart Matter</Link></li>
+            <h4 className="text-xs uppercase tracking-widest text-[#005288] font-bold mb-4">PRODUCTS</h4>
+            <ul className="flex flex-col gap-2.5 text-xs text-gray-500 font-light">
+              <li><Link href="/products/lamps" className="hover:text-[#005288] transition-colors">LED Lamps & Classic Bulbs</Link></li>
+              <li><Link href="/products/indoor-lighting" className="hover:text-[#005288] transition-colors">Architectural Downlights</Link></li>
+              <li><Link href="/products/outdoor-lighting" className="hover:text-[#005288] transition-colors">Outdoor Battens & Floodlights</Link></li>
+              <li><Link href="/products/light-management" className="hover:text-[#005288] transition-colors">INGENIUM Smart Matter</Link></li>
             </ul>
           </div>
 
           {/* Col 3: Support */}
           <div>
-            <h4 className="text-xs uppercase tracking-widest text-[#e2c285] font-bold mb-4">RESOURCES</h4>
-            <ul className="flex flex-col gap-2.5 text-xs text-neutral-400 font-light">
-              <li><Link href="/resources/downloads" className="hover:text-white transition-colors">Technical Download Center</Link></li>
-              <li><Link href="/company/news-and-press" className="hover:text-white transition-colors">Latest News & Press</Link></li>
-              <li><Link href="/company/quality" className="hover:text-white transition-colors">Quality Assurance Standards</Link></li>
-              <li><Link href="/resources/videos" className="hover:text-white transition-colors">Tutorials & Case Videos</Link></li>
+            <h4 className="text-xs uppercase tracking-widest text-[#005288] font-bold mb-4">RESOURCES</h4>
+            <ul className="flex flex-col gap-2.5 text-xs text-gray-500 font-light">
+              <li><Link href="/resources/downloads" className="hover:text-[#005288] transition-colors">Technical Download Center</Link></li>
+              <li><Link href="/company/news-and-press" className="hover:text-[#005288] transition-colors">Latest News & Press</Link></li>
+              <li><Link href="/company/quality" className="hover:text-[#005288] transition-colors">Quality Assurance Standards</Link></li>
+              <li><Link href="/resources/videos" className="hover:text-[#005288] transition-colors">Tutorials & Case Videos</Link></li>
             </ul>
           </div>
 
           {/* Col 4: Newsletter */}
           <div>
-            <h4 className="text-xs uppercase tracking-widest text-[#e2c285] font-bold mb-4">NEWSLETTER</h4>
-            <p className="text-[11px] text-neutral-400 font-light mb-4 leading-relaxed">
+            <h4 className="text-xs uppercase tracking-widest text-[#005288] font-bold mb-4">NEWSLETTER</h4>
+            <p className="text-[11px] text-gray-500 font-light mb-4 leading-relaxed font-sans">
               Sign up for professional specifications updates, DIALux models release, and design releases.
             </p>
-            <div className="flex border border-white/10">
+            <div className="flex border border-gray-300 bg-white shadow-sm">
               <input 
                 type="email" 
                 placeholder="YOUR EMAIL" 
-                className="bg-transparent text-xs p-3 flex-1 focus:outline-none placeholder:text-neutral-600 uppercase text-white font-mono"
+                className="bg-transparent text-xs p-3 flex-1 focus:outline-none placeholder:text-gray-400 uppercase text-gray-700 font-mono"
               />
-              <button className="bg-[#e2c285] text-[#08080a] text-xs px-4 uppercase font-bold hover:bg-white transition-colors cursor-pointer">
+              <button 
+                onClick={() => alert('Subscription successful!')}
+                className="bg-[#005288] text-white text-xs px-4 uppercase font-bold hover:bg-[#003c64] transition-colors cursor-pointer"
+              >
                 JOIN
               </button>
             </div>
@@ -1000,12 +801,12 @@ export default function Home() {
         </div>
 
         {/* Copy / Legals row */}
-        <div className="max-w-7xl mx-auto border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-neutral-500 font-light gap-4">
+        <div className="max-w-7xl mx-auto border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-400 font-light gap-4">
           <p>&copy; {new Date().getFullYear()} MEGAMAN®. ALL RIGHTS RESERVED. POWERED BY ARCHITECTURAL STANDARDS.</p>
-          <div className="flex gap-6 uppercase tracking-wider">
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Terms of Use</Link>
-            <Link href="#" className="hover:text-white transition-colors">Cookies Config</Link>
+          <div className="flex gap-6 uppercase tracking-wider font-mono">
+            <Link href="#" className="hover:text-[#005288] transition-colors">Privacy Policy</Link>
+            <Link href="#" className="hover:text-[#005288] transition-colors">Terms of Use</Link>
+            <Link href="#" className="hover:text-[#005288] transition-colors">Cookies Config</Link>
           </div>
         </div>
       </footer>

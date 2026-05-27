@@ -19,6 +19,11 @@ import {
   faChartLine
 } from '@fortawesome/free-solid-svg-icons';
 
+interface MediaFile {
+  url: string;
+  filename?: string;
+}
+
 interface Product {
   id: string;
   name: string; // Model Number
@@ -29,6 +34,10 @@ interface Product {
   power?: string;
   colourTemperature?: string;
   specifications?: Record<string, unknown> | null;
+  datasheetPdf?: MediaFile | null;
+  photometryLdt?: MediaFile | null;
+  photometryIes?: MediaFile | null;
+  bimRevit?: MediaFile | null;
 }
 
 interface MediaItem {
@@ -100,6 +109,15 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const handleOpenProduct = (product: Product) => {
     setSelectedProduct(product);
     setActiveModalTab('overview');
+  };
+
+  const handleDownloadFile = (fileObj: MediaFile | null | undefined, defaultMsg: string) => {
+    if (fileObj && fileObj.url) {
+      const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+      window.open(`${payloadUrl}${fileObj.url}`, '_blank');
+    } else {
+      alert(defaultMsg);
+    }
   };
 
   const mediaList = useMemo(() => family.media || [], [family.media]);
@@ -588,12 +606,21 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               <p className="text-[9px] text-gray-400 font-light">Complete compliance parameter certifications</p>
                             </div>
                           </div>
-                          <button 
-                            onClick={() => window.print()}
-                            className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm"
-                          >
-                            PRINT SPEC
-                          </button>
+                          {activeDrawerProduct.datasheetPdf ? (
+                            <button 
+                              onClick={() => handleDownloadFile(activeDrawerProduct.datasheetPdf, '')}
+                              className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm"
+                            >
+                              DOWNLOAD PDF
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => window.print()}
+                              className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm"
+                            >
+                              PRINT SPEC
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
@@ -695,21 +722,21 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             
                             <div className="grid grid-cols-1 gap-2 text-xs">
                               <button 
-                                onClick={() => alert('Dialux LDT File downloaded successfully.')}
+                                onClick={() => handleDownloadFile(activeDrawerProduct.photometryLdt, 'Dialux LDT File is available on request. Please contact Megaman support.')}
                                 className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
                               >
                                 <span>DIALUX PHOTOMETRIC [LDT]</span>
                                 <FontAwesomeIcon icon={faDownload} />
                               </button>
                               <button 
-                                onClick={() => alert('IES Data sheet prepared.')}
+                                onClick={() => handleDownloadFile(activeDrawerProduct.photometryIes, 'IES lighting calculations are available on request. Please contact Megaman support.')}
                                 className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
                               >
                                 <span>IES DATA SHEET CALCULATIONS [IES]</span>
                                 <FontAwesomeIcon icon={faDownload} />
                               </button>
                               <button 
-                                onClick={() => alert('BIM Revit Object download initiated.')}
+                                onClick={() => handleDownloadFile(activeDrawerProduct.bimRevit, 'BIM Revit Object is available on request. Please contact Megaman support.')}
                                 className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
                               >
                                 <span>BIM OBJECT DATABASE [REVIT]</span>
@@ -733,19 +760,37 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   </span>
                   
                   <div className="flex gap-3">
+                    {activeDrawerProduct.datasheetPdf ? (
+                      <button 
+                        onClick={() => handleDownloadFile(activeDrawerProduct.datasheetPdf, '')}
+                        className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm"
+                      >
+                        <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
+                        DOWNLOAD DATASHEET
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => window.print()}
+                        className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm"
+                      >
+                        <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
+                        PRINT DATASHEET
+                      </button>
+                    )}
                     <button 
-                      onClick={() => window.print()}
-                      className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm"
-                    >
-                      <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
-                      PRINT DATASHEET
-                    </button>
-                    <button 
-                      onClick={() => alert('All photometric databases prepared for planning.')}
+                      onClick={() => {
+                        if (activeDrawerProduct.photometryLdt) {
+                          handleDownloadFile(activeDrawerProduct.photometryLdt, '');
+                        } else if (activeDrawerProduct.datasheetPdf) {
+                          handleDownloadFile(activeDrawerProduct.datasheetPdf, '');
+                        } else {
+                          alert('Technical planning databases are available on request. Please contact Megaman support.');
+                        }
+                      }}
                       className="bg-[#005288] text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none hover:bg-[#003c64] transition-all cursor-pointer font-sans shadow-sm"
                     >
                       <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                      DOWNLOAD ALL FILES
+                      DOWNLOAD CAD FILES
                     </button>
                   </div>
                 </div>

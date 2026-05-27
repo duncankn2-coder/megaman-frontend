@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Metadata } from 'next';
 import ProductsCatalog from './ProductsCatalog';
 
@@ -10,7 +11,6 @@ interface Product {
   id: string;
   name: string;
   description?: string;
-  categories: { id: string; name: string }[];
   images?: { url: string; alt?: string; filename?: string };
 }
 
@@ -50,5 +50,9 @@ async function getFamilies(): Promise<Family[]> {
 export default async function ProductsPage() {
   const families = await getFamilies();
 
-  return <ProductsCatalog families={families} />;
+  return (
+    <Suspense fallback={<div className="container mx-auto px-6 py-24 text-center font-mono text-xs uppercase tracking-widest text-gray-400">Loading catalog...</div>}>
+      <ProductsCatalog families={families} />
+    </Suspense>
+  );
 }

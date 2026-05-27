@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,7 +11,6 @@ interface Product {
   id: string;
   name: string;
   description?: string;
-  categories: { id: string; name: string }[];
   images?: { url: string; alt?: string; filename?: string };
 }
 
@@ -28,6 +28,7 @@ interface Family {
   description?: string;
   media: MediaItem[];
   products: Product[];
+  categories?: { id: string; name: string }[];
 }
 
 interface ProductsCatalogProps {
@@ -38,11 +39,65 @@ interface ProductsCatalogProps {
 const resolveCategories = (family: Family): string[] => {
   const cats = new Set<string>();
   
-  // 1. From products categories inside CMS
-  family.products?.forEach(p => {
-    p.categories?.forEach(c => {
-      if (c.name) cats.add(c.name);
-    });
+  // 1. From family categories inside CMS
+  family.categories?.forEach(c => {
+    if (c.name) {
+      cats.add(c.name);
+      
+      // Dynamically map specific CMS category names to their parent catalog filter categories
+      const catLower = c.name.toLowerCase();
+      if (
+        catLower.includes('classic') ||
+        catLower.includes('filament') ||
+        catLower.includes('reflector') ||
+        catLower.includes('tube') ||
+        catLower.includes('lamp') ||
+        catLower.includes('bulb')
+      ) {
+        cats.add('Lamps');
+      }
+      if (
+        catLower.includes('bulkhead') ||
+        catLower.includes('downlight') ||
+        catLower.includes('batten') ||
+        catLower.includes('panel') ||
+        catLower.includes('track') ||
+        catLower.includes('cabinet') ||
+        catLower.includes('ceiling') ||
+        catLower.includes('indoor') ||
+        catLower.includes('high bay') ||
+        catLower.includes('wall')
+      ) {
+        cats.add('Indoor Lighting');
+      }
+      if (
+        catLower.includes('floodlight') ||
+        catLower.includes('garden') ||
+        catLower.includes('outdoor')
+      ) {
+        cats.add('Outdoor Lighting');
+      }
+      if (
+        catLower.includes('exit') ||
+        catLower.includes('emergency') ||
+        catLower.includes('twinspot') ||
+        catLower.includes('sign')
+      ) {
+        cats.add('Emergency Lighting');
+      }
+      if (
+        catLower.includes('iot') ||
+        catLower.includes('ngenium') ||
+        catLower.includes('management') ||
+        catLower.includes('infinite') ||
+        catLower.includes('matter')
+      ) {
+        cats.add('Light Management');
+      }
+      if (catLower.includes('driver')) {
+        cats.add('Drivers');
+      }
+    }
   });
   
   // 2. Fallback matching rules based on family name
@@ -126,8 +181,43 @@ const CATEGORIES = [
 ];
 
 export default function ProductsCatalog({ families }: ProductsCatalogProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Sync state with URL params when URL changes
+  useEffect(() => {
+    const category = searchParams.get('category') || 'All';
+    const search = searchParams.get('search') || '';
+    setSelectedCategory(category);
+    setSearchQuery(search);
+  }, [searchParams]);
+
+  // Helper to update categories parameter in URL
+  const handleCategoryChange = (category: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (category === 'All') {
+      params.delete('category');
+    } else {
+      params.set('category', category);
+    }
+    // Clear search when changing main categories to prevent conflicts
+    params.delete('search');
+    router.push(`/products?${params.toString()}`, { scroll: false });
+  };
+
+  // Helper to update search parameter in URL
+  const handleSearchChange = (query: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!query) {
+      params.delete('search');
+    } else {
+      params.set('search', query);
+    }
+    router.push(`/products?${params.toString()}`, { scroll: false });
+  };
 
   // Enrich families with resolved category tags
   const enrichedFamilies = useMemo(() => {
@@ -141,10 +231,13 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
   const filteredFamilies = useMemo(() => {
     return enrichedFamilies.filter(family => {
       const matchesCategory = selectedCategory === 'All' || family.resolvedCategories.includes(selectedCategory);
+      
+      const searchLower = searchQuery.toLowerCase();
       const matchesSearch = searchQuery === '' || 
-        family.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (family.description && family.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        family.products.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        family.name.toLowerCase().includes(searchLower) ||
+        (family.description && family.description.toLowerCase().includes(searchLower)) ||
+        family.products.some(p => p.name.toLowerCase().includes(searchLower)) ||
+        family.resolvedCategories.some(cat => cat.toLowerCase().includes(searchLower));
       
       return matchesCategory && matchesSearch;
     });
@@ -174,7 +267,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                 type="text"
                 placeholder="Search catalog..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 text-gray-800 text-sm pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-[#005288] focus:bg-white transition-all shadow-sm"
               />
               <FontAwesomeIcon
@@ -183,7 +276,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
               />
               {searchQuery && (
                 <button 
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => handleSearchChange('')}
                   className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <FontAwesomeIcon icon={faTimes} className="text-xs" />
@@ -203,7 +296,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
               return (
                 <button
                   key={category}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => handleCategoryChange(category)}
                   className={`px-5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap ${
                     isActive
                       ? 'bg-[#005288] text-white shadow-md shadow-blue-500/10'
@@ -228,8 +321,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
           {(selectedCategory !== 'All' || searchQuery) && (
             <button
               onClick={() => {
-                setSelectedCategory('All');
-                setSearchQuery('');
+                handleCategoryChange('All');
               }}
               className="text-xs font-semibold text-[#005288] hover:underline"
             >

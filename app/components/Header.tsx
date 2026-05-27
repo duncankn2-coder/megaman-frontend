@@ -37,68 +37,68 @@ const navItems: NavItem[] = [
     submenu: [
       {
         name: 'Lamps',
-        path: '/products/lamps',
+        path: '/products?category=Lamps',
         items: [
-          { name: 'Classic Bulbs', path: '/products/lamps/classic-bulbs' },
-          { name: 'Filament Lamps', path: '/products/lamps/filament-lamps' },
-          { name: '360° Illumination', path: '/products/lamps/360-illumination' },
-          { name: 'Golden Filament', path: '/products/lamps/golden-filament' },
-          { name: 'Reflector Lamps', path: '/products/lamps/reflector-lamps' },
-          { name: 'LED Tubes', path: '/products/lamps/led-tubes' },
-          { name: 'Special Applications', path: '/products/lamps/special-applications' },
-          { name: 'Decorative', path: '/products/lamps/decorative' },
-          { name: 'Dim-to-Warm', path: '/products/lamps/dim-to-warm' },
-          { name: 'Mega Efficiency', path: '/products/lamps/mega-efficiency' },
+          { name: 'Classic Bulbs', path: '/products?category=Lamps&search=Classic%20Bulbs' },
+          { name: 'Filament Lamps', path: '/products?category=Lamps&search=Filament%20Lamps' },
+          { name: '360° Illumination', path: '/products?category=Lamps&search=360' },
+          { name: 'Golden Filament', path: '/products?category=Lamps&search=Golden%20Filament' },
+          { name: 'Reflector Lamps', path: '/products?category=Lamps&search=Reflector%20Lamps' },
+          { name: 'LED Tubes', path: '/products?category=Lamps&search=LED%20Tubes' },
+          { name: 'Special Applications', path: '/products?category=Lamps&search=Special%20Applications' },
+          { name: 'Decorative', path: '/products?category=Lamps&search=Decorative' },
+          { name: 'Dim-to-Warm', path: '/products?category=Lamps&search=Dim-to-Warm' },
+          { name: 'Mega Efficiency', path: '/products?category=Lamps&search=Mega%20Efficiency' },
         ],
       },
       {
         name: 'Indoor Lighting',
-        path: '/products/indoor-lighting',
+        path: '/products?category=Indoor%20Lighting',
         items: [
-          { name: 'Bulkhead', path: '/products/indoor-lighting/bulkhead' },
-          { name: 'Downlight', path: '/products/indoor-lighting/downlight' },
-          { name: 'Damp Proof Batten', path: '/products/indoor-lighting/damp-proof-batten' },
-          { name: 'Indoor Batten', path: '/products/indoor-lighting/indoor-batten' },
-          { name: 'High Bay', path: '/products/indoor-lighting/high-bay' },
-          { name: 'Panel', path: '/products/indoor-lighting/panel' },
-          { name: 'Track Lighting', path: '/products/indoor-lighting/track-lighting' },
-          { name: 'Under Cabinet', path: '/products/indoor-lighting/under-cabinet' },
-          { name: 'Wall Lamp', path: '/products/indoor-lighting/wall-lamp' },
-          { name: 'Indoor Ceiling', path: '/products/indoor-lighting/indoor-ceiling' },
+          { name: 'Bulkhead', path: '/products?category=Indoor%20Lighting&search=Bulkhead' },
+          { name: 'Downlight', path: '/products?category=Indoor%20Lighting&search=Downlight' },
+          { name: 'Damp Proof Batten', path: '/products?category=Indoor%20Lighting&search=Damp%20Proof%20Batten' },
+          { name: 'Indoor Batten', path: '/products?category=Indoor%20Lighting&search=Indoor%20Batten' },
+          { name: 'High Bay', path: '/products?category=Indoor%20Lighting&search=High%20Bay' },
+          { name: 'Panel', path: '/products?category=Indoor%20Lighting&search=Panel' },
+          { name: 'Track Lighting', path: '/products?category=Indoor%20Lighting&search=Track%20Lighting' },
+          { name: 'Under Cabinet', path: '/products?category=Indoor%20Lighting&search=Under%20Cabinet' },
+          { name: 'Wall Lamp', path: '/products?category=Indoor%20Lighting&search=Wall%20Lamp' },
+          { name: 'Indoor Ceiling', path: '/products?category=Indoor%20Lighting&search=Indoor%20Ceiling' },
         ],
       },
       {
         name: 'Outdoor Lighting',
-        path: '/products/outdoor-lighting',
+        path: '/products?category=Outdoor%20Lighting',
         items: [
-          { name: 'Floodlight', path: '/products/outdoor-lighting/floodlight' },
-          { name: 'Bulkhead', path: '/products/outdoor-lighting/bulkhead' },
-          { name: 'Garden Lighting', path: '/products/outdoor-lighting/garden-lighting' },
+          { name: 'Floodlight', path: '/products?category=Outdoor%20Lighting&search=Floodlight' },
+          { name: 'Bulkhead', path: '/products?category=Outdoor%20Lighting&search=Bulkhead' },
+          { name: 'Garden Lighting', path: '/products?category=Outdoor%20Lighting&search=Garden%20Lighting' },
         ],
       },
       {
         name: 'Emergency Lighting',
-        path: '/products/emergency-lighting',
+        path: '/products?category=Emergency%20Lighting',
         items: [
-          { name: 'Exit Box', path: '/products/emergency-lighting/exit-box' },
-          { name: 'Exit Sign', path: '/products/emergency-lighting/exit-sign' },
-          { name: 'Emergency Module', path: '/products/emergency-lighting/emergency-module' },
-          { name: 'Recessed Downlight', path: '/products/emergency-lighting/recessed-downlight' },
-          { name: 'Slim Bulkhead', path: '/products/emergency-lighting/slim-bulkhead' },
-          { name: 'Surface Mounted Downlight', path: '/products/emergency-lighting/surface-mounted-downlight' },
-          { name: 'Twinspot', path: '/products/emergency-lighting/twinspot' },
+          { name: 'Exit Box', path: '/products?category=Emergency%20Lighting&search=Exit%20Box' },
+          { name: 'Exit Sign', path: '/products?category=Emergency%20Lighting&search=Exit%20Sign' },
+          { name: 'Emergency Module', path: '/products?category=Emergency%20Lighting&search=Emergency%20Module' },
+          { name: 'Recessed Downlight', path: '/products?category=Emergency%20Lighting&search=Recessed%20Downlight' },
+          { name: 'Slim Bulkhead', path: '/products?category=Emergency%20Lighting&search=Slim%20Bulkhead' },
+          { name: 'Surface Mounted Downlight', path: '/products?category=Emergency%20Lighting&search=Surface%20Mounted%20Downlight' },
+          { name: 'Twinspot', path: '/products?category=Emergency%20Lighting&search=Twinspot' },
         ],
       },
       {
         name: 'Light Management',
-        path: '/products/light-management',
+        path: '/products?category=Light%20Management',
         items: [
-          { name: 'NGENIUM® Matter', path: '/products/light-management/ngenium-matter' },
-          { name: 'Infinite IoT Lighting', path: '/products/light-management/infinite-iot-lighting' },
+          { name: 'NGENIUM® Matter', path: '/products?category=Light%20Management&search=NGENIUM' },
+          { name: 'Infinite IoT Lighting', path: '/products?category=Light%20Management&search=Infinite' },
         ],
       },
-      { name: 'Drivers', path: '/products/drivers' },
-      { name: 'Others', path: '/products/others' },
+      { name: 'Drivers', path: '/products?category=Drivers' },
+      { name: 'Others', path: '/products?category=Others' },
     ],
   },
   {
@@ -251,7 +251,7 @@ export default function Header() {
                         <div className="space-y-4">
                           <div>
                             <Link 
-                              href="/products/lamps" 
+                              href="/products?category=Lamps" 
                               onClick={() => setActiveMenu(null)}
                               className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-3 block border-b border-gray-100 pb-1.5"
                             >
@@ -265,7 +265,7 @@ export default function Header() {
                               ].map((name) => (
                                 <li key={name}>
                                   <Link
-                                    href={`/products/lamps/${name.toLowerCase().replace(/ /g, '-').replace(/°/g, '')}`}
+                                    href={`/products?category=Lamps&search=${encodeURIComponent(name)}`}
                                     onClick={() => setActiveMenu(null)}
                                     className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
                                   >
@@ -281,7 +281,7 @@ export default function Header() {
                         <div className="space-y-4">
                           <div>
                             <Link 
-                              href="/products/indoor-lighting" 
+                              href="/products?category=Indoor%20Lighting" 
                               onClick={() => setActiveMenu(null)}
                               className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-3 block border-b border-gray-100 pb-1.5"
                             >
@@ -295,7 +295,7 @@ export default function Header() {
                               ].map((name) => (
                                 <li key={name}>
                                   <Link
-                                    href={`/products/indoor-lighting/${name.toLowerCase().replace(/ /g, '-')}`}
+                                    href={`/products?category=Indoor%20Lighting&search=${encodeURIComponent(name)}`}
                                     onClick={() => setActiveMenu(null)}
                                     className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
                                   >
@@ -311,7 +311,7 @@ export default function Header() {
                         <div className="space-y-6">
                           <div>
                             <Link 
-                              href="/products/outdoor-lighting" 
+                              href="/products?category=Outdoor%20Lighting" 
                               onClick={() => setActiveMenu(null)}
                               className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
                             >
@@ -321,7 +321,7 @@ export default function Header() {
                               {['Floodlight', 'Bulkhead', 'Garden Lighting'].map((name) => (
                                 <li key={name}>
                                   <Link
-                                    href={`/products/outdoor-lighting/${name.toLowerCase().replace(/ /g, '-')}`}
+                                    href={`/products?category=Outdoor%20Lighting&search=${encodeURIComponent(name)}`}
                                     onClick={() => setActiveMenu(null)}
                                     className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
                                   >
@@ -334,7 +334,7 @@ export default function Header() {
 
                           <div>
                             <Link 
-                              href="/products/emergency-lighting" 
+                              href="/products?category=Emergency%20Lighting" 
                               onClick={() => setActiveMenu(null)}
                               className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
                             >
@@ -347,7 +347,7 @@ export default function Header() {
                               ].map((name) => (
                                 <li key={name}>
                                   <Link
-                                    href={`/products/emergency-lighting/${name.toLowerCase().replace(/ /g, '-')}`}
+                                    href={`/products?category=Emergency%20Lighting&search=${encodeURIComponent(name)}`}
                                     onClick={() => setActiveMenu(null)}
                                     className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
                                   >
@@ -363,7 +363,7 @@ export default function Header() {
                         <div className="space-y-6">
                           <div>
                             <Link 
-                              href="/products/light-management" 
+                              href="/products?category=Light%20Management" 
                               onClick={() => setActiveMenu(null)}
                               className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
                             >
@@ -373,7 +373,7 @@ export default function Header() {
                               {['NGENIUM® Matter', 'Infinite IoT Lighting'].map((name) => (
                                 <li key={name}>
                                   <Link
-                                    href={`/products/light-management/${name.toLowerCase().replace(/®/g, '').replace(/ /g, '-')}`}
+                                    href={`/products?category=Light%20Management&search=${encodeURIComponent(name.replace(/®/g, ''))}`}
                                     onClick={() => setActiveMenu(null)}
                                     className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
                                   >
@@ -392,7 +392,7 @@ export default function Header() {
                               {['Drivers', 'Others'].map((name) => (
                                 <li key={name}>
                                   <Link
-                                    href={`/products/${name.toLowerCase()}`}
+                                    href={`/products?category=${encodeURIComponent(name)}`}
                                     onClick={() => setActiveMenu(null)}
                                     className="inline-flex items-center text-[14px] font-semibold text-gray-800 hover:text-[#005288] hover:translate-x-1 transition-all duration-150"
                                   >
