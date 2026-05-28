@@ -51,7 +51,8 @@ export default function Home() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch('http://localhost:3000/api/products');
+        const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+        const response = await fetch(`${payloadUrl}/api/products`);
         if (response.ok) {
           const data = await response.json();
           setProductsCount(data.totalDocs || data.docs?.length || 0);
