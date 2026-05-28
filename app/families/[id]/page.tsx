@@ -48,14 +48,14 @@ async function getFamily(id: string): Promise<Family | null> {
   }
 }
 
-export async function generateMetadata({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ id: string }>
 }): Promise<Metadata> {
   const resolvedParams = await params;
   const family = await getFamily(resolvedParams.id);
-  
+
   if (!family) {
     return {
       title: 'Series Not Found | MEGAMAN®',
@@ -68,10 +68,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function FamilyDetailPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
+export default async function FamilyDetailPage({
+  params
+}: {
+  params: Promise<{ id: string }>
 }) {
   const resolvedParams = await params;
   const family = await getFamily(resolvedParams.id);
@@ -86,4 +86,4 @@ export default async function FamilyDetailPage({
   }
 
   return <FamilyDetailClient family={family} />;
-}
+}
