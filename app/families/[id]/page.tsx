@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import FamilyDetailClient from './FamilyDetailClient';
 
+export const dynamic = 'force-dynamic';
+
 interface Product {
   id: string;
   name: string;

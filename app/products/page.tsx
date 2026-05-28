@@ -2,6 +2,8 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import ProductsCatalog from './ProductsCatalog';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Products Catalog | MEGAMAN® High-Performance LED Solutions',
   description: 'Explore Megaman\'s full architectural lighting catalog, featuring state-of-the-art Lamps, Indoor & Outdoor Lighting, Emergency systems, and Smart IoT Light Management solutions.',
