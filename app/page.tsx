@@ -472,7 +472,7 @@ export default function Home() {
                 <span className="font-bold text-[#005288]">150+ Lamps</span>
               </div>
               <Link 
-                href="/products/lamps"
+                href="/products?category=Lamps"
                 className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
               >
                 Explore Lamps &rarr;
@@ -497,7 +497,7 @@ export default function Home() {
                 <span className="font-bold text-[#005288]">80+ Downlights</span>
               </div>
               <Link 
-                href="/products/indoor-lighting"
+                href="/products?category=Indoor%20Lighting"
                 className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
               >
                 Explore Indoor &rarr;
@@ -522,7 +522,7 @@ export default function Home() {
                 <span className="font-bold text-[#005288]">IP65 / IP66</span>
               </div>
               <Link 
-                href="/products/outdoor-lighting"
+                href="/products?category=Outdoor%20Lighting"
                 className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
               >
                 Explore Outdoor &rarr;
@@ -547,7 +547,7 @@ export default function Home() {
                 <span className="font-bold text-[#005288]">{productsCount || 24} Active Items</span>
               </div>
               <Link 
-                href="/products/light-management"
+                href="/products?category=Light%20Management"
                 className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
               >
                 Explore Smart &rarr;
