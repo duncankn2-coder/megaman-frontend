@@ -760,10 +760,10 @@ export default function Home() {
           <div>
             <h4 className="text-xs uppercase tracking-widest text-[#005288] font-bold mb-4">PRODUCTS</h4>
             <ul className="flex flex-col gap-2.5 text-xs text-gray-500 font-light">
-              <li><Link href="/products/lamps" className="hover:text-[#005288] transition-colors">LED Lamps & Classic Bulbs</Link></li>
-              <li><Link href="/products/indoor-lighting" className="hover:text-[#005288] transition-colors">Architectural Downlights</Link></li>
-              <li><Link href="/products/outdoor-lighting" className="hover:text-[#005288] transition-colors">Outdoor Battens & Floodlights</Link></li>
-              <li><Link href="/products/light-management" className="hover:text-[#005288] transition-colors">INGENIUM Smart Matter</Link></li>
+              <li><Link href="/products?category=Lamps" className="hover:text-[#005288] transition-colors">LED Lamps & Classic Bulbs</Link></li>
+              <li><Link href="/products?category=Indoor%20Lighting" className="hover:text-[#005288] transition-colors">Architectural Downlights</Link></li>
+              <li><Link href="/products?category=Outdoor%20Lighting" className="hover:text-[#005288] transition-colors">Outdoor Battens & Floodlights</Link></li>
+              <li><Link href="/products?category=Light%20Management" className="hover:text-[#005288] transition-colors">INGENIUM Smart Matter</Link></li>
             </ul>
           </div>
 
