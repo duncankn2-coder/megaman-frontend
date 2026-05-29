@@ -114,9 +114,17 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const handleDownloadFile = (fileObj: MediaFile | null | undefined, defaultMsg: string) => {
     if (fileObj && fileObj.url) {
       const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-      window.open(`${payloadUrl}${fileObj.url}`, '_blank');
+      const fullUrl = `${payloadUrl}${fileObj.url}`;
+      const filename = fileObj.filename || fileObj.url.split('/').pop() || 'download';
+      const link = document.createElement('a');
+      link.href = fullUrl;
+      link.download = filename;
+      link.target = '_blank'; // fallback for cross-origin files
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else {
-      alert(defaultMsg);
+      alert(defaultMsg || 'No file is available for this product.');
     }
   };
 
@@ -230,10 +238,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   </div>
                 )}
 
-                {/* Sidelite Glowing Tech Badge */}
-                <div className="absolute left-6 top-6 bg-[#005288] text-white py-1.5 px-3 text-[9px] uppercase tracking-widest font-semibold shadow-sm">
-                  SIDELITE® OPTICAL ENGINE
-                </div>
+
               </div>
 
               {/* Thumbnails grid with fine borders */}
@@ -633,10 +638,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             </button>
                           ) : (
                             <button 
-                              onClick={() => window.print()}
-                              className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm"
+                              onClick={() => alert('No datasheet PDF is available for this product. Please contact Megaman support.')}
+                              className="text-[10px] uppercase font-mono text-white font-bold bg-gray-400 hover:bg-gray-500 px-4 py-2 transition-all cursor-pointer shadow-sm"
                             >
-                              PRINT SPEC
+                              NO PDF AVAILABLE
                             </button>
                           )}
                         </div>
@@ -788,11 +793,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       </button>
                     ) : (
                       <button 
-                        onClick={() => window.print()}
-                        className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm"
+                        onClick={() => alert('No datasheet PDF is available for this product. Please contact Megaman support.')}
+                        className="bg-white border border-gray-300 text-gray-400 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none cursor-not-allowed font-sans shadow-sm"
+                        disabled
                       >
-                        <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
-                        PRINT DATASHEET
+                        <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-300" />
+                        NO PDF AVAILABLE
                       </button>
                     )}
                     <button 
