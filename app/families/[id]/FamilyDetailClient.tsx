@@ -202,7 +202,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 {activeMedia ? (
                   activeMedia.type === 'image' ? (
                     <Image
-                      src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${activeMedia.url}`}
+                      src={activeMedia.filename 
+                        ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${activeMedia.filename}`
+                        : `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${activeMedia.url}`
+                      }
                       alt={activeMedia.alt || family.name}
                       fill
                       className="object-contain p-12 transition-transform duration-700 hover:scale-102"
@@ -210,7 +213,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     />
                   ) : (
                     <video controls className="w-full h-full object-contain">
-                      <source src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${activeMedia.url}`} type="video/mp4" />
+                      <source 
+                        src={activeMedia.filename 
+                          ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${activeMedia.filename}`
+                          : `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${activeMedia.url}`
+                        } 
+                        type="video/mp4" 
+                      />
                       Your browser does not support the video tag.
                     </video>
                   )
@@ -242,7 +251,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     >
                       {media.type === 'image' ? (
                         <Image
-                          src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${media.url}`}
+                          src={media.filename 
+                            ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${media.filename}`
+                            : `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${media.url}`
+                          }
                           alt={media.alt || ''}
                           fill
                           className="object-contain p-1"
@@ -434,7 +446,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           <div className="relative w-8 h-8 bg-white border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-1 shadow-sm">
                             {prod.images && prod.images.url ? (
                               <Image
-                                src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${prod.images.url}`}
+                                src={prod.images.filename 
+                                  ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${prod.images.filename}`
+                                  : `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${prod.images.url}`
+                                }
                                 alt={prod.name}
                                 fill
                                 className="object-contain p-0.5"
@@ -555,7 +570,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             <div className="relative aspect-square w-full bg-gray-50 border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-4 shadow-sm">
                               {activeDrawerProduct.images && activeDrawerProduct.images.url ? (
                                 <Image
-                                  src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${activeDrawerProduct.images.url}`}
+                                  src={activeDrawerProduct.images.filename 
+                                    ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${activeDrawerProduct.images.filename}`
+                                    : `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${activeDrawerProduct.images.url}`
+                                  }
                                   alt={activeDrawerProduct.name}
                                   fill
                                   className="object-contain p-2"

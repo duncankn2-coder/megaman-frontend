@@ -357,7 +357,10 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                   <div className="relative aspect-square w-full bg-gradient-to-b from-gray-50/50 to-gray-100/50 overflow-hidden flex items-center justify-center">
                     {imageItem ? (
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${imageItem.url}`}
+                        src={imageItem.filename 
+                          ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${imageItem.filename}`
+                          : `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${imageItem.url}`
+                        }
                         alt={imageItem.alt || family.name}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
