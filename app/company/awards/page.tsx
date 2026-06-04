@@ -578,17 +578,23 @@ export default function AwardsPage() {
                   </div>
 
                   {/* Logo Image */}
-                  {localLogoPath && (
-                    <div className="relative w-full h-24 flex items-center justify-center overflow-hidden bg-slate-50 border border-gray-100 p-2 shadow-inner">
-                      <Image 
-                        src={localLogoPath} 
+                  <div className="w-full h-24 flex items-center justify-center overflow-hidden bg-slate-50 border border-gray-100 p-3 shadow-inner">
+                    {localLogoPath ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img 
+                        src={localLogoPath}
                         alt={`${item.title} Logo`}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 25vw"
-                        className="object-contain p-2"
+                        className="max-w-full max-h-full object-contain"
+                        style={{ maxHeight: '72px' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-gray-300 gap-1">
+                        <FontAwesomeIcon icon={styles.icon} className="text-2xl" />
+                        <span className="text-[9px] font-mono uppercase tracking-wider">Award</span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Award Title */}
                   <h4 className="text-sm font-bold text-gray-900 leading-snug tracking-wide group-hover:text-[#005288] transition-colors">
