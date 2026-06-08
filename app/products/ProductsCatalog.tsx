@@ -236,7 +236,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
       const matchesSearch = searchQuery === '' || 
         family.name.toLowerCase().includes(searchLower) ||
         (family.description && family.description.toLowerCase().includes(searchLower)) ||
-        family.products.some(p => p.name.toLowerCase().includes(searchLower)) ||
+        (family.products?.some(p => p.name.toLowerCase().includes(searchLower)) ?? false) ||
         family.resolvedCategories.some(cat => cat.toLowerCase().includes(searchLower));
       
       return matchesCategory && matchesSearch;
