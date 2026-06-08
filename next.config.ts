@@ -49,10 +49,11 @@ const nextConfig: NextConfig = {
         hostname: '*.vercel.app',
         pathname: '/api/media/file/**',
       },
+      // Vercel Blob Storage CDN (used in production for Payload media)
       {
         protocol: 'https',
-        hostname: '*.vercel.app',
-        pathname: '/media/**',
+        hostname: '*.public.blob.vercel-storage.com',
+        pathname: '/**',
       },
     ],
   },
