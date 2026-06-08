@@ -73,14 +73,18 @@ const getImageUrl = (image: any): string => {
   
   const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
   
-  if (image.filename) {
-    return `${baseUrl}/media/${image.filename}`;
-  }
+  // Prefer image.url — when Vercel Blob storage is active, this is the full
+  // Blob CDN URL (https://xxxx.public.blob.vercel-storage.com/...) which should
+  // be used directly. Only fall back to constructing /media/filename when url
+  // is absent, meaning the file is served locally.
   if (image.url) {
     if (image.url.startsWith('http') || image.url.startsWith('/')) {
       return image.url;
     }
     return `${baseUrl}${image.url}`;
+  }
+  if (image.filename) {
+    return `${baseUrl}/media/${image.filename}`;
   }
   
   return '/placeholder.png';
