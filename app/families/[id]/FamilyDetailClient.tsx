@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -38,6 +40,9 @@ interface Product {
   photometryLdt?: MediaFile | null;
   photometryIes?: MediaFile | null;
   bimRevit?: MediaFile | null;
+  techDocControlGear?: MediaFile | null;
+  techDocContainingProduct?: MediaFile | null;
+  techDocLightSource?: MediaFile | null;
 }
 
 interface MediaItem {
@@ -59,6 +64,37 @@ interface Family {
 interface FamilyDetailClientProps {
   family: Family;
 }
+
+// Helper to safely resolve media and image URLs (supporting Vercel Blob CDN)
+const getImageUrl = (image: any): string => {
+  if (!image) return '/placeholder.png';
+  const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+  if (image.url) {
+    if (image.url.startsWith('http') || image.url.startsWith('//')) {
+      return image.url;
+    }
+    return `${baseUrl}${image.url}`;
+  }
+  if (image.filename) {
+    return `${baseUrl}/media/${image.filename}`;
+  }
+  return '/placeholder.png';
+};
+
+const getMediaUrl = (media: any): string => {
+  if (!media) return '';
+  const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+  if (media.url) {
+    if (media.url.startsWith('http') || media.url.startsWith('//')) {
+      return media.url;
+    }
+    return `${baseUrl}${media.url}`;
+  }
+  if (media.filename) {
+    return `${baseUrl}/media/${media.filename}`;
+  }
+  return '';
+};
 
 // Extraction utility for technical parameters inside product specifications JSON (RZB Style)
 const getProductSpec = (product: Product, specNames: string[], defaultValue = '—'): string => {
@@ -114,7 +150,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const handleDownloadFile = (fileObj: MediaFile | null | undefined, defaultMsg: string) => {
     if (fileObj && fileObj.url) {
       const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-      const fullUrl = `${payloadUrl}${fileObj.url}`;
+      const fullUrl = fileObj.url.startsWith('http') || fileObj.url.startsWith('//')
+        ? fileObj.url
+        : `${payloadUrl}${fileObj.url}`;
       const filename = fileObj.filename || fileObj.url.split('/').pop() || 'download';
       const link = document.createElement('a');
       link.href = fullUrl;
@@ -210,26 +248,17 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 {activeMedia ? (
                   activeMedia.type === 'image' ? (
                     <Image
-                      src={activeMedia.url && (activeMedia.url.startsWith('http') || activeMedia.url.startsWith('/'))
-                        ? activeMedia.url
-                        : activeMedia.filename
-                          ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${activeMedia.filename}`
-                          : '/placeholder.png'
-                      }
+                      src={getImageUrl(activeMedia)}
                       alt={activeMedia.alt || family.name}
                       fill
                       className="object-contain p-12 transition-transform duration-700 hover:scale-102"
                       priority
+                      unoptimized
                     />
                   ) : (
                     <video controls className="w-full h-full object-contain">
                       <source 
-                        src={activeMedia.url && (activeMedia.url.startsWith('http') || activeMedia.url.startsWith('/'))
-                          ? activeMedia.url
-                          : activeMedia.filename
-                            ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${activeMedia.filename}`
-                            : ''
-                        } 
+                        src={getMediaUrl(activeMedia)} 
                         type="video/mp4" 
                       />
                       Your browser does not support the video tag.
@@ -255,20 +284,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       className={`relative aspect-video bg-white border focus:outline-none transition-all cursor-pointer shadow-sm ${
                         activeMediaIndex === idx
                           ? 'border-[#005288] ring-1 ring-[#005288]/30 bg-[#005288]/5'
-                          : 'border-gray-200 hover:border-gray-400'
+                          : 'border-gray-250 hover:border-gray-400'
                       }`}
                     >
                       {media.type === 'image' ? (
                         <Image
-                          src={media.url && (media.url.startsWith('http') || media.url.startsWith('/'))
-                            ? media.url
-                            : media.filename
-                              ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${media.filename}`
-                              : '/placeholder.png'
-                          }
+                          src={getImageUrl(media)}
                           alt={media.alt || ''}
                           fill
                           className="object-contain p-1"
+                          unoptimized
                         />
                       ) : (
                         <div className="flex items-center justify-center h-full text-[8px] font-bold text-gray-500">
@@ -455,17 +480,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         <td className="py-4 font-sans font-medium text-gray-900">{prod.name}</td>
                         <td className="py-4">
                           <div className="relative w-8 h-8 bg-white border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-1 shadow-sm">
-                            {prod.images && prod.images.url ? (
+                            {prod.images ? (
                               <Image
-                                src={prod.images.url && (prod.images.url.startsWith('http') || prod.images.url.startsWith('/'))
-                                  ? prod.images.url
-                                  : prod.images.filename
-                                    ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${prod.images.filename}`
-                                    : '/placeholder.png'
-                                }
+                                src={getImageUrl(prod.images)}
                                 alt={prod.name}
                                 fill
                                 className="object-contain p-0.5"
+                                unoptimized
                               />
                             ) : (
                               <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-xs" />
@@ -581,17 +602,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                           <div className="md:col-span-5 flex flex-col space-y-4">
                             <div className="relative aspect-square w-full bg-gray-50 border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-4 shadow-sm">
-                              {activeDrawerProduct.images && activeDrawerProduct.images.url ? (
+                              {activeDrawerProduct.images ? (
                                 <Image
-                                  src={activeDrawerProduct.images.url && (activeDrawerProduct.images.url.startsWith('http') || activeDrawerProduct.images.url.startsWith('/'))
-                                    ? activeDrawerProduct.images.url
-                                    : activeDrawerProduct.images.filename
-                                      ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${activeDrawerProduct.images.filename}`
-                                      : '/placeholder.png'
-                                  }
+                                  src={getImageUrl(activeDrawerProduct.images)}
                                   alt={activeDrawerProduct.name}
                                   fill
                                   className="object-contain p-2"
+                                  unoptimized
                                 />
                               ) : (
                                 <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-4xl" />
@@ -745,9 +762,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               <text x="60" y="112" fill="rgba(0,0,0,0.3)" fontSize="6" textAnchor="middle">0°</text>
                             </svg>
                             <span className="text-[8px] font-mono text-gray-400 mt-3">Direct/Indirect symmetric beam</span>
-                          </div>
-
-                          {/* Right: Technical Downloads List */}
+                                                 {/* Right: Technical Downloads List */}
                           <div className="md:col-span-7 space-y-4">
                             <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
                               CAD, BIM & Architectural Databases
@@ -776,8 +791,46 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                 <FontAwesomeIcon icon={faGlobe} />
                               </button>
                             </div>
+
+                            {/* Compliance documents section */}
+                            {(activeDrawerProduct.techDocControlGear || activeDrawerProduct.techDocContainingProduct || activeDrawerProduct.techDocLightSource) && (
+                              <div className="mt-6 pt-6 border-t border-gray-200">
+                                <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans mb-3">
+                                  Technical Compliance & Ecodesign
+                                </h4>
+                                <div className="grid grid-cols-1 gap-2 text-xs">
+                                  {activeDrawerProduct.techDocControlGear && (
+                                    <button 
+                                      onClick={() => handleDownloadFile(activeDrawerProduct.techDocControlGear, 'Control Gear document is available on request.')}
+                                      className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                    >
+                                      <span>TECHNICAL DOCUMENT - CONTROL GEAR</span>
+                                      <FontAwesomeIcon icon={faDownload} />
+                                    </button>
+                                  )}
+                                  {activeDrawerProduct.techDocContainingProduct && (
+                                    <button 
+                                      onClick={() => handleDownloadFile(activeDrawerProduct.techDocContainingProduct, 'Containing Product document is available on request.')}
+                                      className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                    >
+                                      <span>TECHNICAL DOCUMENT - CONTAINING PRODUCT</span>
+                                      <FontAwesomeIcon icon={faDownload} />
+                                    </button>
+                                  )}
+                                  {activeDrawerProduct.techDocLightSource && (
+                                    <button 
+                                      onClick={() => handleDownloadFile(activeDrawerProduct.techDocLightSource, 'Light Source document is available on request.')}
+                                      className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                    >
+                                      <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
+                                      <FontAwesomeIcon icon={faDownload} />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </div>
+                        </div>        </div>
 
                       </div>
                     )}

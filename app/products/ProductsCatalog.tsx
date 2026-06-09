@@ -357,17 +357,20 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                   <div className="relative aspect-square w-full bg-gradient-to-b from-gray-50/50 to-gray-100/50 overflow-hidden flex items-center justify-center">
                     {imageItem ? (
                       <Image
-                        src={imageItem.url && (imageItem.url.startsWith('http') || imageItem.url.startsWith('/'))
+                        src={imageItem.url && (imageItem.url.startsWith('http') || imageItem.url.startsWith('//'))
                           ? imageItem.url
-                          : imageItem.filename
-                            ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${imageItem.filename}`
-                            : '/placeholder.png'
+                          : imageItem.url
+                            ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${imageItem.url}`
+                            : imageItem.filename
+                              ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/media/${imageItem.filename}`
+                              : '/placeholder.png'
                         }
                         alt={imageItem.alt || family.name}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-contain p-8 transition-transform duration-500 group-hover:scale-105"
                         priority={false}
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
