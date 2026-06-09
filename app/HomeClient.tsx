@@ -82,6 +82,12 @@ const getImageUrl = (image: any): string => {
     if (image.startsWith('/')) {
       return image;
     }
+    // Safeguard: Check if the string is a MongoDB ObjectId (24-char hex)
+    // If it is, this means the relationship was not populated, so we return a placeholder
+    // instead of a URL like /media/67f4dbfe04e4e1bf223c74e3 which is guaranteed to 404.
+    if (/^[0-9a-fA-F]{24}$/.test(image)) {
+      return '/placeholder.png';
+    }
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     return `${cleanBaseUrl}/media/${image}`;
   }

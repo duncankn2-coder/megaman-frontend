@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 async function getHomePageData() {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/globals/home-page?depth=2`, {
+    const response = await fetch(`${payloadUrl}/api/globals/home-page?depth=4`, {
       cache: 'no-store',
     });
     if (!response.ok) {
