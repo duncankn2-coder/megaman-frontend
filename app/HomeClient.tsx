@@ -63,28 +63,45 @@ interface HomeClientProps {
 // Utility to safely resolve image URLs from Payload CMS or static paths
 const getImageUrl = (image: any): string => {
   if (!image) return '/placeholder.png';
+  const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+
+  const resolveAbsoluteUrl = (url: string): string => {
+    if (url.startsWith('http') || url.startsWith('//')) {
+      const isLocalhostUrl = url.includes('localhost:3000') || url.includes('127.0.0.1:3000');
+      const isBaseUrlLocalhost = baseUrl.includes('localhost:3000') || baseUrl.includes('127.0.0.1:3000');
+      if (isLocalhostUrl && !isBaseUrlLocalhost) {
+        return url
+          .replace(/^https?:\/\/localhost:3000/, baseUrl)
+          .replace(/^https?:\/\/127.0.0.1:3000/, baseUrl);
+      }
+      return url;
+    }
+    return '';
+  };
+
   if (typeof image === 'string') {
-    if (image.startsWith('http') || image.startsWith('/')) {
+    if (image.startsWith('http') || image.startsWith('//')) {
+      const resolved = resolveAbsoluteUrl(image);
+      return resolved || image;
+    }
+    if (image.startsWith('/')) {
       return image;
     }
-    const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    return `${baseUrl}/media/${image}`;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${cleanBaseUrl}/media/${image}`;
   }
   
-  const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-  
-  // Prefer image.url — when Vercel Blob storage is active, this is the full
-  // Blob CDN URL (https://xxxx.public.blob.vercel-storage.com/...) which should
-  // be used directly. Only fall back to constructing /media/filename when url
-  // is absent, meaning the file is served locally.
   if (image.url) {
-    if (image.url.startsWith('http') || image.url.startsWith('/')) {
-      return image.url;
+    if (image.url.startsWith('http') || image.url.startsWith('//')) {
+      return resolveAbsoluteUrl(image.url);
     }
-    return `${baseUrl}${image.url}`;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanPath = image.url.startsWith('/') ? image.url : `/${image.url}`;
+    return `${cleanBaseUrl}${cleanPath}`;
   }
   if (image.filename) {
-    return `${baseUrl}/media/${image.filename}`;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${cleanBaseUrl}/media/${image.filename}`;
   }
   
   return '/placeholder.png';

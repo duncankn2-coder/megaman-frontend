@@ -69,14 +69,44 @@ interface FamilyDetailClientProps {
 const getImageUrl = (image: any): string => {
   if (!image) return '/placeholder.png';
   const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+
+  const resolveAbsoluteUrl = (url: string): string => {
+    if (url.startsWith('http') || url.startsWith('//')) {
+      const isLocalhostUrl = url.includes('localhost:3000') || url.includes('127.0.0.1:3000');
+      const isBaseUrlLocalhost = baseUrl.includes('localhost:3000') || baseUrl.includes('127.0.0.1:3000');
+      if (isLocalhostUrl && !isBaseUrlLocalhost) {
+        return url
+          .replace(/^https?:\/\/localhost:3000/, baseUrl)
+          .replace(/^https?:\/\/127.0.0.1:3000/, baseUrl);
+      }
+      return url;
+    }
+    return '';
+  };
+
+  if (typeof image === 'string') {
+    if (image.startsWith('http') || image.startsWith('//')) {
+      const resolved = resolveAbsoluteUrl(image);
+      return resolved || image;
+    }
+    if (image.startsWith('/')) {
+      return image;
+    }
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${cleanBaseUrl}/media/${image}`;
+  }
+
   if (image.url) {
     if (image.url.startsWith('http') || image.url.startsWith('//')) {
-      return image.url;
+      return resolveAbsoluteUrl(image.url);
     }
-    return `${baseUrl}${image.url}`;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanPath = image.url.startsWith('/') ? image.url : `/${image.url}`;
+    return `${cleanBaseUrl}${cleanPath}`;
   }
   if (image.filename) {
-    return `${baseUrl}/media/${image.filename}`;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${cleanBaseUrl}/media/${image.filename}`;
   }
   return '/placeholder.png';
 };
@@ -84,14 +114,43 @@ const getImageUrl = (image: any): string => {
 const getMediaUrl = (media: any): string => {
   if (!media) return '';
   const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+
+  const resolveAbsoluteUrl = (url: string): string => {
+    if (url.startsWith('http') || url.startsWith('//')) {
+      const isLocalhostUrl = url.includes('localhost:3000') || url.includes('127.0.0.1:3000');
+      const isBaseUrlLocalhost = baseUrl.includes('localhost:3000') || baseUrl.includes('127.0.0.1:3000');
+      if (isLocalhostUrl && !isBaseUrlLocalhost) {
+        return url
+          .replace(/^https?:\/\/localhost:3000/, baseUrl)
+          .replace(/^https?:\/\/127.0.0.1:3000/, baseUrl);
+      }
+      return url;
+    }
+    return '';
+  };
+
+  if (typeof media === 'string') {
+    if (media.startsWith('http') || media.startsWith('//')) {
+      return resolveAbsoluteUrl(media);
+    }
+    if (media.startsWith('/')) {
+      return media;
+    }
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${cleanBaseUrl}/media/${media}`;
+  }
+
   if (media.url) {
     if (media.url.startsWith('http') || media.url.startsWith('//')) {
-      return media.url;
+      return resolveAbsoluteUrl(media.url);
     }
-    return `${baseUrl}${media.url}`;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanPath = media.url.startsWith('/') ? media.url : `/${media.url}`;
+    return `${cleanBaseUrl}${cleanPath}`;
   }
   if (media.filename) {
-    return `${baseUrl}/media/${media.filename}`;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${cleanBaseUrl}/media/${media.filename}`;
   }
   return '';
 };
@@ -150,9 +209,20 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const handleDownloadFile = (fileObj: MediaFile | null | undefined, defaultMsg: string) => {
     if (fileObj && fileObj.url) {
       const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-      const fullUrl = fileObj.url.startsWith('http') || fileObj.url.startsWith('//')
-        ? fileObj.url
-        : `${payloadUrl}${fileObj.url}`;
+      let fullUrl = fileObj.url;
+      if (fileObj.url.startsWith('http') || fileObj.url.startsWith('//')) {
+        const isLocalhostUrl = fileObj.url.includes('localhost:3000') || fileObj.url.includes('127.0.0.1:3000');
+        const isBaseUrlLocalhost = payloadUrl.includes('localhost:3000') || payloadUrl.includes('127.0.0.1:3000');
+        if (isLocalhostUrl && !isBaseUrlLocalhost) {
+          fullUrl = fileObj.url
+            .replace(/^https?:\/\/localhost:3000/, payloadUrl)
+            .replace(/^https?:\/\/127.0.0.1:3000/, payloadUrl);
+        }
+      } else {
+        const cleanBaseUrl = payloadUrl.endsWith('/') ? payloadUrl.slice(0, -1) : payloadUrl;
+        const cleanPath = fileObj.url.startsWith('/') ? fileObj.url : `/${fileObj.url}`;
+        fullUrl = `${cleanBaseUrl}${cleanPath}`;
+      }
       const filename = fileObj.filename || fileObj.url.split('/').pop() || 'download';
       const link = document.createElement('a');
       link.href = fullUrl;
