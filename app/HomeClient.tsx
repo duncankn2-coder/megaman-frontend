@@ -7,13 +7,8 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowRight,
-  faSearch,
-  faFilePdf,
   faChevronLeft,
   faChevronRight,
-  faCheck,
-  faLightbulb,
-  faSlidersH,
   faProjectDiagram
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -114,19 +109,56 @@ const getImageAlt = (image: any, fallback: string): string => {
   return fallback;
 };
 
+const isVideoMedia = (image: any): boolean => {
+  if (!image) return false;
+  
+  const getUrl = (): string => {
+    if (typeof image === 'string') return image;
+    if (image.url) return image.url;
+    if (image.filename) return image.filename;
+    return '';
+  };
+  
+  const url = getUrl().toLowerCase();
+  
+  // Check typical video extensions
+  if (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.ogg') || url.endsWith('.mov')) {
+    return true;
+  }
+  
+  // Check mimeType from Payload CMS if available
+  if (image && typeof image === 'object' && image.mimeType) {
+    return image.mimeType.startsWith('video/');
+  }
+  
+  return false;
+};
+
 export default function HomeClient({ layoutData, initialProductsCount, initialLatestNews }: HomeClientProps) {
   const productsCount = initialProductsCount;
-  const [catalogSearch, setCatalogSearch] = useState<string>('');
-  const [activeCatalogTab, setActiveCatalogTab] = useState<'all' | 'indoor' | 'smart'>('all');
+
 
   // Carousel Hero States
   const [activeSlide, setActiveSlide] = useState<number>(0);
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Find dynamic hero slides or default to 3
+  // Scrollable highlight products container ref
+  const highlightScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollHighlight = (direction: 'left' | 'right') => {
+    if (highlightScrollRef.current) {
+      const scrollAmount = 380;
+      highlightScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Find dynamic hero slides
   const heroBlock = layoutData?.find(b => b.blockType === 'hero');
-  const dynamicSlidesCount = heroBlock?.slides?.length || 3;
+  const dynamicSlidesCount = heroBlock?.slides?.length || 0;
 
   // Autoplay functionality: slide transitions every 6 seconds, pauses on mouse hover
   useEffect(() => {
@@ -141,52 +173,18 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
   }, [isHovered, dynamicSlidesCount]);
 
   const handlePrevSlide = () => {
-    setActiveSlide((prev) => (prev - 1 + dynamicSlidesCount) % dynamicSlidesCount);
+    if (dynamicSlidesCount > 0) {
+      setActiveSlide((prev) => (prev - 1 + dynamicSlidesCount) % dynamicSlidesCount);
+    }
   };
 
   const handleNextSlide = () => {
-    setActiveSlide((prev) => (prev + 1) % dynamicSlidesCount);
+    if (dynamicSlidesCount > 0) {
+      setActiveSlide((prev) => (prev + 1) % dynamicSlidesCount);
+    }
   };
 
-  // Fallback Static Brochures
-  const catalogues = [
-    {
-      id: "indoor",
-      title: "Indoor Luminaires 2026/27",
-      version: "Vol. 4.2",
-      pages: 348,
-      size: "42.8 MB",
-      released: "April 2026",
-      coverUrl: "/hospitality_project_lobby.png",
-      tag: "indoor"
-    },
-    {
-      id: "lamps",
-      title: "LED Lamps & Modules",
-      version: "Vol. 7.1",
-      pages: 184,
-      size: "24.5 MB",
-      released: "May 2026",
-      coverUrl: "/retail_project_showroom.png",
-      tag: "indoor"
-    },
-    {
-      id: "smart",
-      title: "INGENIUM® Smart IoT Matter",
-      version: "Vol. 2.0",
-      pages: 96,
-      size: "12.2 MB",
-      released: "March 2026",
-      coverUrl: "/smart_lighting_matter.png",
-      tag: "smart"
-    }
-  ];
 
-  const filteredCatalogues = catalogues.filter(cat => {
-    if (activeCatalogTab !== 'all' && cat.tag !== activeCatalogTab) return false;
-    if (catalogSearch !== '' && !cat.title.toLowerCase().includes(catalogSearch.toLowerCase())) return false;
-    return true;
-  });
 
   // Check if we render dynamic layout or fall back to static
   const hasDynamicLayout = layoutData && layoutData.length > 0;
@@ -217,11 +215,47 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                     <div className="absolute left-0 right-0 top-[50%] h-[1px] bg-black"></div>
                   </div>
 
-                  <div className="container mx-auto max-w-7xl px-6 md:px-12 relative z-10 w-full">
+                  {/* Slide Background Image or Video */}
+                  <div className="absolute inset-0 z-0">
+                    {(() => {
+                      const media = currentSlideData.image;
+                      if (!media) return null;
+                      
+                      const url = getImageUrl(media);
+                      const isVideo = isVideoMedia(media);
+
+                      if (isVideo) {
+                        return (
+                          <video
+                            src={url}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover transition-opacity duration-700 sharpen-media"
+                          />
+                        );
+                      } else {
+                        return (
+                          <Image 
+                            src={url} 
+                            alt={getImageAlt(media, currentSlideData.title)} 
+                            fill
+                            quality={100}
+                            className="object-cover transition-opacity duration-700 sharpen-media"
+                            priority
+                          />
+                        );
+                      }
+                    })()}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent z-10"></div>
+                  </div>
+
+                  <div className="container mx-auto max-w-7xl px-6 md:px-12 relative z-20 w-full">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
                       
-                      {/* Left: Text Details & Local Search (for catalogues slide, e.g. slide 0) */}
-                      <div className="lg:col-span-5 space-y-6">
+                      {/* Left: Text Details */}
+                      <div className="lg:col-span-6 space-y-6">
                         <div className="flex items-center gap-3">
                           <span className="h-[2px] w-10 bg-[#005288]"></span>
                           <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
@@ -247,142 +281,22 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                           </p>
                         )}
 
-                        {/* Slide 0 specific catalog filter input */}
-                        {activeSlide === 0 && (
-                          <>
-                            <div className="relative max-w-md border border-gray-300 bg-white shadow-sm mt-8">
-                              <input
-                                type="text"
-                                value={catalogSearch}
-                                onChange={(e) => setCatalogSearch(e.target.value)}
-                                placeholder="SEARCH SPECIFICATIONS..."
-                                className="w-full text-xs font-mono p-3.5 focus:outline-none focus:ring-1 focus:ring-[#005288] uppercase text-gray-800"
-                              />
-                              <FontAwesomeIcon icon={faSearch} className="absolute right-4 top-4 text-gray-400 text-sm" />
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 pt-2">
-                              {['all', 'indoor', 'smart'].map((tab) => (
-                                <button
-                                  key={tab}
-                                  onClick={() => setActiveCatalogTab(tab as any)}
-                                  className={`px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-none cursor-pointer border transition-all ${
-                                    activeCatalogTab === tab
-                                      ? 'border-[#005288] bg-[#005288] text-white shadow-sm'
-                                      : 'border-gray-250 bg-white text-gray-500 hover:text-gray-900 hover:border-gray-400'
-                                  }`}
-                                >
-                                  {tab === 'all' ? 'All Documentation' : tab === 'indoor' ? 'Indoor Systems' : 'Smart & IoT'}
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        )}
-
-                        {/* CTA button (if not slide 0 which renders inline files, or if explicitly configured) */}
-                        {activeSlide !== 0 && (
+                        {/* CTA button */}
+                        {currentSlideData.ctaLink && (
                           <div className="pt-6">
                             <a 
-                              href={currentSlideData.ctaLink || '#categories-section'}
+                              href={currentSlideData.ctaLink}
                               className="bg-[#005288] hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
                             >
-                              <FontAwesomeIcon icon={activeSlide === 1 ? faLightbulb : faSlidersH} />
+                              <FontAwesomeIcon icon={faArrowRight} />
                               {currentSlideData.ctaText || 'EXPLORE RANGE'}
                             </a>
                           </div>
                         )}
                       </div>
 
-                      {/* Right: Render representation or file downloads list */}
-                      <div className="lg:col-span-7 w-full">
-                        {activeSlide === 0 ? (
-                          // Render static/dynamic catalog download cards
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {filteredCatalogues.length === 0 ? (
-                              <div className="col-span-full border border-gray-200 bg-white p-12 text-center text-gray-400 font-mono text-xs uppercase tracking-wider shadow-sm">
-                                No matching catalogs found.
-                              </div>
-                            ) : (
-                              filteredCatalogues.map((cat) => (
-                                <div 
-                                  key={cat.id} 
-                                  className="bg-white border border-gray-200 p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 group"
-                                >
-                                  <div>
-                                    <div className="relative aspect-[3/4] w-full bg-gray-50 border border-gray-150 overflow-hidden flex items-center justify-center p-3 mb-4 shadow-sm group-hover:border-gray-300 transition-colors">
-                                      <Image 
-                                        src={cat.coverUrl} 
-                                        alt={cat.title} 
-                                        fill
-                                        className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-103"
-                                      />
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/10"></div>
-                                      
-                                      <div className="absolute bottom-4 left-4 right-4 text-left">
-                                        <span className="text-[8px] font-mono font-bold text-[#e2c285] tracking-widest block">{cat.version}</span>
-                                        <span className="text-xs font-bold text-white tracking-wide block mt-0.5 line-clamp-2">{cat.title}</span>
-                                      </div>
-                                    </div>
-
-                                    <div className="text-[10px] font-mono text-gray-400 space-y-1 mt-2">
-                                      <div className="flex justify-between border-b border-gray-100 pb-1">
-                                        <span>PAGES</span>
-                                        <span className="font-bold text-gray-700">{cat.pages}</span>
-                                      </div>
-                                      <div className="flex justify-between border-b border-gray-100 pb-1">
-                                        <span>RELEASED</span>
-                                        <span className="font-bold text-gray-700">{cat.released}</span>
-                                      </div>
-                                      <div className="flex justify-between border-b border-gray-100 pb-1">
-                                        <span>FILE SIZE</span>
-                                        <span className="font-bold text-[#005288]">{cat.size}</span>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <button 
-                                    onClick={() => alert(`Catalog ${cat.title} PDF download initiated.`)}
-                                    className="w-full mt-5 bg-[#005288] hover:bg-[#003c64] text-white py-2.5 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
-                                  >
-                                    <FontAwesomeIcon icon={faFilePdf} />
-                                    DOWNLOAD PDF
-                                  </button>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        ) : (
-                          // Render slide showcase image
-                          <div className="relative h-[420px] w-full bg-white border border-gray-250 shadow-sm overflow-hidden flex items-center justify-center">
-                            <Image 
-                              src={getImageUrl(currentSlideData.image)} 
-                              alt={getImageAlt(currentSlideData.image, currentSlideData.title)} 
-                              fill
-                              className="object-cover opacity-95"
-                              priority
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"></div>
-                            
-                            {/* Technical floating spec overlay badge */}
-                            <div className="absolute bottom-6 right-6 bg-white border border-gray-200 p-4 font-mono text-[10px] text-gray-500 shadow-md">
-                              <p className="text-[8px] uppercase tracking-widest text-[#005288] font-bold mb-2">SYSTEM PARAMETER METRICS</p>
-                              {activeSlide === 1 ? (
-                                <div className="flex gap-6">
-                                  <div>CRI: <span className="font-bold text-gray-900">Ra 95+</span></div>
-                                  <div>GLARE: <span className="font-bold text-[#005288]">UGR &le; 19</span></div>
-                                  <div>PROTECTION: <span className="font-bold text-gray-900">IP54</span></div>
-                                </div>
-                              ) : (
-                                <div className="flex gap-6">
-                                  <div>BRIGHTNESS: <span className="font-bold text-gray-900">80%</span></div>
-                                  <div>CCT: <span className="font-bold text-[#005288]">3200K</span></div>
-                                  <div>MESH: <span className="font-bold text-green-600">CONNECTED</span></div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      {/* Right: Empty Column / Spacer to let full bleed background show */}
+                      <div className="lg:col-span-6 w-full"></div>
 
                     </div>
                   </div>
@@ -487,16 +401,38 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               
               return (
                 <section key={`highlights-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200 bg-[#fafafa]/50">
-                  <div className="mb-16">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-                      {block.subtitle || 'PREMIUM SELECTIONS'}
-                    </span>
-                    <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-                      {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
-                    </h2>
+                  <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                        {block.subtitle || 'PREMIUM SELECTIONS'}
+                      </span>
+                      <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                        {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
+                      </h2>
+                    </div>
+                    {/* Navigation Buttons for Horizontal Scroll */}
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => scrollHighlight('left')}
+                        className="w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white text-gray-500 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm"
+                        aria-label="Scroll left"
+                      >
+                        <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
+                      </button>
+                      <button 
+                        onClick={() => scrollHighlight('right')}
+                        className="w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white text-gray-500 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm"
+                        aria-label="Scroll right"
+                      >
+                        <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div 
+                    ref={highlightScrollRef}
+                    className="flex overflow-x-auto gap-8 pb-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent snap-x snap-mandatory scroll-smooth no-scrollbar"
+                  >
                     {products.map((p, idx) => {
                       const imageItem = p.images;
                       const imageUrl = getImageUrl(imageItem);
@@ -505,7 +441,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                       return (
                         <div 
                           key={p.id || idx}
-                          className="bg-white border border-gray-200 rounded-none overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between"
+                          className="bg-white border border-gray-200 rounded-none overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between flex-shrink-0 w-[290px] md:w-[340px] snap-start"
                         >
                           <div className="relative aspect-square w-full bg-gray-50 flex items-center justify-center p-8 border-b border-gray-100">
                             {imageItem ? (
@@ -513,7 +449,8 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                                 src={imageUrl}
                                 alt={p.name}
                                 fill
-                                className="object-contain p-6"
+                                quality={95}
+                                className="object-contain p-6 sharpen-media"
                               />
                             ) : (
                               <div className="text-gray-300 font-mono text-xs uppercase tracking-widest">MEGAMAN® Optic</div>
@@ -585,7 +522,8 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                             src={imageUrl}
                             alt={block.title || "Editorial"}
                             fill
-                            className="object-cover"
+                            quality={95}
+                            className="object-cover sharpen-media"
                           />
                         </div>
                       )}
@@ -634,7 +572,8 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                             src={imageUrl}
                             alt={block.title || "Editorial"}
                             fill
-                            className="object-cover"
+                            quality={95}
+                            className="object-cover sharpen-media"
                           />
                         </div>
                       )}
@@ -671,7 +610,8 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                               src={imageUrl} 
                               alt={proj.title}
                               fill
-                              className="object-cover transition-transform duration-700 group-hover:scale-102"
+                              quality={95}
+                              className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                           </div>
@@ -752,315 +692,6 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
       ) : (
         // Fallback layout when there's no layout data from CMS
         <>
-          {/* SECTION 1: XAL-Style Light-Themed Hero Carousel */}
-          <section 
-            className="relative bg-gray-50 border-b border-gray-200 min-h-[640px] md:h-[75vh] flex items-center overflow-hidden"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0">
-              <div className="absolute left-[33%] top-0 bottom-0 w-[1px] bg-black"></div>
-              <div className="absolute left-[66%] top-0 bottom-0 w-[1px] bg-black"></div>
-              <div className="absolute left-0 right-0 top-[50%] h-[1px] bg-black"></div>
-            </div>
-
-            <div className="container mx-auto max-w-7xl px-6 md:px-12 relative z-10 w-full">
-              
-              {/* SLIDE 0: CATALOGUES & DOWNLOADS */}
-              <div className={`transition-all duration-700 ease-in-out grid grid-cols-1 lg:grid-cols-12 gap-16 items-center ${
-                activeSlide === 0 ? 'opacity-100 translate-x-0 relative block' : 'opacity-0 translate-x-12 absolute hidden'
-              }`}>
-                <div className="lg:col-span-5 space-y-6">
-                  <div className="flex items-center gap-3">
-                    <span className="h-[2px] w-10 bg-[#005288]"></span>
-                    <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
-                      TECHNICAL ARCHITECTURE
-                    </p>
-                  </div>
-
-                  <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
-                    CATALOGUES &<br /><span className="font-bold text-[#005288]">DOWNLOADS</span>
-                  </h1>
-
-                  <p className="text-xs md:text-sm text-gray-500 font-light max-w-md leading-relaxed">
-                    Access our comprehensive library of professional lighting planners, complete with photometric LDT files, Dialux calculations, BIM databases, and PDF product catalogs.
-                  </p>
-
-                  <div className="relative max-w-md border border-gray-300 bg-white shadow-sm mt-8">
-                    <input
-                      type="text"
-                      value={catalogSearch}
-                      onChange={(e) => setCatalogSearch(e.target.value)}
-                      placeholder="SEARCH SPECIFICATIONS..."
-                      className="w-full text-xs font-mono p-3.5 focus:outline-none focus:ring-1 focus:ring-[#005288] uppercase text-gray-800"
-                    />
-                    <FontAwesomeIcon icon={faSearch} className="absolute right-4 top-4 text-gray-400 text-sm" />
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <button
-                      onClick={() => setActiveCatalogTab('all')}
-                      className={`px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-none cursor-pointer border transition-all ${
-                        activeCatalogTab === 'all' 
-                          ? 'border-[#005288] bg-[#005288] text-white shadow-sm' 
-                          : 'border-gray-250 bg-white text-gray-500 hover:text-gray-900 hover:border-gray-400'
-                      }`}
-                    >
-                      All Documentation
-                    </button>
-                    <button
-                      onClick={() => setActiveCatalogTab('indoor')}
-                      className={`px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-none cursor-pointer border transition-all ${
-                        activeCatalogTab === 'indoor' 
-                          ? 'border-[#005288] bg-[#005288] text-white shadow-sm' 
-                          : 'border-gray-250 bg-white text-gray-500 hover:text-gray-900 hover:border-gray-400'
-                      }`}
-                    >
-                      Indoor Systems
-                    </button>
-                    <button
-                      onClick={() => setActiveCatalogTab('smart')}
-                      className={`px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-none cursor-pointer border transition-all ${
-                        activeCatalogTab === 'smart' 
-                          ? 'border-[#005288] bg-[#005288] text-white shadow-sm' 
-                          : 'border-gray-250 bg-white text-gray-500 hover:text-gray-900 hover:border-gray-400'
-                      }`}
-                    >
-                      Smart & IoT
-                    </button>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {filteredCatalogues.length === 0 ? (
-                    <div className="col-span-full border border-gray-200 bg-white p-12 text-center text-gray-400 font-mono text-xs uppercase tracking-wider shadow-sm">
-                      No matching catalogs found.
-                    </div>
-                  ) : (
-                    filteredCatalogues.map((cat) => (
-                      <div 
-                        key={cat.id} 
-                        className="bg-white border border-gray-200 p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 group"
-                      >
-                        <div>
-                          <div className="relative aspect-[3/4] w-full bg-gray-50 border border-gray-150 overflow-hidden flex items-center justify-center p-3 mb-4 shadow-sm group-hover:border-gray-300 transition-colors">
-                            <Image 
-                              src={cat.coverUrl} 
-                              alt={cat.title} 
-                              fill
-                              className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-103"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/10"></div>
-                            
-                            <div className="absolute bottom-4 left-4 right-4 text-left">
-                              <span className="text-[8px] font-mono font-bold text-[#e2c285] tracking-widest block">{cat.version}</span>
-                              <span className="text-xs font-bold text-white tracking-wide block mt-0.5 line-clamp-2">{cat.title}</span>
-                            </div>
-                          </div>
-
-                          <div className="text-[10px] font-mono text-gray-400 space-y-1 mt-2">
-                            <div className="flex justify-between border-b border-gray-100 pb-1">
-                              <span>PAGES</span>
-                              <span className="font-bold text-gray-700">{cat.pages}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-gray-100 pb-1">
-                              <span>RELEASED</span>
-                              <span className="font-bold text-gray-700">{cat.released}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-gray-100 pb-1">
-                              <span>FILE SIZE</span>
-                              <span className="font-bold text-[#005288]">{cat.size}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button 
-                          onClick={() => alert(`Catalog ${cat.title} PDF download initiated.`)}
-                          className="w-full mt-5 bg-[#005288] hover:bg-[#003c64] text-white py-2.5 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
-                        >
-                          <FontAwesomeIcon icon={faFilePdf} />
-                          DOWNLOAD PDF
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* SLIDE 1: TRIONA SYSTEM SHOWCASE */}
-              <div className={`transition-all duration-700 ease-in-out grid grid-cols-1 lg:grid-cols-12 gap-16 items-center ${
-                activeSlide === 1 ? 'opacity-100 translate-x-0 relative block' : 'opacity-0 translate-x-12 absolute hidden'
-              }`}>
-                <div className="lg:col-span-5 space-y-6">
-                  <div className="flex items-center gap-3">
-                    <span className="h-[2px] w-10 bg-[#005288]"></span>
-                    <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
-                      ARCHITECTURAL COMPLIANCE
-                    </p>
-                  </div>
-
-                  <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
-                    TRIONA SYSTEM<br /><span className="font-bold text-[#005288]">CIRCULAR ELEGANCE</span>
-                  </h1>
-
-                  <p className="text-xs md:text-sm text-gray-500 font-light max-w-md leading-relaxed">
-                    Replicating circular rimless perfection with lateral SIDELITE® light injection. Meticulously designed for low glare output, biological human-centric (HCL) rhythm tuning, and tool-free mounting connection.
-                  </p>
-
-                  <div className="grid grid-cols-1 gap-2 pt-4">
-                    <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
-                      <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
-                        <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
-                      </div>
-                      <span>High color rendering performance (CRI &ge; 95)</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
-                      <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
-                        <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
-                      </div>
-                      <span>Microprismatic office glare index (UGR &le; 19)</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
-                      <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
-                        <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
-                      </div>
-                      <span>Water protection ingress ratings IP54/IP65</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-6">
-                    <a 
-                      href="#categories-section" 
-                      className="bg-[#005288] hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
-                    >
-                      <FontAwesomeIcon icon={faLightbulb} />
-                      EXPLORE ARCHITECTURAL RANGE
-                    </a>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-7 relative h-[420px] w-full bg-white border border-gray-250 shadow-sm overflow-hidden flex items-center justify-center">
-                  <Image 
-                    src="/hero_architectural_light.png" 
-                    alt="Megaman Triona Sidelite System" 
-                    fill
-                    className="object-cover opacity-95"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"></div>
-                  
-                  <div className="absolute bottom-6 right-6 bg-white border border-gray-200 p-4 font-mono text-[10px] text-gray-500 shadow-md">
-                    <p className="text-[8px] uppercase tracking-widest text-gray-400 font-bold mb-2">SYSTEM PARAMETER METRICS</p>
-                    <div className="flex gap-6">
-                      <div>CRI: <span className="font-bold text-gray-900">Ra 95+</span></div>
-                      <div>GLARE: <span className="font-bold text-[#005288]">UGR &le; 19</span></div>
-                      <div>PROTECTION: <span className="font-bold text-gray-900">IP54</span></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SLIDE 2: INGENIUM MATTER SMART LIGHTING */}
-              <div className={`transition-all duration-700 ease-in-out grid grid-cols-1 lg:grid-cols-12 gap-16 items-center ${
-                activeSlide === 2 ? 'opacity-100 translate-x-0 relative block' : 'opacity-0 translate-x-12 absolute hidden'
-              }`}>
-                <div className="lg:col-span-5 space-y-6">
-                  <div className="flex items-center gap-3">
-                    <span className="h-[2px] w-10 bg-[#005288]"></span>
-                    <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
-                      INTELLIGENT SMART NETWORKS
-                    </p>
-                  </div>
-
-                  <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
-                    INGENIUM® MATTER<br /><span className="font-bold text-[#005288]">SMART HOME IOT</span>
-                  </h1>
-
-                  <p className="text-xs md:text-sm text-gray-500 font-light max-w-md leading-relaxed">
-                    Connect your architectural downlights into a single, unified smart mesh network. Matter mesh compatibility allows robust multi-admin local router integrations, auto-routing meshes, and dynamic dim-to-warm circadian parameters.
-                  </p>
-
-                  <div className="grid grid-cols-1 gap-2 pt-4">
-                    <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
-                      <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
-                        <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
-                      </div>
-                      <span>Standard Matter dynamic mesh connectivity</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
-                      <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
-                        <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
-                      </div>
-                      <span>Dynamic color temperature (CCT 2200K - 6500K) controls</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 font-light">
-                      <div className="w-5 h-5 rounded-full bg-[#005288]/10 flex items-center justify-center flex-shrink-0">
-                        <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[9px]" />
-                      </div>
-                      <span>Deep standby low energy consumption (&le;0.5W)</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-6">
-                    <a 
-                      href="#categories-section" 
-                      className="bg-[#005288] hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
-                    >
-                      <FontAwesomeIcon icon={faSlidersH} />
-                      EXPLORE INGENIUM RANGE
-                    </a>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-7 relative h-[420px] w-full bg-white border border-gray-250 shadow-sm overflow-hidden flex items-center justify-center">
-                  <Image 
-                    src="/smart_lighting_matter.png" 
-                    alt="Megaman Smart Matter downlights system" 
-                    fill
-                    className="object-cover opacity-95"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"></div>
-                  
-                  <div className="absolute bottom-6 right-6 bg-white border border-gray-200 p-4 font-mono text-[10px] text-gray-500 shadow-md">
-                    <p className="text-[8px] uppercase tracking-widest text-[#005288] font-bold mb-2">LIVE CONTROL STATUS</p>
-                    <div className="flex gap-6">
-                      <div>BRIGHTNESS: <span className="font-bold text-gray-900">80%</span></div>
-                      <div>CCT: <span className="font-bold text-[#005288]">3200K</span></div>
-                      <div>MESH: <span className="font-bold text-green-600">CONNECTED</span></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <button 
-              onClick={handlePrevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-20"
-            >
-              <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
-            </button>
-            <button 
-              onClick={handleNextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-20"
-            >
-              <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
-            </button>
-
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-              {[...Array(3)].map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveSlide(idx)}
-                  className={`h-1 cursor-pointer transition-all duration-300 rounded-none focus:outline-none ${
-                    activeSlide === idx 
-                      ? 'bg-[#005288] w-10' 
-                      : 'bg-gray-300 w-6 hover:bg-gray-400'
-                  }`}
-                />
-              ))}
-            </div>
-          </section>
-
           {/* SECTION 2: Categories */}
           <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200" id="categories-section">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
@@ -1196,7 +827,8 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                     src="/hospitality_project_lobby.png" 
                     alt="Hospitality Lounge Project Showcase"
                     fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-102"
+                    quality={95}
+                    className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                 </div>
@@ -1220,7 +852,8 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                     src="/retail_project_showroom.png" 
                     alt="Luxury Retail Showroom Showcase"
                     fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-102"
+                    quality={95}
+                    className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                 </div>

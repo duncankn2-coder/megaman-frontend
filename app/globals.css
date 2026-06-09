@@ -124,3 +124,13 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Sharp image/video rendering */
+.sharpen-media {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
