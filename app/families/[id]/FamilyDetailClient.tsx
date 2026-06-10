@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,7 +18,11 @@ import {
   faCogs,
   faGlobe,
   faFileAlt,
-  faChartLine
+  faChartLine,
+  faArrowRight,
+  faChevronLeft,
+  faChevronRight,
+  faProjectDiagram
 } from '@fortawesome/free-solid-svg-icons';
 
 interface MediaFile {
@@ -53,12 +57,36 @@ interface MediaItem {
   type: 'image' | 'video';
 }
 
+interface SymbolItem {
+  id: string;
+  name: string;
+  icon?: { url: string; alt?: string; filename?: string } | null;
+  isHighlighted?: boolean;
+}
+
+interface Block {
+  blockType: string;
+  id?: string;
+  title?: string;
+  subtitle?: string;
+  content?: string;
+  image?: any;
+  linkText?: string;
+  linkUrl?: string;
+  layout?: 'grid' | 'split-left' | 'split-right';
+  products?: any[];
+  projects?: any[];
+}
+
 interface Family {
   id: string;
   name: string;
   description?: string;
   media: MediaItem[];
   products: Product[];
+  features?: { id?: string; feature: string }[];
+  symbols?: SymbolItem[];
+  layout?: Block[];
 }
 
 interface FamilyDetailClientProps {
@@ -186,6 +214,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [powerFilter, setPowerFilter] = useState('All');
   const [colorTempFilter, setColorTempFilter] = useState('All');
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
+
+  const highlightScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollHighlight = (direction: 'left' | 'right') => {
+    if (highlightScrollRef.current) {
+      const scrollAmount = 380;
+      highlightScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Local state to keep product content during slide-out animation (400ms)
   const [activeDrawerProduct, setActiveDrawerProduct] = useState<Product | null>(null);
@@ -379,15 +419,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
             {/* Right Column: RZB Toledo Series Key Information & Certifications */}
             <div className="lg:col-span-5 flex flex-col justify-between h-full">
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="h-[1px] w-8 bg-[#005288]"></span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288]">
-                    ARCHITECTURAL SERIES
-                  </span>
-                </div>
                 
                 <h1 className="text-4xl lg:text-5xl font-light uppercase tracking-widest text-gray-900 leading-none mb-6">
-                  {family.name} <span className="font-bold text-[#005288]">SYSTEM</span>
+                  {family.name}
                 </h1>
                 
                 {family.description ? (
@@ -402,17 +436,20 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                 {/* Technical Characteristics Grid (RZB Toledo Features style) */}
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-150">
-                  Key Technical Characteristics
+                  Key Features
                 </h3>
                 <div className="grid grid-cols-1 gap-3.5">
-                  {[
-                    "Excellent light uniformity through high-performance PMMA diffuser",
-                    "Circadian biology support with optional Tunable White (HCL) controls",
-                    "Ultra-thin recessed height, ideal for tight ceiling cutouts",
-                    "Pre-wired plug & play connection for rapid installation",
-                    "Spring clip system for immediate, tool-free mounting",
-                    "Ingress protection class IP54/IP65 options available"
-                  ].map((feat, idx) => (
+                  {((family.features && family.features.length > 0)
+                    ? family.features.map(f => f.feature)
+                    : [
+                        "Excellent light uniformity through high-performance PMMA diffuser",
+                        "Circadian biology support with optional Tunable White (HCL) controls",
+                        "Ultra-thin recessed height, ideal for tight ceiling cutouts",
+                        "Pre-wired plug & play connection for rapid installation",
+                        "Spring clip system for immediate, tool-free mounting",
+                        "Ingress protection class IP54/IP65 options available"
+                      ]
+                  ).map((feat, idx) => (
                     <div key={idx} className="flex items-start gap-3">
                       <div className="w-4 h-4 rounded-full bg-[#005288]/10 flex items-center justify-center mt-0.5 flex-shrink-0">
                         <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[8px]" />
@@ -425,11 +462,43 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
               {/* RZB Certifications Bar */}
               <div className="mt-12 pt-6 border-t border-gray-200 flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex gap-3 text-[9px] uppercase tracking-wider font-mono text-gray-500">
-                  <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">CE</span>
-                  <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">IP54</span>
-                  <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">IK08</span>
-                  <span className="border border-[#005288]/20 text-[#005288] bg-[#005288]/5 px-2 py-0.5">HCL Ready</span>
+                <div className="flex flex-wrap gap-3 items-center text-[9px] uppercase tracking-wider font-mono text-gray-500">
+                  {family.symbols && family.symbols.length > 0 ? (
+                    family.symbols.map((symbol) => {
+                      if (symbol.icon) {
+                        return (
+                          <div key={symbol.id} className="relative h-6 w-12 bg-white flex items-center justify-center p-0.5 shadow-sm border border-gray-200" title={symbol.name}>
+                            <Image
+                              src={getImageUrl(symbol.icon)}
+                              alt={symbol.name}
+                              fill
+                              className="object-contain"
+                              unoptimized
+                            />
+                          </div>
+                        );
+                      }
+                      return (
+                        <span 
+                          key={symbol.id} 
+                          className={`border px-2 py-0.5 ${
+                            symbol.isHighlighted 
+                              ? 'border-[#005288]/20 text-[#005288] bg-[#005288]/5 font-bold' 
+                              : 'border-gray-200 bg-gray-50'
+                          }`}
+                        >
+                          {symbol.name}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">CE</span>
+                      <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">IP54</span>
+                      <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">IK08</span>
+                      <span className="border border-[#005288]/20 text-[#005288] bg-[#005288]/5 px-2 py-0.5 font-bold">HCL Ready</span>
+                    </>
+                  )}
                 </div>
                 <a
                   href="#variants"
@@ -443,6 +512,255 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
           </div>
         </div>
       </section>
+
+      {/* Dynamic CMS Layout Sections (Rendered above Technical Configurator) */}
+      {family.layout && family.layout.map((block, blockIdx) => {
+        switch (block.blockType) {
+          case 'editorial': {
+            const isSplitLeft = block.layout === 'split-left';
+            const isSplitRight = block.layout === 'split-right';
+            const imageUrl = getImageUrl(block.image);
+
+            return (
+              <section key={`editorial-${blockIdx}`} className="py-24 border-b border-gray-200 bg-white">
+                <div className="max-w-7xl mx-auto px-6 md:px-12">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+                    
+                    {/* Left Column (Image if split-left, otherwise text) */}
+                    {isSplitLeft && block.image && (
+                      <div className="lg:col-span-6 relative h-[450px] w-full border border-gray-200 bg-gray-50 shadow-sm overflow-hidden">
+                        <Image 
+                          src={imageUrl}
+                          alt={block.title || "Editorial"}
+                          fill
+                          quality={95}
+                          className="object-cover sharpen-media"
+                        />
+                      </div>
+                    )}
+
+                    <div className={block.image ? "lg:col-span-6 space-y-6" : "lg:col-span-12 space-y-6 max-w-3xl mx-auto text-center"}>
+                      {block.subtitle && (
+                        <div className={`flex items-center gap-3 ${!block.image ? "justify-center" : ""}`}>
+                          <span className="h-[2px] w-10 bg-[#005288]"></span>
+                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
+                            {block.subtitle}
+                          </p>
+                        </div>
+                      )}
+
+                      <h2 className="text-3xl font-light uppercase tracking-widest leading-snug text-gray-900">
+                        {block.title?.split(' ').map((w, idx) => (
+                          <span key={idx} className={w.toLowerCase() === 'technology' || w.toLowerCase() === 'precision' ? "font-bold text-[#005288]" : ""}>
+                            {w}{' '}
+                          </span>
+                        ))}
+                      </h2>
+
+                      {block.content && (
+                        <p className="text-sm text-gray-500 font-light leading-relaxed">
+                          {block.content}
+                        </p>
+                      )}
+
+                      {block.linkUrl && block.linkText && (
+                        <div className="pt-4">
+                          <Link 
+                            href={block.linkUrl}
+                            className="bg-[#005288] hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
+                          >
+                            <FontAwesomeIcon icon={faProjectDiagram} />
+                            {block.linkText}
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Column (Image if split-right) */}
+                    {isSplitRight && block.image && (
+                      <div className="lg:col-span-6 relative h-[450px] w-full border border-gray-200 bg-gray-50 shadow-sm overflow-hidden">
+                        <Image 
+                          src={imageUrl}
+                          alt={block.title || "Editorial"}
+                          fill
+                          quality={95}
+                          className="object-cover sharpen-media"
+                        />
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          case 'inspiration': {
+            const projects = block.projects || [];
+            if (projects.length === 0) return null;
+
+            return (
+              <section key={`inspiration-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200">
+                <div className="mb-16">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                    {block.subtitle || 'PROJECTS & REFERENCES'}
+                  </span>
+                  <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                    {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  {projects.map((proj, idx) => {
+                    const imageUrl = getImageUrl(proj.images);
+                    
+                    return (
+                      <div key={proj.id || idx} className="flex flex-col gap-6 group">
+                        <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                          <Image 
+                            src={imageUrl} 
+                            alt={proj.title}
+                            fill
+                            quality={95}
+                            className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                        </div>
+
+                        <div>
+                          <div className="flex gap-4 items-center font-mono">
+                            <span className="text-[10px] uppercase font-bold text-[#005288] tracking-widest">PROJECT REFERENCE</span>
+                            <span className="h-[1px] w-8 bg-gray-200"></span>
+                            <span className="text-[9px] text-gray-400 tracking-wider uppercase">{proj.location || 'GLOBAL'}</span>
+                          </div>
+                          <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mt-2 mb-3">{proj.title}</h3>
+                          <p className="text-xs text-gray-500 font-light leading-relaxed">
+                            {proj.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          }
+
+          case 'highlightProducts': {
+            const products = block.products || [];
+            if (products.length === 0) return null;
+            
+            return (
+              <section key={`highlights-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200 bg-[#fafafa]/50">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                      {block.subtitle || 'PREMIUM SELECTIONS'}
+                    </span>
+                    <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                      {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
+                    </h2>
+                  </div>
+                  {/* Navigation Buttons for Horizontal Scroll */}
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => scrollHighlight('left')}
+                      className="w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white text-gray-500 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm"
+                      aria-label="Scroll left"
+                    >
+                      <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
+                    </button>
+                    <button 
+                      onClick={() => scrollHighlight('right')}
+                      className="w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white text-gray-500 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm"
+                      aria-label="Scroll right"
+                    >
+                      <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
+                    </button>
+                  </div>
+                </div>
+
+                <div 
+                  ref={highlightScrollRef}
+                  className="flex overflow-x-auto gap-8 pb-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent snap-x snap-mandatory scroll-smooth no-scrollbar"
+                >
+                  {products.map((p, idx) => {
+                    const imageItem = p.images;
+                    const imageUrl = getImageUrl(imageItem);
+                    const familyId = p.families?.id || p.families;
+
+                    return (
+                      <div 
+                        key={p.id || idx}
+                        className="bg-white border border-gray-200 rounded-none overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between flex-shrink-0 w-[290px] md:w-[340px] snap-start"
+                      >
+                        <div className="relative aspect-square w-full bg-gray-50 flex items-center justify-center p-8 border-b border-gray-100">
+                          {imageItem ? (
+                            <Image 
+                              src={imageUrl}
+                              alt={p.name}
+                              fill
+                              quality={95}
+                              className="object-contain p-6 sharpen-media"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="text-gray-300 font-mono text-xs uppercase tracking-widest">MEGAMAN® Optic</div>
+                          )}
+                        </div>
+
+                        <div className="p-6 flex-grow flex flex-col justify-between">
+                          <div>
+                            <h3 className="text-base font-bold uppercase text-gray-900 tracking-wider mb-2">{p.name}</h3>
+                            {p.description && (
+                              <p className="text-xs text-gray-500 font-light line-clamp-3 mb-4 leading-relaxed">
+                                {p.description}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="border-t border-gray-100 pt-4 mt-4 font-mono text-[10px] text-gray-400">
+                            {p.specifications?.model_identifier && (
+                              <div className="flex justify-between mb-1.5">
+                                <span>MODEL IDENTIFIER</span>
+                                <span className="text-gray-700 font-semibold">{p.specifications.model_identifier}</span>
+                              </div>
+                            )}
+                            {p.power && (
+                              <div className="flex justify-between mb-1.5">
+                                <span>ON-MODE POWER</span>
+                                <span className="text-gray-700 font-semibold">{p.power} W</span>
+                              </div>
+                            )}
+                            {p.colour && (
+                              <div className="flex justify-between">
+                                <span>FITTING COLOR</span>
+                                <span className="text-[#005288] font-semibold">{p.colour}</span>
+                              </div>
+                            )}
+
+                            {familyId && (
+                              <Link 
+                                href={`/families/${familyId}`}
+                                className="mt-6 w-full bg-gray-50 border border-gray-200 text-gray-700 hover:text-white hover:bg-[#005288] hover:border-[#005288] py-2.5 text-[9px] uppercase font-bold tracking-widest flex items-center justify-center gap-2 transition-all"
+                              >
+                                View Series Range &rarr;
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          }
+
+          default:
+            return null;
+        }
+      })}
 
       {/* SECTION: Technical Configurator (RZB Toledo Configurator Spreadsheet) */}
       <section id="variants" className="container mx-auto px-6 md:px-12 max-w-7xl mt-16">
