@@ -1052,12 +1052,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               DOWNLOAD PDF
                             </button>
                           ) : (
-                            <button 
-                              onClick={() => alert('No datasheet PDF is available for this product. Please contact Megaman support.')}
-                              className="text-[10px] uppercase font-mono text-white font-bold bg-gray-400 hover:bg-gray-500 px-4 py-2 transition-all cursor-pointer shadow-sm"
+                            <Link 
+                              href={`/products/${activeDrawerProduct.id}/datasheet`}
+                              target="_blank"
+                              className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm inline-flex items-center"
                             >
-                              NO PDF AVAILABLE
-                            </button>
+                              GENERATE PDF
+                            </Link>
                           )}
                         </div>
                       </div>
@@ -1243,14 +1244,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         DOWNLOAD DATASHEET
                       </button>
                     ) : (
-                      <button 
-                        onClick={() => alert('No datasheet PDF is available for this product. Please contact Megaman support.')}
-                        className="bg-white border border-gray-300 text-gray-400 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none cursor-not-allowed font-sans shadow-sm"
-                        disabled
+                      <Link 
+                        href={`/products/${activeDrawerProduct.id}/datasheet`}
+                        target="_blank"
+                        className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm inline-flex items-center justify-center"
                       >
-                        <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-300" />
-                        NO PDF AVAILABLE
-                      </button>
+                        <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
+                        DOWNLOAD DATASHEET
+                      </Link>
                     )}
                     <button 
                       onClick={() => {
