@@ -23,12 +23,22 @@ interface MediaItem {
   type: 'image' | 'video';
 }
 
+interface SymbolItem {
+  id: string;
+  name: string;
+  icon?: { url: string; alt?: string; filename?: string } | null;
+  isHighlighted?: boolean;
+}
+
 interface Family {
   id: string;
   name: string;
   description?: string;
   media: MediaItem[];
   products: Product[];
+  features?: { id?: string; feature: string }[];
+  symbols?: SymbolItem[];
+  layout?: any[];
 }
 
 async function getFamily(id: string): Promise<Family | null> {

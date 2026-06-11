@@ -35,6 +35,53 @@ interface ProductsCatalogProps {
   families: Family[];
 }
 
+const getImageUrl = (image: { url?: string; filename?: string; alt?: string } | string | null | undefined): string => {
+  if (!image) return '/placeholder.png';
+  const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+
+  const resolveAbsoluteUrl = (url: string): string => {
+    if (url.startsWith('http') || url.startsWith('//')) {
+      const isLocalhostUrl = url.includes('localhost:3000') || url.includes('127.0.0.1:3000');
+      const isBaseUrlLocalhost = baseUrl.includes('localhost:3000') || baseUrl.includes('127.0.0.1:3000');
+      if (isLocalhostUrl && !isBaseUrlLocalhost) {
+        return url
+          .replace(/^https?:\/\/localhost:3000/, baseUrl)
+          .replace(/^https?:\/\/127.0.0.1:3000/, baseUrl);
+      }
+      return url;
+    }
+    return '';
+  };
+
+  if (typeof image === 'string') {
+    if (image.startsWith('http') || image.startsWith('//')) {
+      const resolved = resolveAbsoluteUrl(image);
+      return resolved || image;
+    }
+    if (image.startsWith('/')) {
+      return image;
+    }
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${cleanBaseUrl}/media/${image}`;
+  }
+
+  if (image && typeof image === 'object') {
+    if (image.url) {
+      if (image.url.startsWith('http') || image.url.startsWith('//')) {
+        return resolveAbsoluteUrl(image.url);
+      }
+      const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      const cleanPath = image.url.startsWith('/') ? image.url : `/${image.url}`;
+      return `${cleanBaseUrl}${cleanPath}`;
+    }
+    if (image.filename) {
+      const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      return `${cleanBaseUrl}/media/${image.filename}`;
+    }
+  }
+  return '/placeholder.png';
+};
+
 // Map families to primary categories for precise catalog filtering (XAL Style)
 const resolveCategories = (family: Family): string[] => {
   const cats = new Set<string>();
@@ -236,7 +283,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
       const matchesSearch = searchQuery === '' || 
         family.name.toLowerCase().includes(searchLower) ||
         (family.description && family.description.toLowerCase().includes(searchLower)) ||
-        family.products.some(p => p.name.toLowerCase().includes(searchLower)) ||
+        (family.products?.some(p => p.name.toLowerCase().includes(searchLower)) ?? false) ||
         family.resolvedCategories.some(cat => cat.toLowerCase().includes(searchLower));
       
       return matchesCategory && matchesSearch;
@@ -357,12 +404,13 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                   <div className="relative aspect-square w-full bg-gradient-to-b from-gray-50/50 to-gray-100/50 overflow-hidden flex items-center justify-center">
                     {imageItem ? (
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}${imageItem.url}`}
+                        src={getImageUrl(imageItem)}
                         alt={imageItem.alt || family.name}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-contain p-8 transition-transform duration-500 group-hover:scale-105"
                         priority={false}
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
