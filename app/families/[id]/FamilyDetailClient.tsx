@@ -199,21 +199,79 @@ const getProductSpec = (product: Product, specNames: string[], defaultValue = '�
     }
   }
 
-  // Fallback fields
-  if (specNames.includes('power') && product.power) return product.power;
-  if (specNames.includes('colourTemperature') && product.colourTemperature) return product.colourTemperature;
-  if (specNames.includes('colour') && product.colour) return product.colour;
+  return defaultValue;
+};
+
+const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string => {
+  if (!sku) return defaultValue;
   
+  if (sku.isFallbackProduct || !sku.product) {
+    return getProductSpec(sku, specNames, defaultValue);
+  }
+  
+  const parent = typeof sku.product === 'object' ? sku.product : null;
+  
+  for (const name of specNames) {
+    if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
+      if (sku.name) return sku.name;
+    }
+    if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color') && sku.colour) return sku.colour;
+    if ((name === 'power' || name === 'System power' || name === 'wattage') && sku.wattage) return sku.wattage;
+    if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT') && sku.colourTemperature) return sku.colourTemperature;
+    if ((name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') && sku.ip) return sku.ip;
+    if ((name === 'controlGear' || name === 'control_gear' || name === 'Control gear') && sku.connector) return sku.connector;
+    
+    if (sku.specifications && sku.specifications[name] !== undefined && sku.specifications[name] !== null) {
+      return String(sku.specifications[name]);
+    }
+    
+    if (parent?.specifications && parent.specifications[name] !== undefined && parent.specifications[name] !== null) {
+      return String(parent.specifications[name]);
+    }
+    
+    if (parent) {
+      if ((name === 'power' || name === 'System power' || name === 'wattage') && parent.wattage) return parent.wattage;
+      if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT') && parent.colourTemperature) return parent.colourTemperature;
+      if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color') && parent.colour) return parent.colour;
+      if (name === 'customer_model_no_new' && parent.name) return parent.name;
+    }
+  }
   return defaultValue;
 };
 
 export default function FamilyDetailClient({ family }: FamilyDetailClientProps) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [powerFilter, setPowerFilter] = useState('All');
   const [colorTempFilter, setColorTempFilter] = useState('All');
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
+  const [skus, setSkus] = useState<any[]>([]);
+  const [isLoadingSkus, setIsLoadingSkus] = useState(true);
+
+  useEffect(() => {
+    async function fetchSkus() {
+      if (!family.products || family.products.length === 0) {
+        setIsLoadingSkus(false);
+        return;
+      }
+      try {
+        const productIds = family.products.map(p => typeof p === 'string' ? p : p.id);
+        const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+        const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${id}`).join('&');
+        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=1`);
+        if (response.ok) {
+          const data = await response.json();
+          setSkus(data.docs || []);
+        }
+      } catch (err) {
+        console.error('Error fetching SKUs in FamilyDetailClient:', err);
+      } finally {
+        setIsLoadingSkus(false);
+      }
+    }
+    fetchSkus();
+  }, [family.products]);
 
   const highlightScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -279,14 +337,19 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const mediaList = useMemo(() => family.media || [], [family.media]);
   const activeMedia = mediaList[activeMediaIndex];
 
-  // Dynamically extract unique filtering parameters from products
+  // Dynamically extract unique filtering parameters from products/SKUs
   const filtersData = useMemo(() => {
     const powers = new Set<string>();
     const colorTemps = new Set<string>();
     
-    family.products?.forEach(p => {
-      const pwr = getProductSpec(p, ['power', 'System power', 'systemPower', 'wattage']);
-      const ct = getProductSpec(p, ['colourTemperature', 'Color Temperature', 'colorTemp', 'CCT']);
+    const items = skus.length > 0 ? skus : (family.products || []);
+    items.forEach(item => {
+      const pwr = skus.length > 0 
+        ? (item.wattage || getSkuSpec(item, ['power', 'System power', 'wattage']))
+        : getProductSpec(item, ['power', 'System power', 'systemPower', 'wattage']);
+      const ct = skus.length > 0 
+        ? (item.colourTemperature || getSkuSpec(item, ['colourTemperature', 'Color Temperature', 'CCT']))
+        : getProductSpec(item, ['colourTemperature', 'Color Temperature', 'colorTemp', 'CCT']);
       if (pwr && pwr !== '—') powers.add(pwr);
       if (ct && ct !== '—') colorTemps.add(ct);
     });
@@ -295,23 +358,40 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       powers: Array.from(powers),
       colorTemps: Array.from(colorTemps)
     };
-  }, [family.products]);
+  }, [family.products, skus]);
 
-  // Handle product filtering & searching
-  const filteredProducts = useMemo(() => {
-    return (family.products || []).filter(product => {
-      const pwr = getProductSpec(product, ['power', 'System power', 'systemPower', 'wattage']);
-      const ct = getProductSpec(product, ['colourTemperature', 'Color Temperature', 'colorTemp', 'CCT']);
+  // Handle SKU filtering & searching
+  const filteredSkus = useMemo(() => {
+    if (skus.length === 0) {
+      return (family.products || []).map(p => ({
+        id: p.id,
+        name: getProductSpec(p, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], p.name),
+        colour: getProductSpec(p, ['colour', 'color', 'Colour', 'Color']),
+        wattage: getProductSpec(p, ['power', 'System power', 'wattage']),
+        colourTemperature: getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT']),
+        ip: getProductSpec(p, ['ipRating', 'IP rating', 'IP Rating']),
+        connector: getProductSpec(p, ['controlGear', 'control_gear', 'Control gear']),
+        isFallbackProduct: true,
+        product: p,
+      }));
+    }
+
+    return skus.filter(sku => {
+      const pwr = sku.wattage || getSkuSpec(sku, ['power', 'System power', 'wattage']);
+      const ct = sku.colourTemperature || getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT']);
       
-      const matchesPower = powerFilter === 'All' || pwr === powerFilter;
-      const matchesColorTemp = colorTempFilter === 'All' || ct === colorTempFilter;
+      const matchesPower = powerFilter === 'All' || pwr === powerFilter || pwr.replace(/[^\d]/g, '') === powerFilter.replace(/[^\d]/g, '');
+      const matchesColorTemp = colorTempFilter === 'All' || ct === colorTempFilter || ct.replace(/[^\d]/g, '') === colorTempFilter.replace(/[^\d]/g, '');
+      
+      const parentName = typeof sku.product === 'object' ? sku.product.name : '';
       const matchesSearch = searchQuery === '' || 
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+        sku.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sku.modelNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        parentName.toLowerCase().includes(searchQuery.toLowerCase());
 
       return matchesPower && matchesColorTemp && matchesSearch;
     });
-  }, [family.products, powerFilter, colorTempFilter, searchQuery]);
+  }, [family.products, skus, powerFilter, colorTempFilter, searchQuery]);
 
   return (
     <div className="bg-[#fcfcfc] text-gray-800 min-h-screen pb-24 relative font-sans selection:bg-[#005288] selection:text-white">
@@ -769,7 +849,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-200">
             <div>
               <h2 className="text-xl uppercase tracking-widest text-gray-900 font-light">TECHNICAL CONFIGURATIONS</h2>
-              <p className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider">Configure specific technical article variants of the {family.name} series.</p>
+              <p className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider">Configure specific technical MM Code variants of the {family.name} series.</p>
             </div>
 
             {/* Filter controls */}
@@ -778,7 +858,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search articles..."
+                  placeholder="Search MM codes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="bg-white border border-gray-300 text-gray-800 text-xs pl-8 pr-4 py-2.5 focus:outline-none focus:border-[#005288] focus:ring-1 focus:ring-[#005288] transition-all placeholder:text-gray-400 font-mono shadow-inner"
@@ -811,13 +891,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   {filtersData.colorTemps.map(ct => (
                     <option key={ct} value={ct}>{ct}</option>
                   ))}
-                </select>
+                        </select>
               )}
             </div>
           </div>
 
           {/* RZB-style SpreadSheet Table */}
-          {filteredProducts.length === 0 ? (
+          {filteredSkus.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <FontAwesomeIcon icon={faSlidersH} className="text-gray-300 text-3xl mb-3" />
               <p className="text-xs uppercase tracking-widest font-mono">No models matching the filters found.</p>
@@ -827,9 +907,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <table className="w-full text-left border-collapse font-mono">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-[9px] font-bold text-gray-500 uppercase tracking-widest">
-                    <th className="py-4 pl-4">Article Code</th>
-                    <th className="py-4">Model Description</th>
-                    <th className="py-4">Optical Visual</th>
+                    <th className="py-4 pl-4">MM Code</th>
+                    <th className="py-4">Model No.</th>
                     <th className="py-4">Luminaire Finish</th>
                     <th className="py-4 text-center">Power</th>
                     <th className="py-4 text-center">Luminous Flux</th>
@@ -842,15 +921,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-150 text-gray-700">
-                  {filteredProducts.map((prod) => {
-                    const mmCode = getProductSpec(prod, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], prod.name);
-                    const color = getProductSpec(prod, ['colour', 'color', 'Colour', 'Color']);
-                    const power = getProductSpec(prod, ['power', 'System power', 'wattage']);
-                    const flux = getProductSpec(prod, ['luminousFlux', 'Luminous flux', 'flux', 'lumens']);
-                    const cct = getProductSpec(prod, ['colourTemperature', 'Color Temperature', 'CCT']);
-                    const cri = getProductSpec(prod, ['cri', 'CRI', 'Colour rendering index']);
-                    const ip = getProductSpec(prod, ['ipRating', 'IP rating', 'IP Rating']);
-                    const control = getProductSpec(prod, ['controlGear', 'control_gear', 'Control gear']);
+                  {filteredSkus.map((sku) => {
+                    const parent = typeof sku.product === 'object' ? sku.product : null;
+                    const mmCode = sku.name;
+                    const modelNo = parent?.name || sku.modelNumber || '—';
+                    
+                    const color = sku.colour || getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color'], '—');
+                    const power = sku.wattage || getSkuSpec(sku, ['power', 'System power', 'wattage'], '—');
+                    const flux = getSkuSpec(sku, ['luminousFlux', 'Luminous flux', 'flux', 'lumens'], '—');
+                    const cct = sku.colourTemperature || getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT'], '—');
+                    const cri = getSkuSpec(sku, ['cri', 'CRI', 'Colour rendering index', 'ra'], '—');
+                    const ip = sku.ip || getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip'], '—');
+                    const control = sku.connector || getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear'], '—');
                     
                     const numFlux = parseInt(flux);
                     const numPower = parseFloat(power);
@@ -858,29 +940,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       ? `${Math.round(numFlux / numPower)} lm/W`
                       : '—';
 
+                    const rowImage = sku.isFallbackProduct ? sku.images : (parent?.images || sku.images);
+
                     return (
                       <tr 
-                        key={prod.id} 
-                        onClick={() => handleOpenProduct(prod)}
+                        key={sku.id} 
+                        onClick={() => handleOpenProduct(sku)}
                         className="text-[11px] hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-100"
                       >
                         <td className="py-4 pl-4 font-bold text-[#005288]">{mmCode}</td>
-                        <td className="py-4 font-sans font-medium text-gray-900">{prod.name}</td>
-                        <td className="py-4">
-                          <div className="relative w-8 h-8 bg-white border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-1 shadow-sm">
-                            {prod.images ? (
-                              <Image
-                                src={getImageUrl(prod.images)}
-                                alt={prod.name}
-                                fill
-                                className="object-contain p-0.5"
-                                unoptimized
-                              />
-                            ) : (
-                              <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-xs" />
-                            )}
-                          </div>
-                        </td>
+                        <td className="py-4 font-sans font-medium text-gray-900">{modelNo}</td>
                         <td className="py-4 text-gray-500">{color}</td>
                         <td className="py-4 text-center font-bold text-gray-900">{power}</td>
                         <td className="py-4 text-center">{flux}</td>
@@ -891,7 +960,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         <td className="py-4 text-center text-gray-500 font-sans">{control}</td>
                         <td className="py-4 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => handleOpenProduct(prod)}
+                            onClick={() => handleOpenProduct(sku)}
                             className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-none transition-all cursor-pointer font-sans shadow-sm"
                           >
                             Specs Drawer
@@ -932,7 +1001,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         RZB-STYLE TECHNICAL DATASHEET
                       </span>
                       <h3 className="text-xl uppercase tracking-widest font-light text-gray-900 mt-1.5 font-sans">
-                        ARTICLE: {activeDrawerProduct.name}
+                        MM CODE: {activeDrawerProduct.name}
                       </h3>
                     </div>
                     
@@ -987,80 +1056,101 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {/* TAB 1: OVERVIEW */}
                     {activeModalTab === 'overview' && (
                       <div className="space-y-6 animate-fade-in">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                          <div className="md:col-span-5 flex flex-col space-y-4">
-                            <div className="relative aspect-square w-full bg-gray-50 border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-4 shadow-sm">
-                              {activeDrawerProduct.images ? (
-                                <Image
-                                  src={getImageUrl(activeDrawerProduct.images)}
-                                  alt={activeDrawerProduct.name}
-                                  fill
-                                  className="object-contain p-2"
-                                  unoptimized
-                                />
+                        {(() => {
+                          const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                          const activeImage = activeDrawerProduct.images || parent?.images;
+                          const mmCodeVal = activeDrawerProduct.isFallbackProduct ? getProductSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], activeDrawerProduct.name) : activeDrawerProduct.name;
+                          
+                          return (
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                              <div className="md:col-span-5 flex flex-col space-y-4">
+                                <div className="relative aspect-square w-full bg-gray-50 border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-4 shadow-sm">
+                                  {activeImage ? (
+                                    <Image
+                                      src={getImageUrl(activeImage)}
+                                      alt={activeDrawerProduct.name}
+                                      fill
+                                      className="object-contain p-2"
+                                      unoptimized
+                                    />
+                                  ) : (
+                                    <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-4xl" />
+                                  )}
+                                </div>
+                                <div className="bg-gray-50 border border-gray-200 p-3.5 text-center font-mono shadow-inner">
+                                  <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">MM CODE</span>
+                                  <span className="text-xs font-bold text-[#005288] block mt-1">
+                                    {mmCodeVal}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="md:col-span-7 space-y-4">
+                                <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
+                                  Optical Innovation Engine
+                                </h4>
+                                <p className="text-xs text-gray-600 font-light leading-relaxed">
+                                  {activeDrawerProduct.description || parent?.description || "The Toledo-Triona system represents circular rimless optical perfection. Delivers elegant, homogenous distribution across premium corporate environments."}
+                                </p>
+
+                                <div className="grid grid-cols-1 gap-2 pt-2">
+                                  <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
+                                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
+                                    <span>SIDELITE® Lateral optical reflection system</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
+                                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
+                                    <span>Circadian Human Centric lighting support</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
+                                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
+                                    <span>Dimmable via architectural DALI systems</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {(() => {
+                          const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                          const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                            ? activeDrawerProduct.id
+                            : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
+                          const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                            ? ''
+                            : `?sku=${activeDrawerProduct.name}`;
+                          const pdfLink = `/products/${parentId}/datasheet${skuQuery}`;
+                          const pdfFile = activeDrawerProduct.datasheetPdf || parent?.datasheetPdf;
+
+                          return (
+                            <div className="border border-gray-200 p-5 bg-gray-50 flex items-center justify-between gap-4 mt-6 shadow-sm">
+                              <div className="flex items-center gap-3">
+                                <FontAwesomeIcon icon={faFileAlt} className="text-[#005288] text-xl" />
+                                <div>
+                                  <p className="text-[10px] uppercase font-bold text-gray-700 tracking-widest">PRODUCT DATASHEET DOCUMENTATION</p>
+                                  <p className="text-[9px] text-gray-400 font-light">Complete compliance parameter certifications</p>
+                                </div>
+                              </div>
+                              {pdfFile ? (
+                                <button 
+                                  onClick={() => handleDownloadFile(pdfFile, '')}
+                                  className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm"
+                                >
+                                  DOWNLOAD PDF
+                                </button>
                               ) : (
-                                <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-4xl" />
+                                <Link 
+                                  href={pdfLink}
+                                  target="_blank"
+                                  className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm inline-flex items-center"
+                                >
+                                  GENERATE PDF
+                                </Link>
                               )}
                             </div>
-                            <div className="bg-gray-50 border border-gray-200 p-3.5 text-center font-mono shadow-inner">
-                              <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">ARTICLE NO</span>
-                              <span className="text-xs font-bold text-[#005288] block mt-1">
-                                {getProductSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], activeDrawerProduct.name)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="md:col-span-7 space-y-4">
-                            <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
-                              Optical Innovation Engine
-                            </h4>
-                            <p className="text-xs text-gray-600 font-light leading-relaxed">
-                              {activeDrawerProduct.description || "The Toledo-Triona system represents circular rimless optical perfection. Delivers elegant, homogenous distribution across premium corporate environments."}
-                            </p>
-
-                            <div className="grid grid-cols-1 gap-2 pt-2">
-                              <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
-                                <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
-                                <span>SIDELITE® Lateral optical reflection system</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
-                                <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
-                                <span>Circadian Human Centric lighting support</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
-                                <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
-                                <span>Dimmable via architectural DALI systems</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* PDF download promo */}
-                        <div className="border border-gray-200 p-5 bg-gray-50 flex items-center justify-between gap-4 mt-6 shadow-sm">
-                          <div className="flex items-center gap-3">
-                            <FontAwesomeIcon icon={faFileAlt} className="text-[#005288] text-xl" />
-                            <div>
-                              <p className="text-[10px] uppercase font-bold text-gray-700 tracking-widest">PRODUCT DATASHEET DOCUMENTATION</p>
-                              <p className="text-[9px] text-gray-400 font-light">Complete compliance parameter certifications</p>
-                            </div>
-                          </div>
-                          {activeDrawerProduct.datasheetPdf ? (
-                            <button 
-                              onClick={() => handleDownloadFile(activeDrawerProduct.datasheetPdf, '')}
-                              className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm"
-                            >
-                              DOWNLOAD PDF
-                            </button>
-                          ) : (
-                            <Link 
-                              href={`/products/${activeDrawerProduct.id}/datasheet`}
-                              target="_blank"
-                              className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm inline-flex items-center"
-                            >
-                              GENERATE PDF
-                            </Link>
-                          )}
-                        </div>
+                          );
+                        })()}
                       </div>
                     )}
 
@@ -1075,16 +1165,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           <table className="w-full text-left border-collapse">
                             <tbody className="divide-y divide-gray-150 bg-white">
                               {[
-                                { label: 'Article Code', value: getProductSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier'], activeDrawerProduct.name) },
-                                { label: 'System Power Input', value: `${getProductSpec(activeDrawerProduct, ['power', 'System power'])} W` },
-                                { label: 'Luminous Flux Output', value: `${getProductSpec(activeDrawerProduct, ['luminousFlux', 'Luminous flux'])} lm` },
-                                { label: 'Color Temperature (CCT)', value: `${getProductSpec(activeDrawerProduct, ['colourTemperature', 'Color Temperature'])} K` },
-                                { label: 'Color Rendering (CRI)', value: `Ra ≥ ${getProductSpec(activeDrawerProduct, ['cri', 'CRI'])}` },
-                                { label: 'Ingress Protection class', value: `IP ${getProductSpec(activeDrawerProduct, ['ipRating', 'IP rating'], '54')}` },
-                                { label: 'Luminaire Casing Finish', value: getProductSpec(activeDrawerProduct, ['colour', 'color']) },
+                                { label: 'MM Code', value: getSkuSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier', 'mm_code'], activeDrawerProduct.name) },
+                                { label: 'System Power Input', value: `${getSkuSpec(activeDrawerProduct, ['power', 'System power', 'wattage'])} W` },
+                                { label: 'Luminous Flux Output', value: `${getSkuSpec(activeDrawerProduct, ['luminousFlux', 'Luminous flux', 'flux', 'lumens'])} lm` },
+                                { label: 'Color Temperature (CCT)', value: `${getSkuSpec(activeDrawerProduct, ['colourTemperature', 'Color Temperature', 'CCT'])}` },
+                                { label: 'Color Rendering (CRI)', value: `Ra ≥ ${getSkuSpec(activeDrawerProduct, ['cri', 'CRI', 'ra'])}` },
+                                { label: 'Ingress Protection class', value: `IP ${getSkuSpec(activeDrawerProduct, ['ipRating', 'IP rating', 'ip'], '54')}` },
+                                { label: 'Luminaire Casing Finish', value: getSkuSpec(activeDrawerProduct, ['colour', 'color']) },
                                 { label: 'Impact Resistance class', value: 'IK 08' },
                                 { label: 'Protection Insulation Class', value: 'Protection Class I' },
-                                { label: 'Driver Control Gear type', value: getProductSpec(activeDrawerProduct, ['controlGear', 'Control gear'], 'DALI-2 / Matter relay') }
+                                { label: 'Driver Control Gear type', value: getSkuSpec(activeDrawerProduct, ['controlGear', 'Control gear', 'connector'], 'DALI-2 / Matter relay') }
                               ].map((row, index) => (
                                 <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
                                   <td className="py-2.5 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
@@ -1105,7 +1195,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               <table className="w-full text-left border-collapse">
                                 <tbody className="divide-y divide-gray-150 bg-white">
                                   {Object.entries(activeDrawerProduct.specifications).map(([key, value], idx) => {
-                                    const standardKeys = ['power', 'wattage', 'flux', 'luminousFlux', 'CCT', 'colourTemperature', 'Color Temperature', 'CRI', 'cri', 'ipRating', 'IP rating', 'colour', 'color', 'controlGear', 'Control gear'];
+                                    const standardKeys = ['power', 'wattage', 'flux', 'luminousFlux', 'CCT', 'colourTemperature', 'Color Temperature', 'CRI', 'cri', 'ipRating', 'IP rating', 'colour', 'color', 'controlGear', 'Control gear', 'manager'];
                                     if (standardKeys.some(sk => key.toLowerCase().includes(sk.toLowerCase()))) return null;
                                     
                                     return (
@@ -1151,76 +1241,95 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               <text x="60" y="112" fill="rgba(0,0,0,0.3)" fontSize="6" textAnchor="middle">0°</text>
                             </svg>
                             <span className="text-[8px] font-mono text-gray-400 mt-3">Direct/Indirect symmetric beam</span>
-                                                 {/* Right: Technical Downloads List */}
+                          </div>
+
+                          {/* Right: Technical Downloads List */}
                           <div className="md:col-span-7 space-y-4">
                             <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
                               CAD, BIM & Architectural Databases
                             </h4>
                             
-                            <div className="grid grid-cols-1 gap-2 text-xs">
-                              <button 
-                                onClick={() => handleDownloadFile(activeDrawerProduct.photometryLdt, 'Dialux LDT File is available on request. Please contact Megaman support.')}
-                                className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                              >
-                                <span>DIALUX PHOTOMETRIC [LDT]</span>
-                                <FontAwesomeIcon icon={faDownload} />
-                              </button>
-                              <button 
-                                onClick={() => handleDownloadFile(activeDrawerProduct.photometryIes, 'IES lighting calculations are available on request. Please contact Megaman support.')}
-                                className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                              >
-                                <span>IES DATA SHEET CALCULATIONS [IES]</span>
-                                <FontAwesomeIcon icon={faDownload} />
-                              </button>
-                              <button 
-                                onClick={() => handleDownloadFile(activeDrawerProduct.bimRevit, 'BIM Revit Object is available on request. Please contact Megaman support.')}
-                                className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                              >
-                                <span>BIM OBJECT DATABASE [REVIT]</span>
-                                <FontAwesomeIcon icon={faGlobe} />
-                              </button>
-                            </div>
+                            {(() => {
+                              const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                              const ldtFile = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
+                              const iesFile = activeDrawerProduct.photometryIes || parent?.photometryIes;
+                              const bimFile = activeDrawerProduct.bimRevit || parent?.bimRevit;
+                              
+                              return (
+                                <div className="grid grid-cols-1 gap-2 text-xs">
+                                  <button 
+                                    onClick={() => handleDownloadFile(ldtFile, 'Dialux LDT File is available on request. Please contact Megaman support.')}
+                                    className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                  >
+                                    <span>DIALUX PHOTOMETRIC [LDT]</span>
+                                    <FontAwesomeIcon icon={faDownload} />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDownloadFile(iesFile, 'IES lighting calculations are available on request. Please contact Megaman support.')}
+                                    className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                  >
+                                    <span>IES DATA SHEET CALCULATIONS [IES]</span>
+                                    <FontAwesomeIcon icon={faDownload} />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDownloadFile(bimFile, 'BIM Revit Object is available on request. Please contact Megaman support.')}
+                                    className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                  >
+                                    <span>BIM OBJECT DATABASE [REVIT]</span>
+                                    <FontAwesomeIcon icon={faGlobe} />
+                                  </button>
+                                </div>
+                              );
+                            })()}
 
                             {/* Compliance documents section */}
-                            {(activeDrawerProduct.techDocControlGear || activeDrawerProduct.techDocContainingProduct || activeDrawerProduct.techDocLightSource) && (
-                              <div className="mt-6 pt-6 border-t border-gray-200">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans mb-3">
-                                  Technical Compliance & Ecodesign
-                                </h4>
-                                <div className="grid grid-cols-1 gap-2 text-xs">
-                                  {activeDrawerProduct.techDocControlGear && (
-                                    <button 
-                                      onClick={() => handleDownloadFile(activeDrawerProduct.techDocControlGear, 'Control Gear document is available on request.')}
-                                      className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                    >
-                                      <span>TECHNICAL DOCUMENT - CONTROL GEAR</span>
-                                      <FontAwesomeIcon icon={faDownload} />
-                                    </button>
-                                  )}
-                                  {activeDrawerProduct.techDocContainingProduct && (
-                                    <button 
-                                      onClick={() => handleDownloadFile(activeDrawerProduct.techDocContainingProduct, 'Containing Product document is available on request.')}
-                                      className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                    >
-                                      <span>TECHNICAL DOCUMENT - CONTAINING PRODUCT</span>
-                                      <FontAwesomeIcon icon={faDownload} />
-                                    </button>
-                                  )}
-                                  {activeDrawerProduct.techDocLightSource && (
-                                    <button 
-                                      onClick={() => handleDownloadFile(activeDrawerProduct.techDocLightSource, 'Light Source document is available on request.')}
-                                      className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                    >
-                                      <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
-                                      <FontAwesomeIcon icon={faDownload} />
-                                    </button>
-                                  )}
+                            {(() => {
+                              const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                              const docControlGear = activeDrawerProduct.techDocControlGear || parent?.techDocControlGear;
+                              const docContainingProduct = activeDrawerProduct.techDocContainingProduct || parent?.techDocContainingProduct;
+                              const docLightSource = activeDrawerProduct.techDocLightSource || parent?.techDocLightSource;
+                              
+                              if (!docControlGear && !docContainingProduct && !docLightSource) return null;
+                              
+                              return (
+                                <div className="mt-6 pt-6 border-t border-gray-200">
+                                  <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans mb-3">
+                                    Technical Compliance & Ecodesign
+                                  </h4>
+                                  <div className="grid grid-cols-1 gap-2 text-xs">
+                                    {docControlGear && (
+                                      <button 
+                                        onClick={() => handleDownloadFile(docControlGear, 'Control Gear document is available on request.')}
+                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                      >
+                                        <span>TECHNICAL DOCUMENT - CONTROL GEAR</span>
+                                        <FontAwesomeIcon icon={faDownload} />
+                                      </button>
+                                    )}
+                                    {docContainingProduct && (
+                                      <button 
+                                        onClick={() => handleDownloadFile(docContainingProduct, 'Containing Product document is available on request.')}
+                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                      >
+                                        <span>TECHNICAL DOCUMENT - CONTAINING PRODUCT</span>
+                                        <FontAwesomeIcon icon={faDownload} />
+                                      </button>
+                                    )}
+                                    {docLightSource && (
+                                      <button 
+                                        onClick={() => handleDownloadFile(docLightSource, 'Light Source document is available on request.')}
+                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                      >
+                                        <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
+                                        <FontAwesomeIcon icon={faDownload} />
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })()}
                           </div>
-                        </div>        </div>
-
+                        </div>
                       </div>
                     )}
 
@@ -1235,39 +1344,56 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   </span>
                   
                   <div className="flex gap-3">
-                    {activeDrawerProduct.datasheetPdf ? (
-                      <button 
-                        onClick={() => handleDownloadFile(activeDrawerProduct.datasheetPdf, '')}
-                        className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm"
-                      >
-                        <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
-                        DOWNLOAD DATASHEET
-                      </button>
-                    ) : (
-                      <Link 
-                        href={`/products/${activeDrawerProduct.id}/datasheet`}
-                        target="_blank"
-                        className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm inline-flex items-center justify-center"
-                      >
-                        <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
-                        DOWNLOAD DATASHEET
-                      </Link>
-                    )}
-                    <button 
-                      onClick={() => {
-                        if (activeDrawerProduct.photometryLdt) {
-                          handleDownloadFile(activeDrawerProduct.photometryLdt, '');
-                        } else if (activeDrawerProduct.datasheetPdf) {
-                          handleDownloadFile(activeDrawerProduct.datasheetPdf, '');
-                        } else {
-                          alert('Technical planning databases are available on request. Please contact Megaman support.');
-                        }
-                      }}
-                      className="bg-[#005288] text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none hover:bg-[#003c64] transition-all cursor-pointer font-sans shadow-sm"
-                    >
-                      <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                      DOWNLOAD CAD FILES
-                    </button>
+                    {(() => {
+                      const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                      const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                        ? activeDrawerProduct.id
+                        : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
+                      const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                        ? ''
+                        : `?sku=${activeDrawerProduct.name}`;
+                      const pdfLink = `/products/${parentId}/datasheet${skuQuery}`;
+                      const pdfFile = activeDrawerProduct.datasheetPdf || parent?.datasheetPdf;
+                      const ldtFile = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
+
+                      return (
+                        <>
+                          {pdfFile ? (
+                            <button 
+                              onClick={() => handleDownloadFile(pdfFile, '')}
+                              className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm"
+                            >
+                              <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
+                              DOWNLOAD DATASHEET
+                            </button>
+                          ) : (
+                            <Link 
+                              href={pdfLink}
+                              target="_blank"
+                              className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm inline-flex items-center justify-center"
+                            >
+                              <FontAwesomeIcon icon={faFilePdf} className="mr-2 text-gray-500" />
+                              DOWNLOAD DATASHEET
+                            </Link>
+                          )}
+                          <button 
+                            onClick={() => {
+                              if (ldtFile) {
+                                handleDownloadFile(ldtFile, '');
+                              } else if (pdfFile) {
+                                handleDownloadFile(pdfFile, '');
+                              } else {
+                                alert('Technical planning databases are available on request. Please contact Megaman support.');
+                              }
+                            }}
+                            className="bg-[#005288] text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none hover:bg-[#003c64] transition-all cursor-pointer font-sans shadow-sm"
+                          >
+                            <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                            DOWNLOAD CAD FILES
+                          </button>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </>

@@ -24,7 +24,47 @@ interface Product {
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ sku?: string }>;
 }
+
+interface SKU {
+  id: string;
+  name: string; // MM Code
+  modelNumber?: string;
+  colour?: string;
+  specialFeatures?: string;
+  wattage?: string;
+  lampBase?: string;
+  colourTemperature?: string;
+  voltage?: string;
+  connector?: string;
+  ip?: string;
+  eanBarcode?: string;
+  innerBoxItf?: string;
+  outerBoxItf?: string;
+  packingMethod?: string;
+  remark?: string;
+  optionCode?: string;
+  specifications?: Record<string, any> | null;
+}
+
+async function getProductSKUs(productId: string): Promise<SKU[]> {
+  try {
+    const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+    const response = await fetch(`${payloadUrl}/api/skus?where[product][equals]=${productId}&limit=100`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch SKUs: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.docs || [];
+  } catch (error) {
+    console.error('Error fetching product SKUs:', error);
+    return [];
+  }
+}
+
 
 async function getProduct(id: string): Promise<Product | null> {
   try {
@@ -146,9 +186,11 @@ const TechSection = ({ title, specs }: { title: string; specs: { label: string; 
   );
 };
 
-export default async function ProductDatasheetPage({ params }: PageProps) {
+export default async function ProductDatasheetPage({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const product = await getProduct(resolvedParams.id);
+  const skus = await getProductSKUs(resolvedParams.id);
 
   if (!product) {
     return (
@@ -158,6 +200,11 @@ export default async function ProductDatasheetPage({ params }: PageProps) {
       </div>
     );
   }
+
+  // Determine the selected SKU (defaults to first SKU, or matches search param)
+  const selectedSku = resolvedSearchParams.sku 
+    ? skus.find(s => s.name === resolvedSearchParams.sku) || skus[0]
+    : skus[0];
 
   // Resolve URLs and fields safely
   const getImageUrl = (image: any): string => {
@@ -175,6 +222,25 @@ export default async function ProductDatasheetPage({ params }: PageProps) {
   };
 
   const getSpec = (specName: string, defaultValue = ''): string => {
+    // 1. Try to fetch from selected SKU specifications JSON first
+    if (selectedSku?.specifications && selectedSku.specifications[specName] !== undefined && selectedSku.specifications[specName] !== null) {
+      return String(selectedSku.specifications[specName]);
+    }
+    
+    // 2. Try to fetch from SKU direct attributes
+    if (specName === 'model_identifier' && selectedSku?.name) return selectedSku.name;
+    if (specName === 'customer_model_no_new' && selectedSku?.modelNumber) return selectedSku.modelNumber;
+    if (specName === 'fitting_colour' && selectedSku?.colour) return selectedSku.colour;
+    if (specName === 'colourTemp' && selectedSku?.colourTemperature) return selectedSku.colourTemperature;
+    if (specName === 'cct_k' && selectedSku?.colourTemperature) return selectedSku.colourTemperature.replace(/[^\d]/g, '');
+    if (specName === 'on_mode_power_w' && selectedSku?.wattage) return selectedSku.wattage;
+    if (specName === 'mounting' && selectedSku?.lampBase) return selectedSku.lampBase;
+    if (specName === 'ean' && selectedSku?.eanBarcode) return selectedSku.eanBarcode;
+    if (specName === 'inner_itf' && selectedSku?.innerBoxItf) return selectedSku.innerBoxItf;
+    if (specName === 'outer_itf' && selectedSku?.outerBoxItf) return selectedSku.outerBoxItf;
+    if (specName === 'packaging' && selectedSku?.packingMethod) return selectedSku.packingMethod;
+
+    // 3. Fallback to product specifications JSON (legacy format)
     if (product.specifications && product.specifications[specName] !== undefined && product.specifications[specName] !== null) {
       return String(product.specifications[specName]);
     }
@@ -187,7 +253,7 @@ export default async function ProductDatasheetPage({ params }: PageProps) {
   // Header tracking variables
   const familyName = product.families?.name || getSpec('series_name') || 'MEGAMAN® SERIES';
   const typeName = getSpec('product_type') || 'LED Luminaire';
-  const refCode = getSpec('customer_model_no_new') || getSpec('yk_product_code') || product.name;
+  const refCode = product.name || selectedSku?.modelNumber || getSpec('customer_model_no_new') || getSpec('yk_product_code');
 
   // Resolve packshot image URL
   const packshotImageUrl = product.images ? getImageUrl(product.images) : '/placeholder.png';
@@ -216,9 +282,9 @@ export default async function ProductDatasheetPage({ params }: PageProps) {
 
   // Page 2 Specifications Lists
   const productInfoSpecs = filterSpecs([
-    { label: 'Model Number', value: getSpec('customer_model_no_new') || product.name },
-    { label: 'Product Code', value: 'To be confirmed' },
-    { label: 'MM Code', value: 'To be confirmed' },
+    { label: 'Model Number', value: product.name || selectedSku?.modelNumber || getSpec('customer_model_no_new') },
+    { label: 'Product Code', value: selectedSku?.optionCode || 'To be confirmed' },
+    { label: 'MM Code', value: selectedSku?.name || 'To be confirmed' },
   ]);
 
   const electricalSpecs = filterSpecs([
@@ -439,12 +505,12 @@ export default async function ProductDatasheetPage({ params }: PageProps) {
               </thead>
               <tbody>
                 <tr className="border border-gray-200">
-                  <td className="p-1.5 border border-gray-200 font-mono text-gray-900 font-medium">{getSpec('model_identifier', '—')}</td>
-                  <td className="p-1.5 border border-gray-200 text-gray-900 font-medium">—</td>
-                  <td className="p-1 border border-gray-200 text-gray-900 font-medium">—</td>
-                  <td className="p-1 border border-gray-200 text-gray-900 font-medium">—</td>
-                  <td className="p-1 border border-gray-200 text-gray-900 font-medium">—</td>
-                  <td className="p-1.5 border border-gray-200 text-gray-900 font-medium">—</td>
+                  <td className="p-1.5 border border-gray-200 font-mono text-gray-900 font-medium">{selectedSku?.name || getSpec('model_identifier', '—')}</td>
+                  <td className="p-1.5 border border-gray-200 text-gray-900 font-medium">{selectedSku?.packingMethod || getSpec('packaging', '—')}</td>
+                  <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_length_mm', '—')}</td>
+                  <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_width_mm', '—')}</td>
+                  <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_height_mm', '—')}</td>
+                  <td className="p-1.5 border border-gray-200 text-gray-900 font-medium">{getSpec('gross_weight_outer_box_kg', '—')}</td>
                 </tr>
               </tbody>
             </table>
