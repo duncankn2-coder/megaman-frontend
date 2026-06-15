@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // Global A4 Page Wrapper for strict print formatting
 const A4Page = ({ children, pageNumber, totalPages }: { children: React.ReactNode; pageNumber: number; totalPages: number }) => {
   return (
-    <div className="relative border border-gray-300 shadow-lg mx-auto bg-white p-12 mb-8 overflow-hidden print:shadow-none print:border-none print:m-0 print:p-0 print:mb-0" 
+    <div className="relative border border-gray-300 shadow-lg mx-auto bg-white pt-[9mm] px-[15mm] pb-[9mm] mb-8 overflow-hidden print:shadow-none print:border-none print:m-0 print:mb-0" 
          style={{ width: '210mm', height: '296.5mm', pageBreakAfter: 'always', boxSizing: 'border-box' }}>
       
       {/* Content Area with bottom margin to prevent collision with footer */}
@@ -62,7 +62,7 @@ const A4Page = ({ children, pageNumber, totalPages }: { children: React.ReactNod
       </div>
 
       {/* Global Footer (absolutely positioned inside the page container) */}
-      <footer className="absolute bottom-6 left-12 right-12 text-[8px] text-gray-400 font-mono border-t border-gray-200 pt-4 z-50">
+      <footer className="absolute bottom-[9mm] left-[15mm] right-[15mm] text-[8px] text-gray-400 font-mono border-t border-gray-200 pt-4 z-50">
         <div className="grid grid-cols-3 items-end">
           {/* Left: Links & Copyright */}
           <div className="flex flex-col space-y-0.5 text-left">
