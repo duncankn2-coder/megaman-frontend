@@ -293,7 +293,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         const productIds = family.products.map(p => typeof p === 'string' ? p : p.id);
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
         const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${id}`).join('&');
-        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=1`);
+        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=2`);
         if (response.ok) {
           const data = await response.json();
           setSkus(data.docs || []);
@@ -1092,7 +1092,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       <div className="space-y-6 animate-fade-in">
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                          const activeImage = activeDrawerProduct.images || parent?.images;
+                          // Use the parent model No.'s image — SKUs (MM codes) don't carry their own images
+                          const activeImage = parent?.images || activeDrawerProduct.images;
                           const mmCodeVal = activeDrawerProduct.isFallbackProduct ? getProductSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], activeDrawerProduct.name) : activeDrawerProduct.name;
                           
                           return (
