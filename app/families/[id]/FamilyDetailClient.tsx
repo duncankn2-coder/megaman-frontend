@@ -320,7 +320,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   };
 
   // Local state to keep product content during slide-out animation (400ms)
-  const [activeDrawerProduct, setActiveDrawerProduct] = useState<Product | null>(null);
+  const [activeDrawerProduct, setActiveDrawerProduct] = useState<any | null>(null);
 
   useEffect(() => {
     if (selectedProduct) {
