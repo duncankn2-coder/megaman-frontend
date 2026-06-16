@@ -183,17 +183,49 @@ const getMediaUrl = (media: any): string => {
   return '';
 };
 
+// Helper to expand lookups with database schema keys dynamically
+const expandSpecNames = (specNames: string[]): string[] => {
+  const expanded = [...specNames];
+  for (const name of specNames) {
+    const lower = name.toLowerCase();
+    if (lower.includes('flux') || lower.includes('lumen')) {
+      expanded.push('useful_luminous_flux_lm', 'total_luminous_flux_lm', 'light_source_useful_luminous_flux_lm');
+    }
+    if (lower.includes('cct') || lower.includes('temp')) {
+      expanded.push('cct_k');
+    }
+    if (lower.includes('colour') || lower.includes('color')) {
+      expanded.push('fitting_colour');
+    }
+    if (lower.includes('power') || lower.includes('watt') || lower.includes('system power')) {
+      expanded.push('on_mode_power_w');
+    }
+    if (lower.includes('ip')) {
+      expanded.push('ip');
+    }
+    if (lower.includes('cri') || lower.includes('ra')) {
+      expanded.push('ra');
+    }
+    if (lower.includes('gear') || lower.includes('control') || lower.includes('connector')) {
+      expanded.push('type_terminal block', 'cap_type', 'driver_type', 'driver_model');
+    }
+  }
+  return Array.from(new Set(expanded));
+};
+
 // Extraction utility for technical parameters inside product specifications JSON (RZB Style)
 const getProductSpec = (product: Product, specNames: string[], defaultValue = 'â€”'): string => {
+  const expandedNames = expandSpecNames(specNames);
+  
   if (!product.specifications) {
-    if (specNames.includes('power') && product.power) return product.power;
-    if (specNames.includes('colourTemperature') && product.colourTemperature) return product.colourTemperature;
-    if (specNames.includes('colour') && product.colour) return product.colour;
+    if (expandedNames.some(name => name.includes('power')) && product.power) return product.power;
+    if (expandedNames.some(name => name.includes('colourTemperature')) && product.colourTemperature) return product.colourTemperature;
+    if (expandedNames.some(name => name.includes('colour')) && product.colour) return product.colour;
     return defaultValue;
   }
-  
+
   const specs = product.specifications as Record<string, unknown>;
-  for (const name of specNames) {
+  for (const name of expandedNames) {
     if (specs[name] !== undefined && specs[name] !== null) {
       return String(specs[name]);
     }
@@ -205,21 +237,23 @@ const getProductSpec = (product: Product, specNames: string[], defaultValue = 'â
 const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string => {
   if (!sku) return defaultValue;
   
+  const expandedNames = expandSpecNames(specNames);
+
   if (sku.isFallbackProduct || !sku.product) {
-    return getProductSpec(sku, specNames, defaultValue);
+    return getProductSpec(sku, expandedNames, defaultValue);
   }
   
   const parent = typeof sku.product === 'object' ? sku.product : null;
   
-  for (const name of specNames) {
+  for (const name of expandedNames) {
     if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
       if (sku.name) return sku.name;
     }
-    if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color') && sku.colour) return sku.colour;
-    if ((name === 'power' || name === 'System power' || name === 'wattage') && sku.wattage) return sku.wattage;
-    if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT') && sku.colourTemperature) return sku.colourTemperature;
+    if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && sku.colour) return sku.colour;
+    if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && sku.wattage) return sku.wattage;
+    if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && sku.colourTemperature) return sku.colourTemperature;
     if ((name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') && sku.ip) return sku.ip;
-    if ((name === 'controlGear' || name === 'control_gear' || name === 'Control gear') && sku.connector) return sku.connector;
+    if ((name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type') && sku.connector) return sku.connector;
     
     if (sku.specifications && sku.specifications[name] !== undefined && sku.specifications[name] !== null) {
       return String(sku.specifications[name]);
@@ -230,9 +264,9 @@ const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string =>
     }
     
     if (parent) {
-      if ((name === 'power' || name === 'System power' || name === 'wattage') && parent.wattage) return parent.wattage;
-      if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT') && parent.colourTemperature) return parent.colourTemperature;
-      if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color') && parent.colour) return parent.colour;
+      if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && parent.wattage) return parent.wattage;
+      if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && parent.colourTemperature) return parent.colourTemperature;
+      if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && parent.colour) return parent.colour;
       if (name === 'customer_model_no_new' && parent.name) return parent.name;
     }
   }
