@@ -107,10 +107,10 @@ const navItems: NavItem[] = [
     description: 'Explore how Megaman brings spaces to life across global portfolios, tailoring light to elevate experiences and meet stringent architectural demands.',
     tagline: 'LIGHTING THE WORLD',
     submenu: [
-      { name: 'Hospitality', path: '/projects/hospitality' },
-      { name: 'Retail', path: '/projects/retail' },
-      { name: 'Residential', path: '/projects/residential' },
-      { name: 'Commercial', path: '/projects/commercial' },
+      { name: 'Hospitality', path: '/projects?category=hospitality' },
+      { name: 'Retail', path: '/projects?category=retail' },
+      { name: 'Residential', path: '/projects?category=residential' },
+      { name: 'Commercial', path: '/projects?category=commercial' },
     ],
   },
   {

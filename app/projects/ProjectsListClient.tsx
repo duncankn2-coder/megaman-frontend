@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 interface Media {
   id: string;
@@ -73,7 +74,31 @@ const MOCK_PROJECTS: Project[] = [
 ];
 
 export default function ProjectsListClient({ initialProjects }: ProjectsListClientProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
+
+  useEffect(() => {
+    const category = searchParams.get('category');
+    if (category) {
+      const lower = category.toLowerCase();
+      if (['hospitality', 'retail', 'residential', 'commercial'].includes(lower)) {
+        setSelectedFilter(lower);
+        return;
+      }
+    }
+    setSelectedFilter('all');
+  }, [searchParams]);
+
+  const handleFilterChange = (value: string) => {
+    const params = new URLSearchParams(window.location.search);
+    if (value === 'all') {
+      params.delete('category');
+    } else {
+      params.set('category', value);
+    }
+    router.push(`/projects?${params.toString()}`, { scroll: false });
+  };
 
   // If no projects exist in database, display the fallbacks so page is immediately gorgeous
   const displayProjects = initialProjects.length > 0 ? initialProjects : MOCK_PROJECTS;
@@ -162,7 +187,7 @@ export default function ProjectsListClient({ initialProjects }: ProjectsListClie
               return (
                 <button
                   key={filter.value}
-                  onClick={() => setSelectedFilter(filter.value)}
+                  onClick={() => handleFilterChange(filter.value)}
                   className={`px-5 py-2.5 transition-all duration-300 border font-bold cursor-pointer rounded-none text-[11px] ${
                     isActive
                       ? 'border-[#005288] bg-[#005288] text-white'
