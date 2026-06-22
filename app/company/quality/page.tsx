@@ -93,8 +93,8 @@ export default function QualityPage() {
       </div>
 
       {/* Hero Header Banner */}
-      <section className="relative bg-slate-950 text-white min-h-[380px] flex items-center overflow-hidden border-b border-gray-900 z-10">
-        <div className="absolute inset-0 opacity-40 select-none">
+      <section className="relative bg-slate-900 text-white min-h-[380px] flex items-center overflow-hidden border-b border-gray-200 z-10">
+        <div className="absolute inset-0 opacity-80 select-none">
           <Image 
             src="/banners/products.jpg" 
             alt="Megaman Quality Assurance Banner"
@@ -102,9 +102,9 @@ export default function QualityPage() {
             className="object-cover object-center"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent"></div>
         </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#002b47]/75 via-[#002b47]/25 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
 
         <div className="container mx-auto px-6 md:px-12 max-w-7xl relative z-10 py-16">
           <div className="max-w-3xl space-y-6">

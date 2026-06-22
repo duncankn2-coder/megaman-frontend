@@ -36,8 +36,8 @@ export default async function NewsAndPressPage() {
     <div className="bg-[#fcfcfc] text-gray-800 min-h-screen font-sans selection:bg-[#005288] selection:text-white">
 
       {/* Hero */}
-      <section className="relative bg-slate-950 text-white min-h-[320px] flex items-center overflow-hidden border-b border-gray-900">
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+      <section className="relative bg-gradient-to-r from-[#003457] to-[#005288] text-white min-h-[320px] flex items-center overflow-hidden border-b border-gray-200">
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
           <div className="absolute left-[25%] top-0 bottom-0 w-[1px] bg-white" />
           <div className="absolute left-[50%] top-0 bottom-0 w-[1px] bg-white" />
           <div className="absolute left-[75%] top-0 bottom-0 w-[1px] bg-white" />
