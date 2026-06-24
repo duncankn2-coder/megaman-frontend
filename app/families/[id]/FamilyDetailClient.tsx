@@ -1320,54 +1320,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           </div>
                         </div>
 
-                        {/* Display Extra CMS parsed details */}
-                        {activeDrawerProduct.specifications && Object.keys(activeDrawerProduct.specifications).length > 0 && (
-                          <div className="space-y-3 pt-2">
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
-                              Extended compliance data
-                            </h4>
-                            <div className="border border-gray-250 overflow-hidden shadow-sm max-h-48 overflow-y-auto">
-                              <table className="w-full text-left border-collapse">
-                                <tbody className="divide-y divide-gray-150 bg-white">
-                                  {Object.entries(activeDrawerProduct.specifications).map(([key, value], idx) => {
-                                    const lowerKey = key.toLowerCase();
-                                    const standardKeys = ['power', 'wattage', 'flux', 'luminousFlux', 'CCT', 'colourTemperature', 'Color Temperature', 'CRI', 'cri', 'ipRating', 'IP rating', 'colour', 'color', 'controlGear', 'Control gear', 'manager'];
-                                    if (standardKeys.some(sk => lowerKey.includes(sk.toLowerCase()))) return null;
-                                    
-                                    // Filter out user-requested excluded columns/parameters
-                                    const excludeKeys = [
-                                      'img',
-                                      'old_model_no',
-                                      'old model no',
-                                      'old_model',
-                                      'supplementary_code',
-                                      'supplementary code',
-                                      'old_erp_supplier_model',
-                                      'old erp supplier model',
-                                      'new_erp_supplier_model',
-                                      'new erp supplier model',
-                                      'ingress_protection',
-                                      'ingress protection',
-                                      'impact_resistance',
-                                      'impact resistance',
-                                      'driver_control_gear',
-                                      'driver control gear',
-                                      'control_gear_type'
-                                    ];
-                                    if (excludeKeys.some(ek => lowerKey.includes(ek) || lowerKey === ek || lowerKey.replace(/_/g, ' ').includes(ek))) return null;
 
-                                    return (
-                                      <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
-                                        <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{key.replace(/_/g, ' ')}</td>
-                                        <td className="py-2 px-4 text-gray-900 font-medium">{String(value)}</td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
 
