@@ -189,7 +189,14 @@ const expandSpecNames = (specNames: string[]): string[] => {
   for (const name of specNames) {
     const lower = name.toLowerCase();
     if (lower.includes('flux') || lower.includes('lumen')) {
-      expanded.push('useful_luminous_flux_lm', 'total_luminous_flux_lm', 'light_source_useful_luminous_flux_lm');
+      expanded.push(
+        'useful_luminous_flux_lm',
+        'total_luminous_flux_lm',
+        'light_source_useful_luminous_flux_lm',
+        'useful_luminous_flux',
+        'total_luminous_flux',
+        'light_source_useful_luminous_flux'
+      );
     }
     if (lower.includes('cct') || lower.includes('temp')) {
       expanded.push('cct_k');
@@ -203,8 +210,8 @@ const expandSpecNames = (specNames: string[]): string[] => {
     if (lower.includes('ip')) {
       expanded.push('ip');
     }
-    if (lower.includes('cri') || lower.includes('ra')) {
-      expanded.push('ra');
+    if (lower.includes('cri') || lower.includes('ra') || lower.includes('rendering')) {
+      expanded.push('ra', 'colour_rendering_index', 'color_rendering_index');
     }
     if (lower.includes('gear') || lower.includes('control') || lower.includes('connector')) {
       expanded.push('type_terminal block', 'cap_type', 'driver_type', 'driver_model');
@@ -1192,32 +1199,125 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {/* TAB 2: TECHNICAL DATA (Detailed parameters) */}
                     {activeModalTab === 'technical' && (
                       <div className="space-y-6 animate-fade-in font-mono text-[11px] text-gray-700">
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
-                          Mechanical & Photometric Schema
-                        </h4>
                         
-                        <div className="border border-gray-250 overflow-hidden shadow-sm">
-                          <table className="w-full text-left border-collapse">
-                            <tbody className="divide-y divide-gray-150 bg-white">
-                              {[
-                                { label: 'MM Code', value: getSkuSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier', 'mm_code'], activeDrawerProduct.name) },
-                                { label: 'System Power Input', value: `${getSkuSpec(activeDrawerProduct, ['power', 'System power', 'wattage'])} W` },
-                                { label: 'Luminous Flux Output', value: `${getSkuSpec(activeDrawerProduct, ['luminousFlux', 'Luminous flux', 'flux', 'lumens'])} lm` },
-                                { label: 'Color Temperature (CCT)', value: `${getSkuSpec(activeDrawerProduct, ['colourTemperature', 'Color Temperature', 'CCT'])}` },
-                                { label: 'Color Rendering (CRI)', value: `Ra ≥ ${getSkuSpec(activeDrawerProduct, ['cri', 'CRI', 'ra'])}` },
-                                { label: 'Ingress Protection class', value: `IP ${getSkuSpec(activeDrawerProduct, ['ipRating', 'IP rating', 'ip'], '54')}` },
-                                { label: 'Luminaire Casing Finish', value: getSkuSpec(activeDrawerProduct, ['colour', 'color']) },
-                                { label: 'Impact Resistance class', value: 'IK 08' },
-                                { label: 'Protection Insulation Class', value: 'Protection Class I' },
-                                { label: 'Driver Control Gear type', value: getSkuSpec(activeDrawerProduct, ['controlGear', 'Control gear', 'connector'], 'DALI-2 / Matter relay') }
-                              ].map((row, index) => (
-                                <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
-                                  <td className="py-2.5 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
-                                  <td className="py-2.5 px-4 text-gray-900 font-medium">{row.value}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                        {/* Table 1: Electrical Data */}
+                        <div className="space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                            Electrical Data
+                          </h4>
+                          <div className="border border-gray-250 overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                              <tbody className="divide-y divide-gray-150 bg-white">
+                                {[
+                                  { label: 'Voltage (V)', value: getSkuSpec(activeDrawerProduct, ['rated_voltage_v', 'light_source_rated_voltage_v', 'voltage', 'Input Voltage'], '—') },
+                                  { label: 'Frequency (Hz)', value: getSkuSpec(activeDrawerProduct, ['frequency_hz', 'frequency', 'mains_frequency_hz'], '—') },
+                                  { label: 'Current (mA)', value: getSkuSpec(activeDrawerProduct, ['input_current_ma', 'input_current', 'light_source_input_current_ma'], '—') },
+                                  { label: 'Power Factor (λ)', value: getSkuSpec(activeDrawerProduct, ['power_factor', 'displacement_factor'], '—') },
+                                  { label: 'Starting Time (sec)', value: getSkuSpec(activeDrawerProduct, ['starting_time_sec', 'starting_time', 'start_time'], '—') },
+                                  { label: 'Warm-up Time Up to 60% of the Full Light Output (sec)', value: getSkuSpec(activeDrawerProduct, ['warm_up_time_sec', 'warm_up_time', 'warmup_time', 'warm_up_time_up_to_60_of_the_full_light_output_sec'], '—') }
+                                ].map((row, index) => (
+                                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                    <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                    <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Table 2: Product Data */}
+                        <div className="space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                            Product Data
+                          </h4>
+                          <div className="border border-gray-250 overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                              <tbody className="divide-y divide-gray-150 bg-white">
+                                {[
+                                  { label: 'Lamp Base', value: getSkuSpec(activeDrawerProduct, ['lampBase', 'lamp_base', 'cap_type', 'cap_base', 'base', 'lamp_holder_type'], '—') },
+                                  { label: 'Product Wattage (W)', value: getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w', 'light_source_on_mode_power_w'], '—') },
+                                  { label: 'Equivalent Wattage (W)', value: getSkuSpec(activeDrawerProduct, ['equivalent_power_w', 'equivalent_power', 'equivalent_wattage'], '—') },
+                                  { label: 'Colour Temperature (K)', value: getSkuSpec(activeDrawerProduct, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k'], '—') },
+                                  { label: 'Colour Render Index (Ra)', value: getSkuSpec(activeDrawerProduct, ['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index'], '—') },
+                                  { label: 'Colour Consistency (SDCM)', value: getSkuSpec(activeDrawerProduct, ['colour_consistency', 'color_consistency', 'sdcm'], '—') },
+                                  { label: 'Dimmable', value: getSkuSpec(activeDrawerProduct, ['dimmable', 'light_source_dimmable'], '—') },
+                                  { label: 'Operating Temperature', value: getSkuSpec(activeDrawerProduct, ['operating_temperature', 'temperature_of_ambient'], '—') },
+                                  { label: 'Switching Cycles (times)', value: getSkuSpec(activeDrawerProduct, ['switching_cycles', 'switching_Cycles'], '—') },
+                                  { label: 'Weight (g)', value: getSkuSpec(activeDrawerProduct, ['net_weight_g', 'net_weight', 'weight'], '—') },
+                                  { label: 'Application', value: getSkuSpec(activeDrawerProduct, ['application', 'intended_use', 'zone'], '—') }
+                                ].map((row, index) => (
+                                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                    <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                    <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Table 3: Performance Data */}
+                        <div className="space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                            Performance Data
+                          </h4>
+                          <div className="border border-gray-250 overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                              <tbody className="divide-y divide-gray-150 bg-white">
+                                {(() => {
+                                  const totalFlux = getSkuSpec(activeDrawerProduct, ['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm'], '—');
+                                  const rawEfficacy = getSkuSpec(activeDrawerProduct, ['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy'], '');
+                                  const rawPower = getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w'], '');
+                                  
+                                  let efficacyVal = rawEfficacy;
+                                  if (!efficacyVal) {
+                                    const numFlux = parseInt(totalFlux);
+                                    const numPower = parseFloat(rawPower);
+                                    if (!isNaN(numFlux) && !isNaN(numPower) && numPower > 0) {
+                                      efficacyVal = `${Math.round(numFlux / numPower)} lm/W`;
+                                    } else {
+                                      efficacyVal = '—';
+                                    }
+                                  }
+
+                                  return [
+                                    { label: 'Total Luminous Flux (lm)', value: totalFlux },
+                                    { label: 'Luminous Efficacy (lm/W)', value: efficacyVal },
+                                    { label: 'Rated Life (hrs)', value: getSkuSpec(activeDrawerProduct, ['norminal_life_h', 'nominal_life_h', 'rated_life_h', 'rated_life'], '—') }
+                                  ].map((row, index) => (
+                                    <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                      <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                      <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
+                                    </tr>
+                                  ));
+                                })()}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Table 4: Product Dimensions */}
+                        <div className="space-y-2">
+                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                            Product Dimensions
+                          </h4>
+                          <div className="border border-gray-250 overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                              <tbody className="divide-y divide-gray-150 bg-white">
+                                {[
+                                  { label: 'Diameter (mm)', value: getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter'], '—') },
+                                  { label: 'Width (mm)', value: getSkuSpec(activeDrawerProduct, ['width_mm', 'width'], '—') },
+                                  { label: 'Height (mm)', value: getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '—') }
+                                ].map((row, index) => (
+                                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                    <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                    <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
 
                         {/* Display Extra CMS parsed details */}
@@ -1230,9 +1330,32 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               <table className="w-full text-left border-collapse">
                                 <tbody className="divide-y divide-gray-150 bg-white">
                                   {Object.entries(activeDrawerProduct.specifications).map(([key, value], idx) => {
+                                    const lowerKey = key.toLowerCase();
                                     const standardKeys = ['power', 'wattage', 'flux', 'luminousFlux', 'CCT', 'colourTemperature', 'Color Temperature', 'CRI', 'cri', 'ipRating', 'IP rating', 'colour', 'color', 'controlGear', 'Control gear', 'manager'];
-                                    if (standardKeys.some(sk => key.toLowerCase().includes(sk.toLowerCase()))) return null;
+                                    if (standardKeys.some(sk => lowerKey.includes(sk.toLowerCase()))) return null;
                                     
+                                    // Filter out user-requested excluded columns/parameters
+                                    const excludeKeys = [
+                                      'img',
+                                      'old_model_no',
+                                      'old model no',
+                                      'old_model',
+                                      'supplementary_code',
+                                      'supplementary code',
+                                      'old_erp_supplier_model',
+                                      'old erp supplier model',
+                                      'new_erp_supplier_model',
+                                      'new erp supplier model',
+                                      'ingress_protection',
+                                      'ingress protection',
+                                      'impact_resistance',
+                                      'impact resistance',
+                                      'driver_control_gear',
+                                      'driver control gear',
+                                      'control_gear_type'
+                                    ];
+                                    if (excludeKeys.some(ek => lowerKey.includes(ek) || lowerKey === ek || lowerKey.replace(/_/g, ' ').includes(ek))) return null;
+
                                     return (
                                       <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
                                         <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{key.replace(/_/g, ' ')}</td>
