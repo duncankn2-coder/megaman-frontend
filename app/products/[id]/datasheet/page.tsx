@@ -342,9 +342,87 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   }
   const specSummaryStr = specSummaryParts.join(' ');
 
-  // Page 1: General Information Specs
-  const generalInformationSpecs = filterSpecs([
-    { label: 'Model Number', value: getMultiSpec(['model_identifier', 'customer_model_no_new']) },
+  // Check if this product is a light source (lamp) or a luminaire.
+  const isLuminaire = getSpec('luminaire_category') !== '' || !getSpec('new_erp_model_no');
+
+  // -------------------------------------------------------------
+  // LUMINAIRE SPECIFICATION LISTS (RESTORED ORIGINAL LAYOUT)
+  // -------------------------------------------------------------
+  const luminaireProductInfoSpecs = filterSpecs([
+    { label: 'Model Number', value: product.name || selectedSku?.modelNumber || getSpec('customer_model_no_new') || getSpec('customer_model_no_old') },
+    { label: 'Product Code', value: selectedSku?.optionCode || getSpec('option_code') || getSpec('yk_product_code') || '—' },
+    { label: 'MM Code', value: selectedSku?.name || getSpec('model_identifier') || '—' },
+    { label: 'Housing Colour', value: getSpec('fitting_colour') },
+    { label: 'IP Rating', value: getSpec('ip') },
+    { label: 'Series', value: familyName },
+  ]);
+
+  const luminaireElectricalSpecs = filterSpecs([
+    { label: 'Input Voltage', value: getSpec('rated_voltage_v') },
+    { label: 'Frequency', value: getSpec('frequency_hz') ? `${getSpec('frequency_hz')} Hz` : '' },
+    { label: 'Input Current', value: getSpec('input_current_ma') ? `${getSpec('input_current_ma')} mA` : '' },
+    { label: 'Power', value: getSpec('on_mode_power_w') ? `${getSpec('on_mode_power_w')} W` : '' },
+    { label: 'Power Factor', value: getSpec('power_factor') ? (Number(getSpec('power_factor')) > 0 && Number(getSpec('power_factor')) < 1 ? `>${getSpec('power_factor')}` : getSpec('power_factor')) : '' },
+    { label: 'Total harmonic distortion', value: getSpec('thd') ? (getSpec('thd').toString().includes('%') ? getSpec('thd').toString() : `${getSpec('thd')}%`) : '' },
+    { label: 'Surge Protection', value: getSpec('surge_voltage_l_n_v') ? `${getSpec('surge_voltage_l_n_v')} V` : '' },
+    { label: 'Inrush Current', value: getSpec('inrush_current_a') ? `${getSpec('inrush_current_a')} A` : '' },
+    { label: 'Inrush Duration', value: getSpec('inrush_current_duration_uS') ? `${getSpec('inrush_current_duration_uS')} μs` : '' },
+  ]);
+
+  const luminaireDimmingSpecs = filterSpecs([
+    { label: 'Dimmability status', value: getSpec('dimmable') },
+    { label: 'Dimming Type', value: getSpec('dimming_type') },
+    { label: 'Dimming Range', value: getSpec('dimming_range') },
+  ]);
+
+  const luminairePhotometricalSpecs = filterSpecs([
+    { label: 'Luminous Flux', value: getSpec('useful_luminous_flux_lm') ? `${getSpec('useful_luminous_flux_lm')} lm` : (getSpec('total_luminous_flux_lm') ? `${getSpec('total_luminous_flux_lm')} lm` : '') },
+    { label: 'Luminous Efficacy', value: getSpec('total_mains_efficacy_lmw') ? `${getSpec('total_mains_efficacy_lmw')} lm/W` : '' },
+    { label: 'Colour Temp', value: getSpec('cct_k') ? `${getSpec('cct_k')} K` : '' },
+    { label: 'CRI', value: getSpec('ra') ? `Ra${getSpec('ra')}` : '' },
+    { label: 'Beam Angle', value: getSpec('beam_angle') ? `${getSpec('beam_angle')}°` : '' },
+    { label: 'Colour Consistency', value: getSpec('colour_consistency') },
+    { label: 'Flickering', value: getSpec('flickering') },
+    { label: 'SVM', value: getSpec('svm') },
+    { label: 'Pst LM', value: getSpec('flicker_metric') },
+  ]);
+
+  const luminaireLifeSpecs = filterSpecs([
+    { label: 'Lifetime', value: getSpec('norminal_life_h') || getSpec('norminal_life_h ') },
+    { label: 'Number of Switching Cycles', value: getSpec('switching_Cycles') || getSpec('switching_cycles') },
+  ]);
+
+  const luminaireStandardsSpecs = filterSpecs([
+    { label: 'IK', value: getSpec('ik') },
+    { label: 'Protection Class', value: getSpec('protection_class') },
+    { label: 'Glow Wire', value: getSpec('glow_wire') ? `${getSpec('glow_wire')} °C` : '' },
+    { label: 'Photobiological Safety Group', value: getSpec('photobiological_risk_group') },
+    { label: 'Energy Class', value: getSpec('energy_efficiency_class') },
+    { label: 'Standards Compliance', value: getSpec('standards') },
+  ]);
+
+  const luminaireInstallationSpecs = filterSpecs([
+    { label: 'Installation', value: getSpec('mounting') },
+    { label: 'B10', value: getSpec('mcb_b10') },
+    { label: 'B16', value: getSpec('mcb_b16') },
+    { label: 'C10', value: getSpec('mcb_c10') },
+    { label: 'C16', value: getSpec('mcb_c16') },
+  ]);
+
+  const luminaireMechanicalSpecs = filterSpecs([
+    { label: 'Optics Material', value: getSpec('diffuser_material') },
+    { label: 'Housing Material', value: getSpec('housing_material') },
+    { label: 'Housing Colour', value: getSpec('fitting_colour') },
+    { label: 'Diameter', value: getSpec('diameter_mm') ? `${getSpec('diameter_mm')} mm` : '' },
+    { label: 'Height', value: getSpec('height_mm') ? `${getSpec('height_mm')} mm` : '' },
+    { label: 'Weights', value: getSpec('net_weight_g') ? `${getSpec('net_weight_g')} g` : '' },
+  ]);
+
+  // -------------------------------------------------------------
+  // LIGHT SOURCE (LAMP) SPECIFICATION LISTS (ERP LAYOUT)
+  // -------------------------------------------------------------
+  const lightSourceGeneralSpecs = filterSpecs([
+    { label: 'Model Number', value: getMultiSpec(['new_erp_model_no', 'model_identifier', 'customer_model_no_new']) },
     { label: 'Product Code', value: getMultiSpec(['yk_product_code', 'customer_model_no_new', 'yk_model_no']) },
     { label: 'Cap Base', value: getMultiSpec(['lampBase', 'lamp_base', 'cap_type', 'cap_base', 'base', 'lamp_holder_type']) },
     { label: 'Dimmable', value: getMultiSpec(['dimmable', 'light_source_dimmable']) },
@@ -357,14 +435,12 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
     { label: 'Series', value: familyName },
   ]);
 
-  // Page 2: Life Performance Specs
-  const lifePerformanceSpecs = filterSpecs([
+  const lightSourceLifeSpecs = filterSpecs([
     { label: 'Lifetime (L70 B50)', value: getMultiSpec(['norminal_life_h', 'nominal_life_h', 'rated_life_h', 'rated_life']) },
     { label: 'Number of Switching Cycles', value: getMultiSpec(['switching_cycles', 'switching_Cycles']) },
   ]);
 
-  // Page 2: Electrical Data Specs
-  const electricalDataSpecs = filterSpecs([
+  const lightSourceElectricalSpecs = filterSpecs([
     { label: 'Input Voltage', value: getMultiSpec(['rated_voltage_v', 'light_source_rated_voltage_v', 'voltage', 'Input Voltage']) },
     { label: 'Frequency', value: getMultiSpec(['frequency_hz', 'frequency', 'mains_frequency_hz']) },
     { label: 'Power Factor', value: getMultiSpec(['power_factor', 'displacement_factor']) },
@@ -374,8 +450,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
     { label: 'Surge Protection', value: getMultiSpec(['surge_voltage_l_n_v']) },
   ]);
 
-  // Page 2: Photometrical Information Specs
-  const photometricalSpecs = filterSpecs([
+  const lightSourcePhotometricalSpecs = filterSpecs([
     { label: 'Luminous Flux', value: getMultiSpec(['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm']) },
     { label: 'Luminous Efficacy', value: efficacyVal },
     { label: 'Colour Temperature', value: getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']) },
@@ -386,8 +461,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
     { label: 'Chromaticity Coordinates (x and y)', value: (getMultiSpec(['chromaticity_coordinates_x']) && getMultiSpec(['chromaticity_coordinates_y'])) ? `${getMultiSpec(['chromaticity_coordinates_x'])}, ${getMultiSpec(['chromaticity_coordinates_y'])}` : '' },
   ]);
 
-  // Page 2: Certificates & Standards Specs
-  const certificatesSpecs = filterSpecs([
+  const lightSourceCertificatesSpecs = filterSpecs([
     { label: 'Weighted Energy Consumption', value: getMultiSpec(['energy_consumption_on_mode']) },
     { label: 'Energy Class', value: getMultiSpec(['energy_efficiency_class']) },
     { label: 'Photobiological Safety Group', value: getMultiSpec(['photobiological_risk_group']) },
@@ -475,7 +549,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
         </div>
 
         {/* General Information Table */}
-        <TechSection title="GENERAL INFORMATION" specs={generalInformationSpecs} />
+        <TechSection title="GENERAL INFORMATION" specs={isLuminaire ? luminaireProductInfoSpecs : lightSourceGeneralSpecs} />
       </A4Page>
 
       {/* PAGE 2: TECHNICAL SPECIFICATIONS */}
@@ -483,61 +557,135 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
         <DatasheetHeader familyName={familyName} typeName={typeName} refCode={refCode} specSummaryStr={specSummaryStr} />
         
         <div className="flex flex-col space-y-2">
-          <TechSection title="LIFE PERFORMANCE" specs={lifePerformanceSpecs} />
-          <TechSection title="ELECTRICAL DATA" specs={electricalDataSpecs} />
-          <TechSection title="PHOTOMETRICAL INFORMATION" specs={photometricalSpecs} />
-          <TechSection title="CERTIFICATES & STANDARDS" specs={certificatesSpecs} />
+          {isLuminaire ? (
+            <>
+              <TechSection title="ELECTRICAL INFORMATION" specs={luminaireElectricalSpecs} />
+              <TechSection title="DIMMING AND CONTROLS" specs={luminaireDimmingSpecs} />
+              <TechSection title="PHOTOMETRICAL INFORMATION" specs={luminairePhotometricalSpecs} />
+              <TechSection title="LIFE PERFORMANCE" specs={luminaireLifeSpecs} />
+            </>
+          ) : (
+            <>
+              <TechSection title="LIFE PERFORMANCE" specs={lightSourceLifeSpecs} />
+              <TechSection title="ELECTRICAL DATA" specs={lightSourceElectricalSpecs} />
+              <TechSection title="PHOTOMETRICAL INFORMATION" specs={lightSourcePhotometricalSpecs} />
+              <TechSection title="CERTIFICATES & STANDARDS" specs={lightSourceCertificatesSpecs} />
+            </>
+          )}
         </div>
       </A4Page>
 
-      {/* PAGE 3: DIMENSIONS & WEIGHT */}
+      {/* PAGE 3: DIMENSIONS & WEIGHT / DETAILED TABLES */}
       <A4Page pageNumber={3} totalPages={3}>
         <DatasheetHeader familyName={familyName} typeName={typeName} refCode={refCode} specSummaryStr={specSummaryStr} />
         
-        <div className="mb-5 print-break-inside-avoid text-left">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#009fe3] border-b border-gray-250 pb-1 mb-6 font-sans">
-            DIMENSIONS & WEIGHT
-          </h4>
-          
-          <div className="grid grid-cols-[40%_55%] gap-[5%] items-center mt-8">
-            {/* Left: Annotated SVG light bulb */}
-            <div className="flex flex-col items-center justify-center p-4 border border-gray-150 bg-gray-50/50 relative rounded">
-              <svg viewBox="0 0 140 200" className="w-36 h-48 text-gray-500">
-                {/* Outer Glass */}
-                <path d="M70 25 C45 25 30 45 30 70 C30 95 45 115 53 130 L53 150 L87 150 L87 130 C95 115 110 95 110 70 C110 45 95 25 70 25 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                {/* Base Screw E27 */}
-                <path d="M53 150 L87 150 M53 155 L87 155 M53 160 L87 160 M55 165 L85 165 M57 170 L83 170 M60 175 C60 178 80 178 80 175" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                
-                {/* Height annotation line on the left */}
-                <line x1="15" y1="25" x2="15" y2="175" stroke="#009fe3" strokeWidth="1" strokeDasharray="3,3" />
-                <line x1="10" y1="25" x2="20" y2="25" stroke="#009fe3" strokeWidth="1" />
-                <line x1="10" y1="175" x2="20" y2="175" stroke="#009fe3" strokeWidth="1" />
-                <text x="8" y="105" fill="#009fe3" fontSize="10" fontWeight="bold" textAnchor="middle" transform="rotate(-90 8 105)">H</text>
-                
-                {/* Diameter annotation line at the bottom */}
-                <line x1="30" y1="190" x2="110" y2="190" stroke="#009fe3" strokeWidth="1" strokeDasharray="3,3" />
-                <line x1="30" y1="185" x2="30" y2="195" stroke="#009fe3" strokeWidth="1" />
-                <line x1="110" y1="185" x2="110" y2="195" stroke="#009fe3" strokeWidth="1" />
-                <text x="70" y="198" fill="#009fe3" fontSize="10" fontWeight="bold" textAnchor="middle">D</text>
-              </svg>
-            </div>
+        {isLuminaire ? (
+          <div className="flex flex-col space-y-4">
+            <TechSection title="STANDARDS AND APPLICATION" specs={luminaireStandardsSpecs} />
+            <TechSection title="INSTALLATION AND CAPABILITIES" specs={luminaireInstallationSpecs} />
+            <TechSection title="MECHANICAL AND MATERIAL" specs={luminaireMechanicalSpecs} />
             
-            {/* Right: Dimension specifications table */}
-            <div className="flex flex-col text-[9px] font-sans">
-              {[
-                { label: 'Width (W)', value: getMultiSpec(['width_mm', 'diameter_mm']) ? `${getMultiSpec(['width_mm', 'diameter_mm'])} mm` : '—' },
-                { label: 'Height (H)', value: getMultiSpec(['height_mm']) ? `${getMultiSpec(['height_mm'])} mm` : '—' },
-                { label: 'Diameter (D)', value: getMultiSpec(['diameter_mm']) ? `${getMultiSpec(['diameter_mm'])} mm` : '—' },
-                { label: 'Weight', value: getMultiSpec(['net_weight_g', 'weight']) ? `${getMultiSpec(['net_weight_g', 'weight'])} g` : '—' }
-              ].map((row, idx) => (
-                <div key={idx} className="grid grid-cols-[50%_50%] py-2 border-b border-gray-150 items-baseline">
-                  <span className="text-gray-500 font-semibold uppercase">{row.label}</span>
-                  <span className="text-gray-900 font-bold text-left pl-2">{row.value}</span>
-                </div>
-              ))}
+            {/* OPTIONAL ACCESSORIES Section with standard table layout */}
+            <div className="mb-5 print-break-inside-avoid text-left">
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#009fe3] border-b border-gray-250 pb-1 mb-2 font-sans">
+                OPTIONAL ACCESSORIES
+              </h4>
+              <table className="w-full text-[8px] border-collapse font-sans mt-2">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-700 font-bold border-b border-gray-200">
+                    <th className="p-1.5 text-left w-1/3">Model No.</th>
+                    <th className="p-1.5 text-left w-1/3">MM Code</th>
+                    <th className="p-1.5 text-left w-1/3">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-100">
+                    <td className="p-1.5 text-gray-500 font-medium">—</td>
+                    <td className="p-1.5 text-gray-500 font-medium">—</td>
+                    <td className="p-1.5 text-gray-500 font-medium">To be confirmed</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* LOGISTIC INFORMATION Section with dimensions and units */}
+            <div className="mb-5 print-break-inside-avoid text-left">
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#009fe3] border-b border-gray-250 pb-1 mb-2 font-sans">
+                LOGISTIC INFORMATION
+              </h4>
+              <table className="w-full text-[7.5px] border-collapse font-sans mt-2 text-center">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-700 font-bold border border-gray-200">
+                    <th className="p-1.5 border border-gray-200 align-middle" rowSpan={2}>MM Code</th>
+                    <th className="p-1.5 border border-gray-200 align-middle" rowSpan={2}>Packaging Unit (pcs/unit)</th>
+                    <th className="p-1 border border-gray-200" colSpan={3}>Outer Box Dimensions (mm)</th>
+                    <th className="p-1.5 border border-gray-200 align-middle" rowSpan={2}>Gross Weight per Outer Box (kg)</th>
+                  </tr>
+                  <tr className="bg-gray-50 text-gray-500 text-[6.5px] border border-gray-200">
+                    <th className="p-0.5 border border-gray-200">Length</th>
+                    <th className="p-0.5 border border-gray-200">Width</th>
+                    <th className="p-0.5 border border-gray-200">Height</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border border-gray-200">
+                    <td className="p-1.5 border border-gray-200 font-mono text-gray-900 font-medium">{selectedSku?.name || getSpec('model_identifier', '—')}</td>
+                    <td className="p-1.5 border border-gray-200 text-gray-900 font-medium">{selectedSku?.packingMethod || getSpec('packaging', '—')}</td>
+                    <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_length_mm', '—')}</td>
+                    <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_width_mm', '—')}</td>
+                    <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_height_mm', '—')}</td>
+                    <td className="p-1.5 border border-gray-200 text-gray-900 font-medium">{getSpec('gross_weight_outer_box_kg', '—')}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="mb-5 print-break-inside-avoid text-left">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#009fe3] border-b border-gray-250 pb-1 mb-6 font-sans">
+              DIMENSIONS & WEIGHT
+            </h4>
+            
+            <div className="grid grid-cols-[40%_55%] gap-[5%] items-center mt-8">
+              {/* Left: Annotated SVG light bulb */}
+              <div className="flex flex-col items-center justify-center p-4 border border-gray-150 bg-gray-50/50 relative rounded">
+                <svg viewBox="0 0 140 200" className="w-36 h-48 text-gray-500">
+                  {/* Outer Glass */}
+                  <path d="M70 25 C45 25 30 45 30 70 C30 95 45 115 53 130 L53 150 L87 150 L87 130 C95 115 110 95 110 70 C110 45 95 25 70 25 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  {/* Base Screw E27 */}
+                  <path d="M53 150 L87 150 M53 155 L87 155 M53 160 L87 160 M55 165 L85 165 M57 170 L83 170 M60 175 C60 178 80 178 80 175" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  
+                  {/* Height annotation line on the left */}
+                  <line x1="15" y1="25" x2="15" y2="175" stroke="#009fe3" strokeWidth="1" strokeDasharray="3,3" />
+                  <line x1="10" y1="25" x2="20" y2="25" stroke="#009fe3" strokeWidth="1" />
+                  <line x1="10" y1="175" x2="20" y2="175" stroke="#009fe3" strokeWidth="1" />
+                  <text x="8" y="105" fill="#009fe3" fontSize="10" fontWeight="bold" textAnchor="middle" transform="rotate(-90 8 105)">H</text>
+                  
+                  {/* Diameter annotation line at the bottom */}
+                  <line x1="30" y1="190" x2="110" y2="190" stroke="#009fe3" strokeWidth="1" strokeDasharray="3,3" />
+                  <line x1="30" y1="185" x2="30" y2="195" stroke="#009fe3" strokeWidth="1" />
+                  <line x1="110" y1="185" x2="110" y2="195" stroke="#009fe3" strokeWidth="1" />
+                  <text x="70" y="198" fill="#009fe3" fontSize="10" fontWeight="bold" textAnchor="middle">D</text>
+                </svg>
+              </div>
+              
+              {/* Right: Dimension specifications table */}
+              <div className="flex flex-col text-[9px] font-sans">
+                {[
+                  { label: 'Width (W)', value: getMultiSpec(['width_mm', 'diameter_mm']) ? `${getMultiSpec(['width_mm', 'diameter_mm'])} mm` : '—' },
+                  { label: 'Height (H)', value: getMultiSpec(['height_mm']) ? `${getMultiSpec(['height_mm'])} mm` : '—' },
+                  { label: 'Diameter (D)', value: getMultiSpec(['diameter_mm']) ? `${getMultiSpec(['diameter_mm'])} mm` : '—' },
+                  { label: 'Weight', value: getMultiSpec(['net_weight_g', 'weight']) ? `${getMultiSpec(['net_weight_g', 'weight'])} g` : '—' }
+                ].map((row, idx) => (
+                  <div key={idx} className="grid grid-cols-[50%_50%] py-2 border-b border-gray-150 items-baseline">
+                    <span className="text-gray-500 font-semibold uppercase">{row.label}</span>
+                    <span className="text-gray-900 font-bold text-left pl-2">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </A4Page>
     </div>
   );
