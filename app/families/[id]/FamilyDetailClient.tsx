@@ -17,7 +17,6 @@ import {
   faSearch,
   faCogs,
   faGlobe,
-  faFileAlt,
   faChartLine,
   faArrowRight,
   faChevronLeft,
@@ -1038,9 +1037,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   {/* Header */}
                   <div className="px-8 py-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-transparent">
                     <div>
-                      <span className="text-[9px] font-bold font-mono uppercase tracking-[0.25em] text-[#005288]">
-                        RZB-STYLE TECHNICAL DATASHEET
-                      </span>
                       <h3 className="text-xl uppercase tracking-widest font-light text-gray-900 mt-1.5 font-sans">
                         MM CODE: {activeDrawerProduct.name}
                       </h3>
@@ -1154,45 +1150,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           );
                         })()}
 
-                        {(() => {
-                          const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                          const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
-                            ? activeDrawerProduct.id
-                            : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
-                          const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
-                            ? ''
-                            : `?sku=${activeDrawerProduct.name}`;
-                          const pdfLink = `/products/${parentId}/datasheet${skuQuery}`;
-                          const pdfFile = activeDrawerProduct.datasheetPdf || parent?.datasheetPdf;
-
-                          return (
-                            <div className="border border-gray-200 p-5 bg-gray-50 flex items-center justify-between gap-4 mt-6 shadow-sm">
-                              <div className="flex items-center gap-3">
-                                <FontAwesomeIcon icon={faFileAlt} className="text-[#005288] text-xl" />
-                                <div>
-                                  <p className="text-[10px] uppercase font-bold text-gray-700 tracking-widest">PRODUCT DATASHEET DOCUMENTATION</p>
-                                  <p className="text-[9px] text-gray-400 font-light">Complete compliance parameter certifications</p>
-                                </div>
-                              </div>
-                              {pdfFile ? (
-                                <button 
-                                  onClick={() => handleDownloadFile(pdfFile, '')}
-                                  className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm"
-                                >
-                                  DOWNLOAD PDF
-                                </button>
-                              ) : (
-                                <Link 
-                                  href={pdfLink}
-                                  target="_blank"
-                                  className="text-[10px] uppercase font-mono text-white font-bold bg-[#005288] hover:bg-[#003c64] px-4 py-2 transition-all cursor-pointer shadow-sm inline-flex items-center"
-                                >
-                                  GENERATE PDF
-                                </Link>
-                              )}
-                            </div>
-                          );
-                        })()}
                       </div>
                     )}
 
