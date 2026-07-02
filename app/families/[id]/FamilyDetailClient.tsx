@@ -362,13 +362,33 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         fullUrl = `${cleanBaseUrl}${cleanPath}`;
       }
       const filename = fileObj.filename || fileObj.url.split('/').pop() || 'download';
-      const link = document.createElement('a');
-      link.href = fullUrl;
-      link.download = filename;
-      link.target = '_blank'; // fallback for cross-origin files
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      
+      // Fetch the file as a blob to force direct download without opening in a new tab
+      fetch(fullUrl)
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch file');
+          return response.blob();
+        })
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch(err => {
+          console.warn('Direct blob download failed, falling back to direct URL target_blank', err);
+          const link = document.createElement('a');
+          link.href = fullUrl;
+          link.download = filename;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
     } else {
       alert(defaultMsg || 'No file is available for this product.');
     }
