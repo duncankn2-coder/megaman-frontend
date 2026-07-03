@@ -402,14 +402,30 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     const powers = new Set<string>();
     const colorTemps = new Set<string>();
     
-    const items = skus.length > 0 ? skus : (family.products || []);
-    items.forEach(item => {
-      const pwr = skus.length > 0 
-        ? (item.wattage || getSkuSpec(item, ['power', 'System power', 'wattage']))
-        : getProductSpec(item, ['power', 'System power', 'systemPower', 'wattage']);
-      const ct = skus.length > 0 
-        ? (item.colourTemperature || getSkuSpec(item, ['colourTemperature', 'Color Temperature', 'CCT']))
-        : getProductSpec(item, ['colourTemperature', 'Color Temperature', 'colorTemp', 'CCT']);
+    const productIdsWithSkus = new Set(
+      skus.map(s => {
+        const prodId = typeof s.product === 'object' ? s.product?.id : s.product;
+        return String(prodId);
+      })
+    );
+
+    const productsWithoutSkus = (family.products || []).filter(p => !productIdsWithSkus.has(String(p.id)));
+    const fallbackSkus = productsWithoutSkus.map(p => ({
+      id: p.id,
+      name: '—',
+      colour: p.colour || getProductSpec(p, ['colour', 'color', 'Colour', 'Color']),
+      wattage: p.power || getProductSpec(p, ['power', 'System power', 'wattage']),
+      colourTemperature: p.colourTemperature || getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT']),
+      isFallbackProduct: true,
+      product: p,
+      modelNumber: p.name,
+    }));
+
+    const combinedSkus = [...skus, ...fallbackSkus];
+
+    combinedSkus.forEach(item => {
+      const pwr = item.wattage || getSkuSpec(item, ['power', 'System power', 'wattage']);
+      const ct = item.colourTemperature || getSkuSpec(item, ['colourTemperature', 'Color Temperature', 'CCT']);
       if (pwr && pwr !== '—') powers.add(pwr);
       if (ct && ct !== '—') colorTemps.add(ct);
     });
@@ -422,32 +438,41 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
   // Handle SKU filtering & searching
   const filteredSkus = useMemo(() => {
-    if (skus.length === 0) {
-      return (family.products || []).map(p => ({
-        id: p.id,
-        name: getProductSpec(p, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], p.name),
-        colour: getProductSpec(p, ['colour', 'color', 'Colour', 'Color']),
-        wattage: getProductSpec(p, ['power', 'System power', 'wattage']),
-        colourTemperature: getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT']),
-        ip: getProductSpec(p, ['ipRating', 'IP rating', 'IP Rating']),
-        connector: getProductSpec(p, ['controlGear', 'control_gear', 'Control gear']),
-        isFallbackProduct: true,
-        product: p,
-      }));
-    }
+    const productIdsWithSkus = new Set(
+      skus.map(s => {
+        const prodId = typeof s.product === 'object' ? s.product?.id : s.product;
+        return String(prodId);
+      })
+    );
 
-    return skus.filter(sku => {
+    const productsWithoutSkus = (family.products || []).filter(p => !productIdsWithSkus.has(String(p.id)));
+    const fallbackSkus = productsWithoutSkus.map(p => ({
+      id: p.id,
+      name: '—',
+      colour: p.colour || getProductSpec(p, ['colour', 'color', 'Colour', 'Color']),
+      wattage: p.power || getProductSpec(p, ['power', 'System power', 'wattage']),
+      colourTemperature: p.colourTemperature || getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT']),
+      ip: getProductSpec(p, ['ipRating', 'IP rating', 'IP Rating']),
+      connector: getProductSpec(p, ['controlGear', 'control_gear', 'Control gear']),
+      isFallbackProduct: true,
+      product: p,
+      modelNumber: p.name,
+    }));
+
+    const combinedSkus = [...skus, ...fallbackSkus];
+
+    return combinedSkus.filter(sku => {
       const pwr = sku.wattage || getSkuSpec(sku, ['power', 'System power', 'wattage']);
       const ct = sku.colourTemperature || getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT']);
       
       const matchesPower = powerFilter === 'All' || pwr === powerFilter || pwr.replace(/[^\d]/g, '') === powerFilter.replace(/[^\d]/g, '');
       const matchesColorTemp = colorTempFilter === 'All' || ct === colorTempFilter || ct.replace(/[^\d]/g, '') === colorTempFilter.replace(/[^\d]/g, '');
       
-      const parentName = typeof sku.product === 'object' ? sku.product.name : '';
+      const parentName = typeof sku.product === 'object' ? sku.product?.name : '';
       const matchesSearch = searchQuery === '' || 
-        sku.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sku.modelNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        parentName.toLowerCase().includes(searchQuery.toLowerCase());
+        (sku.name && sku.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (sku.modelNumber && sku.modelNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (parentName && parentName.toLowerCase().includes(searchQuery.toLowerCase()));
 
       return matchesPower && matchesColorTemp && matchesSearch;
     });
