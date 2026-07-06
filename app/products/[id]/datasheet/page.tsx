@@ -433,39 +433,57 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
     { label: 'Series', value: familyName },
   ]);
 
+  // Format Lifetime (L70 B50) value nicely
+  let lightSourceLifetime = getMultiSpec(['norminal_life_h', 'nominal_life_h', 'rated_life_h', 'rated_life', 'indicative_lifetime_l70b50']);
+  if (lightSourceLifetime && /^\d+$/.test(lightSourceLifetime)) {
+    lightSourceLifetime = `${Number(lightSourceLifetime).toLocaleString()} hrs`;
+  }
+
+  // Format Surge Protection value
+  let lightSourceSurge = getMultiSpec(['surge_voltage_l_n_v', 'surge_protection']);
+  if (lightSourceSurge && /^\d+$/.test(lightSourceSurge)) {
+    lightSourceSurge = `${lightSourceSurge} V`;
+  }
+
+  // Format Weighted Energy Consumption
+  let lightSourceEnergyConsumption = getMultiSpec(['energy_consumption_on_mode', 'weighted_energy_consumption']);
+  if (lightSourceEnergyConsumption && /^\d+$/.test(lightSourceEnergyConsumption)) {
+    lightSourceEnergyConsumption = `${lightSourceEnergyConsumption} kWh/1000h`;
+  }
+
   const lightSourceLifeSpecs = filterSpecs([
-    { label: 'Lifetime (L70 B50)', value: getMultiSpec(['norminal_life_h', 'nominal_life_h', 'rated_life_h', 'rated_life']) },
-    { label: 'Number of Switching Cycles', value: getMultiSpec(['switching_cycles', 'switching_Cycles']) },
+    { label: 'Lifetime (L70 B50)', value: lightSourceLifetime },
+    { label: 'Number of Switching Cycles', value: getMultiSpec(['switching_cycles', 'switching_Cycles', 'number_of_switching_cycles']) },
   ]);
 
   const lightSourceElectricalSpecs = filterSpecs([
-    { label: 'Input Voltage', value: getMultiSpec(['rated_voltage_v', 'light_source_rated_voltage_v', 'voltage', 'Input Voltage']) },
+    { label: 'Input Voltage', value: getMultiSpec(['rated_voltage_v', 'light_source_rated_voltage_v', 'voltage', 'Input Voltage', 'input_voltage']) },
     { label: 'Frequency', value: getMultiSpec(['frequency_hz', 'frequency', 'mains_frequency_hz']) },
     { label: 'Power Factor', value: getMultiSpec(['power_factor', 'displacement_factor']) },
-    { label: 'Displacement Factor', value: getMultiSpec(['displacement_factor']) },
-    { label: 'Equivalent Wattage', value: getMultiSpec(['equivalent_power_w', 'equivalent_power', 'equivalent_wattage']) },
-    { label: 'Input Current', value: getMultiSpec(['input_current_ma', 'input_current', 'light_source_input_current_ma']) },
-    { label: 'Surge Protection', value: getMultiSpec(['surge_voltage_l_n_v']) },
+    { label: 'Displacement Factor', value: getMultiSpec(['displacement_factor', 'displacement_factor_cos_1']) },
+    { label: 'Equivalent Wattage', value: getMultiSpec(['equivalent_power_w', 'equivalent_power', 'equivalent_wattage']) ? `${getMultiSpec(['equivalent_power_w', 'equivalent_power', 'equivalent_wattage'])}W` : '' },
+    { label: 'Input Current', value: getMultiSpec(['input_current_ma', 'input_current', 'light_source_input_current_ma']) ? `${getMultiSpec(['input_current_ma', 'input_current', 'light_source_input_current_ma'])} mA` : '' },
+    { label: 'Surge Protection', value: lightSourceSurge },
   ]);
 
   const lightSourcePhotometricalSpecs = filterSpecs([
-    { label: 'Luminous Flux', value: getMultiSpec(['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm']) },
+    { label: 'Luminous Flux', value: getMultiSpec(['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm']) ? `${getMultiSpec(['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm'])} lm` : '' },
     { label: 'Luminous Efficacy', value: efficacyVal },
-    { label: 'Colour Temperature', value: getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']) },
+    { label: 'Colour Temperature', value: getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']) ? (getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']).includes('K') ? getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']) : `${getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k'])} K`) : '' },
     { label: 'Colour Consistency', value: getMultiSpec(['colour_consistency', 'color_consistency', 'sdcm']) },
-    { label: 'CRI', value: getMultiSpec(['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index']) },
-    { label: 'SVM', value: getMultiSpec(['svm']) },
-    { label: 'Pst LM', value: getMultiSpec(['flicker_metric']) },
-    { label: 'Chromaticity Coordinates (x and y)', value: (getMultiSpec(['chromaticity_coordinates_x']) && getMultiSpec(['chromaticity_coordinates_y'])) ? `${getMultiSpec(['chromaticity_coordinates_x'])}, ${getMultiSpec(['chromaticity_coordinates_y'])}` : '' },
+    { label: 'CRI', value: getMultiSpec(['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index']) ? `Ra${getMultiSpec(['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index'])}` : '' },
+    { label: 'SVM', value: getMultiSpec(['svm', 'stroboscopic_effect_metric_svm']) },
+    { label: 'Pst LM', value: getMultiSpec(['flicker_metric', 'flicker_metric_pstlm']) },
+    { label: 'Chromaticity Coordinates (x and y)', value: (getMultiSpec(['chromaticity_coordinates_x']) && getMultiSpec(['chromaticity_coordinates_y'])) ? `${getMultiSpec(['chromaticity_coordinates_x'])}, ${getMultiSpec(['chromaticity_coordinates_y'])}` : (getMultiSpec(['chromaticity_coordinates_x_and_y']) ? getMultiSpec(['chromaticity_coordinates_x_and_y']).replace(/\s+/g, ', ') : '') },
   ]);
 
   const lightSourceCertificatesSpecs = filterSpecs([
-    { label: 'Weighted Energy Consumption', value: getMultiSpec(['energy_consumption_on_mode']) },
-    { label: 'Energy Class', value: getMultiSpec(['energy_efficiency_class']) },
-    { label: 'Photobiological Safety Group', value: getMultiSpec(['photobiological_risk_group']) },
+    { label: 'Weighted Energy Consumption', value: lightSourceEnergyConsumption },
+    { label: 'Energy Class', value: getMultiSpec(['energy_efficiency_class', 'energy_class']) },
+    { label: 'Photobiological Safety Group', value: getMultiSpec(['photobiological_risk_group', 'photobiological_safety_group']) },
     { label: 'Lamp Cap Twist Safe', value: getMultiSpec(['lamp_cap_twist_safe']) },
     { label: 'Approvals', value: getMultiSpec(['approvals', 'standards']) },
-    { label: 'Standards Compliance', value: getMultiSpec(['standards']) },
+    { label: 'Standards Compliance', value: getMultiSpec(['standards', 'standards_compliance']) },
   ]);
 
   const sceneImageUrl = (product.families?.media && product.families.media.length > 0) 
@@ -508,43 +526,87 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
       <A4Page pageNumber={1} totalPages={3}>
         <DatasheetHeader familyName={familyName} typeName={typeName} refCode={refCode} specSummaryStr={specSummaryStr} />
 
-        <div className="flex justify-between items-start gap-4 mb-6">
-          {/* Bulb Image (Left) */}
-          <div className="w-[30%] relative h-[45mm] border border-gray-150 bg-white flex items-center justify-center p-2">
-            <Image 
-              src={packshotImageUrl} 
-              alt={product.name}
-              fill
-              className="object-contain p-2"
-              priority
-              unoptimized
-            />
-          </div>
+        {isLuminaire ? (
+          <div className="flex justify-between items-start gap-4 mb-6">
+            {/* Bulb Image (Left) */}
+            <div className="w-[30%] relative h-[45mm] border border-gray-150 bg-white flex items-center justify-center p-2">
+              <Image 
+                src={packshotImageUrl} 
+                alt={product.name}
+                fill
+                className="object-contain p-2"
+                priority
+                unoptimized
+              />
+            </div>
 
-          {/* Applications list (Middle) */}
-          <div className="w-[30%] h-[45mm] flex flex-col justify-start text-left pl-2">
-            <span className="text-[10px] font-bold text-[#009fe3] uppercase tracking-wider mb-2 font-sans">APPLICATIONS</span>
-            <ul className="text-[8px] text-gray-600 font-light leading-relaxed font-sans space-y-1">
-              {(applications.length > 0 ? applications : ['Commercial Areas', 'Hospitality Installations', 'Residential Lightings', 'Retail shops', 'Social Areas']).map((app, idx) => (
-                <li key={idx} className="flex items-center gap-1">
-                  <span className="text-[#009fe3]">•</span>
-                  <span>{app}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+            {/* Applications list (Middle) */}
+            <div className="w-[30%] h-[45mm] flex flex-col justify-start text-left pl-2">
+              <span className="text-[10px] font-bold text-[#009fe3] uppercase tracking-wider mb-2 font-sans">APPLICATIONS</span>
+              <ul className="text-[8px] text-gray-600 font-light leading-relaxed font-sans space-y-1">
+                {(applications.length > 0 ? applications : ['Commercial Areas', 'Hospitality Installations', 'Residential Lightings', 'Retail shops', 'Social Areas']).map((app, idx) => (
+                  <li key={idx} className="flex items-center gap-1">
+                    <span className="text-[#009fe3]">•</span>
+                    <span>{app}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Scene image (Right) */}
-          <div className="w-[40%] relative h-[45mm] border border-gray-150 bg-gray-50 overflow-hidden">
-            <Image 
-              src={sceneImageUrl} 
-              alt="Application Scene"
-              fill
-              className="object-cover"
-              unoptimized
-            />
+            {/* Scene image (Right) */}
+            <div className="w-[40%] relative h-[45mm] border border-gray-150 bg-gray-50 overflow-hidden">
+              <Image 
+                src={sceneImageUrl} 
+                alt="Application Scene"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-[45%_50%] gap-[5%] items-start mb-6">
+            {/* Product Image (Left) */}
+            <div className="relative h-[90mm] border border-gray-150 bg-white flex items-center justify-center p-4 rounded">
+              <img 
+                src={packshotImageUrl} 
+                alt={product.name}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+
+            {/* Product features & applications of the family (Right) */}
+            <div className="flex flex-col justify-start text-left">
+              <div className="mb-4">
+                <span className="text-[10px] font-bold text-[#009fe3] uppercase tracking-wider mb-2 font-sans block">
+                  PRODUCT FEATURES
+                </span>
+                <ul className="text-[9.5px] text-gray-600 font-light leading-relaxed font-sans space-y-1.5">
+                  {features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-1.5">
+                      <span className="text-[#009fe3] mt-0.5">•</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold text-[#009fe3] uppercase tracking-wider mb-2 font-sans block">
+                  APPLICATIONS
+                </span>
+                <ul className="text-[9.5px] text-gray-600 font-light leading-relaxed font-sans space-y-1">
+                  {(applications.length > 0 ? applications : ['Commercial Areas', 'Hospitality Installations', 'Residential Lightings', 'Retail shops', 'Social Areas']).map((app, idx) => (
+                    <li key={idx} className="flex items-center gap-1.5">
+                      <span className="text-[#009fe3]">•</span>
+                      <span>{app}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* General Information Table */}
         {isLuminaire ? null : <TechSection title="GENERAL INFORMATION" specs={lightSourceGeneralSpecs} />}
@@ -729,9 +791,9 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
               {/* Right: Dimension specifications table */}
               <div className="flex flex-col text-[9px] font-sans">
                 {[
-                  { label: 'Width (W)', value: getMultiSpec(['width_mm', 'diameter_mm']) ? `${getMultiSpec(['width_mm', 'diameter_mm'])} mm` : '—' },
-                  { label: 'Height (H)', value: getMultiSpec(['height_mm']) ? `${getMultiSpec(['height_mm'])} mm` : '—' },
-                  { label: 'Diameter (D)', value: getMultiSpec(['diameter_mm']) ? `${getMultiSpec(['diameter_mm'])} mm` : '—' },
+                  { label: 'Width (W)', value: getMultiSpec(['width_mm', 'diameter_mm', 'width_w']) ? `${getMultiSpec(['width_mm', 'diameter_mm', 'width_w'])} mm` : '—' },
+                  { label: 'Height (H)', value: getMultiSpec(['height_mm', 'height_h']) ? `${getMultiSpec(['height_mm', 'height_h'])} mm` : '—' },
+                  { label: 'Diameter (D)', value: getMultiSpec(['diameter_mm', 'depth_d', 'width_w']) ? `${getMultiSpec(['diameter_mm', 'depth_d', 'width_w'])} mm` : '—' },
                   { label: 'Weight', value: getMultiSpec(['net_weight_g', 'weight']) ? `${getMultiSpec(['net_weight_g', 'weight'])} g` : '—' }
                 ].map((row, idx) => (
                   <div key={idx} className="grid grid-cols-[50%_50%] py-2 border-b border-gray-150 items-baseline">
