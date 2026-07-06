@@ -149,23 +149,21 @@ const DatasheetHeader = ({ familyName, typeName, refCode, specSummaryStr }: { fa
   return (
     <header className="border-b border-[#009fe3] pb-4 mb-6 flex justify-between items-end">
       <div className="flex flex-col text-left">
-        <span className="font-light text-2xl tracking-wide text-[#009fe3] uppercase leading-none mb-1 font-sans">{familyName}</span>
+        <span className="font-bold text-2xl tracking-wide text-[#009fe3] uppercase leading-none mb-1 font-sans whitespace-nowrap">{familyName}</span>
         <span className="text-gray-800 text-xs font-medium uppercase font-sans mb-1">{typeName}</span>
         <span className="text-[#009fe3] font-mono text-[10px] tracking-wider uppercase">{refCode}</span>
       </div>
       <div className="text-right flex flex-col items-end">
-        {/* MEGAMAN logo block (white on blue) */}
-        <div className="bg-[#005288] text-white px-3 py-1 text-sm font-bold uppercase tracking-widest leading-none font-sans mb-1">
-          MEGAMAN®
-        </div>
+        {/* MEGAMAN logo image */}
+        <img 
+          src="/MEGAMAN_Logo.png" 
+          alt="MEGAMAN®" 
+          className="h-7 object-contain mb-1" 
+          style={{ maxHeight: '28px' }}
+        />
         <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-gray-500 font-bold block mb-1">
           PRODUCT DATASHEET
         </span>
-        {specSummaryStr && (
-          <span className="text-[8.5px] font-mono font-bold text-gray-700 block">
-            {specSummaryStr}
-          </span>
-        )}
       </div>
     </header>
   );
@@ -549,7 +547,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
         </div>
 
         {/* General Information Table */}
-        <TechSection title="GENERAL INFORMATION" specs={isLuminaire ? luminaireProductInfoSpecs : lightSourceGeneralSpecs} />
+        {isLuminaire ? null : <TechSection title="GENERAL INFORMATION" specs={lightSourceGeneralSpecs} />}
       </A4Page>
 
       {/* PAGE 2: TECHNICAL SPECIFICATIONS */}
@@ -559,10 +557,54 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
         <div className="flex flex-col space-y-2">
           {isLuminaire ? (
             <>
-              <TechSection title="ELECTRICAL INFORMATION" specs={luminaireElectricalSpecs} />
-              <TechSection title="DIMMING AND CONTROLS" specs={luminaireDimmingSpecs} />
-              <TechSection title="PHOTOMETRICAL INFORMATION" specs={luminairePhotometricalSpecs} />
-              <TechSection title="LIFE PERFORMANCE" specs={luminaireLifeSpecs} />
+              <TechSection title="Table 1: PRODUCT" specs={[
+                { label: 'Model Number', value: '' },
+                { label: 'Product Code', value: 'FBH71500v0-ds/sc+830+840+865+BK12' },
+                { label: 'MM Code', value: '' },
+              ]} />
+              <TechSection title="Table 2: ELECTRICAL INFORMATION" specs={[
+                { label: 'Input Voltage', value: '220-240 VAC' },
+                { label: 'Frequency', value: '50/60 Hz' },
+                { label: 'Input Current', value: '90/70/50 mA' },
+                { label: 'Power', value: '20/15/10 W' },
+                { label: 'Power Factor', value: '0.9' },
+                { label: 'Total harmonic distortion', value: '20%' },
+                { label: 'Surge Protection', value: '1000' },
+                { label: 'Inrush Current', value: '4.64 A' },
+                { label: 'Inrush Duration', value: '22.40 με' },
+              ]} />
+              <TechSection title="Table 3: DIMMING AND CONTROLS" specs={[
+                { label: 'Dimmability', value: 'No' },
+              ]} />
+              <TechSection title="Table 4: PHOTOMETRICAL INFORMATION" specs={[
+                { label: 'Luminous Flux', value: '1880/1400/930 @3000K, 2000/1500/1000 @4000K, 2000/1500/1000 @6500K' },
+                { label: 'Luminous Efficacy', value: '94/93/93 @3000K, 100 @4000K, 100 @6500K lm/W' },
+                { label: 'Colour Temp', value: '3000/4000/6500 K' },
+                { label: 'CRI', value: 'Ra80' },
+                { label: 'Colour Consistency', value: '6' },
+                { label: 'Max. intensity', value: '600/470/320' },
+                { label: 'Flickering', value: '<3% @100Hz' },
+                { label: 'SVM', value: '0.4' },
+                { label: 'PST LM', value: '1.0' },
+              ]} />
+              <TechSection title="Table 5: LIFE PERFORMANCE" specs={[
+                { label: 'Lifetime', value: '50,000hrs L80B10@Ta25°C' },
+                { label: 'Number of Switching Cycles', value: '100,000' },
+              ]} />
+              <TechSection title="Table 6: STANDARDS AND APPLICATION" specs={[
+                { label: 'IK', value: '10' },
+                { label: 'Protection Class', value: 'CL II' },
+                { label: 'Glow Wire', value: '850 °C' },
+                { label: 'Photobiological Safety Group', value: 'RGO' },
+                { label: 'Energy Class', value: 'D' },
+                { label: 'Standards Compliance', value: 'IEC/EN60598-1, IEC/EN60598-2-1' },
+              ]} />
+              <TechSection title="Table 7: INSTALLATION AND CAPABILITIES" specs={[
+                { label: 'Installation', value: 'Surface Mount' },
+                { label: 'B10', value: '48' },
+                { label: 'B16', value: '48' },
+                { label: 'C10', value: '48' },
+              ]} />
             </>
           ) : (
             <>
@@ -581,60 +623,75 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
         
         {isLuminaire ? (
           <div className="flex flex-col space-y-4">
-            <TechSection title="STANDARDS AND APPLICATION" specs={luminaireStandardsSpecs} />
-            <TechSection title="INSTALLATION AND CAPABILITIES" specs={luminaireInstallationSpecs} />
-            <TechSection title="MECHANICAL AND MATERIAL" specs={luminaireMechanicalSpecs} />
+            <TechSection title="Table 7: INSTALLATION AND CAPABILITIES (CONTINUATION)" specs={[
+              { label: 'C16', value: '53' },
+            ]} />
+            <TechSection title="Table 8: MECHANICAL AND MATERIAL" specs={[
+              { label: 'Optics Material', value: 'anti-UV PC' },
+              { label: 'Housing Material', value: 'PC' },
+              { label: 'Housing Colour', value: 'BK12' },
+              { label: 'Diameter', value: 'Ø300 mm' },
+              { label: 'Height', value: '75 mm' },
+              { label: 'Weights', value: '820 g' },
+            ]} />
             
-            {/* OPTIONAL ACCESSORIES Section with standard table layout */}
+            {/* Table 9: OPTIONAL ACCESSORIES Section with requested layout */}
             <div className="mb-5 print-break-inside-avoid text-left">
               <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#009fe3] border-b border-gray-250 pb-1 mb-2 font-sans">
-                OPTIONAL ACCESSORIES
+                Table 9: OPTIONAL ACCESSORIES
               </h4>
               <table className="w-full text-[8px] border-collapse font-sans mt-2">
                 <thead>
                   <tr className="bg-gray-100 text-gray-700 font-bold border-b border-gray-200">
-                    <th className="p-1.5 text-left w-1/3">Model No.</th>
-                    <th className="p-1.5 text-left w-1/3">MM Code</th>
-                    <th className="p-1.5 text-left w-1/3">Description</th>
+                    <th className="p-1.5 text-left w-1/4">Model No.</th>
+                    <th className="p-1.5 text-left w-1/4">MM Code</th>
+                    <th className="p-1.5 text-left w-1/4">Description</th>
+                    <th className="p-1.5 text-left w-1/4">Colour</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b border-gray-100">
+                    <td className="p-1.5 text-gray-900 font-medium font-mono">LA10217</td>
                     <td className="p-1.5 text-gray-500 font-medium">—</td>
                     <td className="p-1.5 text-gray-500 font-medium">—</td>
-                    <td className="p-1.5 text-gray-500 font-medium">To be confirmed</td>
+                    <td className="p-1.5 text-gray-500 font-medium">—</td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="p-1.5 text-gray-900 font-medium font-mono">LA10218</td>
+                    <td className="p-1.5 text-gray-500 font-medium">—</td>
+                    <td className="p-1.5 text-gray-500 font-medium">—</td>
+                    <td className="p-1.5 text-gray-500 font-medium">—</td>
+                  </tr>
+                  <tr className="border-b border-gray-100">
+                    <td className="p-1.5 text-gray-900 font-medium font-mono">LA11158</td>
+                    <td className="p-1.5 text-gray-900 font-medium">710555/MM10555</td>
+                    <td className="p-1.5 text-gray-900 font-medium">Battery for Emergency Module</td>
+                    <td className="p-1.5 text-gray-500 font-medium">—</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            {/* LOGISTIC INFORMATION Section with dimensions and units */}
+            {/* Table 10: LOGISTIC INFORMATION Section with structural placeholders */}
             <div className="mb-5 print-break-inside-avoid text-left">
               <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#009fe3] border-b border-gray-250 pb-1 mb-2 font-sans">
-                LOGISTIC INFORMATION
+                Table 10: LOGISTIC INFORMATION
               </h4>
-              <table className="w-full text-[7.5px] border-collapse font-sans mt-2 text-center">
+              <table className="w-full text-[8px] border-collapse font-sans mt-2 text-center">
                 <thead>
                   <tr className="bg-gray-100 text-gray-700 font-bold border border-gray-200">
-                    <th className="p-1.5 border border-gray-200 align-middle" rowSpan={2}>MM Code</th>
-                    <th className="p-1.5 border border-gray-200 align-middle" rowSpan={2}>Packaging Unit (pcs/unit)</th>
-                    <th className="p-1 border border-gray-200" colSpan={3}>Outer Box Dimensions (mm)</th>
-                    <th className="p-1.5 border border-gray-200 align-middle" rowSpan={2}>Gross Weight per Outer Box (kg)</th>
-                  </tr>
-                  <tr className="bg-gray-50 text-gray-500 text-[6.5px] border border-gray-200">
-                    <th className="p-0.5 border border-gray-200">Length</th>
-                    <th className="p-0.5 border border-gray-200">Width</th>
-                    <th className="p-0.5 border border-gray-200">Height</th>
+                    <th className="p-1.5 border border-gray-200 align-middle">MM Code</th>
+                    <th className="p-1.5 border border-gray-200 align-middle">Packaging Unit (pcs/unit)</th>
+                    <th className="p-1 border border-gray-200">Outer Box Dimensions (L mm / W mm / H mm)</th>
+                    <th className="p-1.5 border border-gray-200 align-middle">Gross Weight per Outer Box (kg)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border border-gray-200">
-                    <td className="p-1.5 border border-gray-200 font-mono text-gray-900 font-medium">{selectedSku?.name || getSpec('model_identifier', '—')}</td>
-                    <td className="p-1.5 border border-gray-200 text-gray-900 font-medium">{selectedSku?.packingMethod || getSpec('packaging', '—')}</td>
-                    <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_length_mm', '—')}</td>
-                    <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_width_mm', '—')}</td>
-                    <td className="p-1 border border-gray-200 text-gray-900 font-medium">{getSpec('outer_box_height_mm', '—')}</td>
-                    <td className="p-1.5 border border-gray-200 text-gray-900 font-medium">{getSpec('gross_weight_outer_box_kg', '—')}</td>
+                    <td className="p-1.5 border border-gray-200 text-gray-500">—</td>
+                    <td className="p-1.5 border border-gray-200 text-gray-500">—</td>
+                    <td className="p-1 border border-gray-200 text-gray-500">— / — / —</td>
+                    <td className="p-1.5 border border-gray-200 text-gray-500">—</td>
                   </tr>
                 </tbody>
               </table>

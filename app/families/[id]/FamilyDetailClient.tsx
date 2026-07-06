@@ -240,18 +240,88 @@ const getProductSpec = (product: Product, specNames: string[], defaultValue = '�
   return defaultValue;
 };
 
+const parseDescriptionSpecs = (desc: string): Record<string, string> => {
+  const specs: Record<string, string> = {};
+  if (!desc) return specs;
+  const parts = desc.split('/').map(p => p.trim());
+  for (const part of parts) {
+    if (part.includes(':')) {
+      const [key, val] = part.split(':').map(x => x.trim());
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === 'housing material') specs['housing_material'] = val;
+      else if (lowerKey === 'cover material') specs['diffuser_material'] = val;
+      else if (lowerKey === 'color' || lowerKey === 'colour') specs['fitting_colour'] = val;
+      else if (lowerKey === 'dimming type') {
+        specs['dimming_type'] = val;
+        specs['control_gear'] = val;
+        specs['connector'] = val;
+      }
+      else if (lowerKey === 'recessed cut out') specs['recessed_cut_out'] = val;
+      else if (lowerKey === 'shape') specs['shape'] = val;
+    } else {
+      const lowerPart = part.toLowerCase();
+      if (/^ac\d+~\d+/i.test(part) || /^ac\d+-\d+/i.test(part)) {
+        const v = part.replace(/^ac/i, '').replace('~', '-');
+        specs['rated_voltage_v'] = `${v} VAC`;
+        specs['voltage'] = `${v} VAC`;
+        specs['frequency_hz'] = '50/60 Hz';
+        specs['frequency'] = '50/60 Hz';
+      }
+      else if (/^ip\d+/i.test(part)) {
+        specs['ip'] = part;
+        specs['ipRating'] = part;
+      }
+      else if (/^cl\s+[i|v|x]+/i.test(part)) {
+        specs['protection_class'] = part;
+      }
+      else if (lowerPart.includes('hrs') || lowerPart.includes('lifetime') || lowerPart.includes('life')) {
+        specs['norminal_life_h'] = part;
+        specs['nominal_life_h'] = part;
+      }
+      else if (/^\d+°/.test(part)) {
+        specs['beam_angle'] = part;
+      }
+    }
+  }
+  return specs;
+};
+
 const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string => {
   if (!sku) return defaultValue;
   
   const expandedNames = expandSpecNames(specNames);
 
   if (sku.isFallbackProduct || !sku.product) {
-    return getProductSpec(sku, expandedNames, defaultValue);
+    const descSpecs = parseDescriptionSpecs(sku.description || '');
+    const productVal = getProductSpec(sku, expandedNames, defaultValue);
+    if (productVal && productVal !== '—') return productVal;
+    
+    for (const name of expandedNames) {
+      if (descSpecs[name] !== undefined) return descSpecs[name];
+    }
+    return defaultValue;
   }
   
   const parent = typeof sku.product === 'object' ? sku.product : null;
+  const descSpecs = parseDescriptionSpecs(parent?.description || sku.description || '');
   
   for (const name of expandedNames) {
+    // 1. Try SKU specifications JSON first (holds imported General Data spreadsheet values)
+    if (sku.specifications && sku.specifications[name] !== undefined && sku.specifications[name] !== null) {
+      return String(sku.specifications[name]);
+    }
+    
+    // 2. Try Parent specifications JSON
+    if (parent?.specifications && parent.specifications[name] !== undefined && parent.specifications[name] !== null) {
+      return String(parent.specifications[name]);
+    }
+
+    // 3. Try parsed description specifications (from parent or SKU description string)
+    if (descSpecs[name] !== undefined) {
+      return descSpecs[name];
+    }
+
+    // 4. Fallback to direct attributes
     if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
       if (sku.name) return sku.name;
     }
@@ -261,18 +331,10 @@ const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string =>
     if ((name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') && sku.ip) return sku.ip;
     if ((name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type') && sku.connector) return sku.connector;
     
-    if (sku.specifications && sku.specifications[name] !== undefined && sku.specifications[name] !== null) {
-      return String(sku.specifications[name]);
-    }
-    
-    if (parent?.specifications && parent.specifications[name] !== undefined && parent.specifications[name] !== null) {
-      return String(parent.specifications[name]);
-    }
-    
     if (parent) {
-      if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && parent.wattage) return parent.wattage;
-      if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && parent.colourTemperature) return parent.colourTemperature;
-      if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && parent.colour) return parent.colour;
+      if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && (parent.power || parent.wattage)) return parent.power || parent.wattage;
+      if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && (parent.colourTemperature || parent.colorTemperature)) return parent.colourTemperature || parent.colorTemperature;
+      if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && (parent.colour || parent.color)) return parent.colour || parent.color;
       if (name === 'customer_model_no_new' && parent.name) return parent.name;
     }
   }
