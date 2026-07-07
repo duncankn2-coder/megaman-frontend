@@ -353,12 +353,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
   useEffect(() => {
     async function fetchSkus() {
-      if (!family.products || family.products.length === 0) {
+      const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null);
+      if (validProducts.length === 0) {
         setIsLoadingSkus(false);
         return;
       }
       try {
-        const productIds = family.products.map(p => typeof p === 'string' ? p : p.id);
+        const productIds = validProducts.map(p => p.id);
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
         const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${id}`).join('&');
         const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=2`);
@@ -471,7 +472,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       })
     );
 
-    const productsWithoutSkus = (family.products || []).filter(p => !productIdsWithSkus.has(String(p.id)));
+    const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null);
+    const productsWithoutSkus = validProducts.filter(p => !productIdsWithSkus.has(String(p.id)));
     const fallbackSkus = productsWithoutSkus.map(p => ({
       id: p.id,
       name: '—',
@@ -507,7 +509,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       })
     );
 
-    const productsWithoutSkus = (family.products || []).filter(p => !productIdsWithSkus.has(String(p.id)));
+    const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null);
+    const productsWithoutSkus = validProducts.filter(p => !productIdsWithSkus.has(String(p.id)));
     const fallbackSkus = productsWithoutSkus.map(p => ({
       id: p.id,
       name: '—',
