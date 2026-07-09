@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Metadata } from 'next';
 import HomeClient from './HomeClient';
+import { getSiteContext } from './utils/siteContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,10 +27,10 @@ async function getHomePageData() {
   }
 }
 
-async function getProductsCount(): Promise<number> {
+async function getProductsCount(siteContext: string): Promise<number> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/products`, {
+    const response = await fetch(`${payloadUrl}/api/products?where[sites][in]=${siteContext}`, {
       cache: 'no-store',
     });
     if (response.ok) {
@@ -61,14 +62,16 @@ async function getLatestNews(): Promise<any[]> {
 }
 
 export default async function Home() {
+  const siteContext = await getSiteContext();
+
   // Fetch home page data, product counts, and news in parallel on the server
   const [homePageData, productsCount, latestNews] = await Promise.all([
     getHomePageData(),
-    getProductsCount(),
+    getProductsCount(siteContext),
     getLatestNews()
   ]);
 
-  const layoutData = homePageData?.layout || null;
+  const layoutData = homePageData?.[siteContext]?.layout || null;
 
   return (
     <HomeClient 

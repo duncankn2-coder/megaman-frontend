@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import ProductsCatalog from './ProductsCatalog';
+import { getSiteContext } from '../utils/siteContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,7 @@ interface Product {
   name: string;
   description?: string;
   images?: { url: string; alt?: string; filename?: string };
+  sites?: string[];
 }
 
 interface MediaItem {
@@ -50,11 +52,24 @@ async function getFamilies(): Promise<Family[]> {
 }
 
 export default async function ProductsPage() {
-  const families = await getFamilies();
+  const [families, siteContext] = await Promise.all([
+    getFamilies(),
+    getSiteContext(),
+  ]);
+
+  // Filter products in each family to match the current site context
+  const filteredFamilies = families.map(family => ({
+    ...family,
+    products: (family.products || []).filter(product => {
+      // If sites is not set or empty, default to visible on both for fallback,
+      // otherwise check if it includes the current siteContext.
+      return !product.sites || product.sites.length === 0 || product.sites.includes(siteContext);
+    })
+  })).filter(family => family.products.length > 0); // Optionally hide empty families
 
   return (
     <Suspense fallback={<div className="container mx-auto px-6 py-24 text-center font-mono text-xs uppercase tracking-widest text-gray-400">Loading catalog...</div>}>
-      <ProductsCatalog families={families} />
+      <ProductsCatalog families={filteredFamilies} />
     </Suspense>
   );
 }
