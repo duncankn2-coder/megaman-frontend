@@ -22,11 +22,9 @@ interface HeroSlide {
 }
 
 interface CategoryItem {
-  number: string;
   title: string;
+  image?: any;
   description?: string;
-  parameterLabel?: string;
-  parameterValue: string;
   linkUrl: string;
   linkText?: string;
 }
@@ -368,28 +366,32 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {categories.map((cat, idx) => (
-                      <div key={idx} className="border border-gray-200 p-8 flex flex-col justify-between min-h-[380px] bg-white relative group shadow-sm hover:shadow-md transition-shadow">
-                        <div>
-                          <div className="text-[#005288] font-mono text-3xl mb-6">{cat.number}</div>
-                          <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mb-4">{cat.title}</h3>
+                      <div key={idx} className="relative aspect-square overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200">
+                        {cat.image ? (
+                          <Image
+                            src={getImageUrl(cat.image)}
+                            alt={cat.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-700"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                            <span className="text-gray-400 text-xs font-light">No Image Available</span>
+                          </div>
+                        )}
+                        
+                        {/* Overlay with text */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 flex flex-col justify-end">
+                          <h3 className="text-lg uppercase tracking-widest font-bold text-white mb-2">{cat.title}</h3>
                           {cat.description && (
-                            <p className="text-xs text-gray-500 font-light leading-relaxed mb-6">
+                            <p className="text-xs text-gray-300 font-light leading-relaxed mb-4 line-clamp-2">
                               {cat.description}
                             </p>
                           )}
-                        </div>
-                        
-                        <div className="border-t border-gray-150 pt-4 flex flex-col justify-between">
-                          <span className="text-[9px] font-mono text-gray-400 uppercase tracking-widest font-bold block mb-3">
-                            {cat.parameterLabel || 'SYSTEM PARAMETERS'}
-                          </span>
-                          <div className="flex justify-between text-[10px] font-mono text-gray-500 border-b border-gray-50 pb-1 mb-2">
-                            <span>METRIC STATUS</span>
-                            <span className="font-bold text-[#005288]">{cat.parameterValue}</span>
-                          </div>
                           <Link 
                             href={cat.linkUrl}
-                            className="text-xs uppercase tracking-widest text-[#005288] font-bold mt-2 inline-block hover:text-[#003c64] group-hover:translate-x-1 transition-transform"
+                            className="text-xs uppercase tracking-widest text-white font-bold inline-flex items-center gap-2 hover:text-gray-300 transition-colors w-fit border-b border-white pb-0.5"
                           >
                             {cat.linkText || 'Explore'} &rarr;
                           </Link>
