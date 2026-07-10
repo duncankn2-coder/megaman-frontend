@@ -401,7 +401,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                   className="group flex flex-col bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100/50"
                 >
                   {/* Aspect Square Image Canvas */}
-                  <div className="relative aspect-square w-full bg-gradient-to-b from-gray-50/50 to-gray-100/50 overflow-hidden flex items-center justify-center">
+                  <div className="relative aspect-square w-full bg-transparent overflow-hidden flex items-center justify-center">
                     {imageItem ? (
                       <Image
                         src={getImageUrl(imageItem)}
@@ -420,13 +420,13 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                         </div>
-                        <span className="text-xs text-gray-400 font-medium">MEGAMAN® Precision Light</span>
+                        <span className="text-xs text-black font-medium">MEGAMAN® Precision Light</span>
                       </div>
                     )}
                     
                     {/* Corner Tag */}
                     <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-gray-100 px-3 py-1 rounded-full shadow-sm">
-                      <span className="text-[10px] font-bold text-gray-600 tracking-wider uppercase">
+                      <span className="text-[10px] font-bold text-black tracking-wider uppercase">
                         {categoryTag}
                       </span>
                     </div>
@@ -436,21 +436,21 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                   <div className="p-6 md:p-8 flex flex-col flex-grow justify-between bg-white border-t border-gray-50">
                     <div>
                       {/* Family Name */}
-                      <h2 className="text-xl font-bold text-gray-900 group-hover:text-[#005288] transition-colors leading-tight flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-black group-hover:text-black transition-colors leading-tight flex items-center justify-between">
                         <span>{family.name}</span>
                         <FontAwesomeIcon
                           icon={faChevronRight}
-                          className="text-[10px] text-gray-300 group-hover:text-[#005288] group-hover:translate-x-1.5 transition-all duration-300"
+                          className="text-[10px] text-gray-400 group-hover:text-black group-hover:translate-x-1.5 transition-all duration-300"
                         />
                       </h2>
                       
                       {/* Description */}
                       {family.description ? (
-                        <p className="text-gray-500 font-light text-sm mt-2.5 leading-relaxed line-clamp-3">
+                        <p className="text-black font-light text-sm mt-2.5 leading-relaxed line-clamp-3">
                           {family.description}
                         </p>
                       ) : (
-                        <p className="text-gray-400 font-light text-sm mt-2.5 italic">
+                        <p className="text-black font-light text-sm mt-2.5 italic opacity-75">
                           Explore our full premium lighting collection options under the {family.name} series.
                         </p>
                       )}
@@ -458,10 +458,10 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
 
                     {/* Footer Specifications & CTA */}
                     <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-                      <span className="text-xs text-gray-400 font-semibold tracking-wider uppercase">
+                      <span className="text-xs text-black font-semibold tracking-wider uppercase">
                         {family.products?.length || 0} Model Variations
                       </span>
-                      <span className="text-xs font-bold text-[#005288] group-hover:underline flex items-center gap-1">
+                      <span className="text-xs font-bold text-black group-hover:underline flex items-center gap-1">
                         View Models
                         <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
                       </span>

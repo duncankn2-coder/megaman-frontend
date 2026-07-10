@@ -382,16 +382,16 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                         )}
                         
                         {/* Overlay with text */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 flex flex-col justify-end">
-                          <h3 className="text-lg uppercase tracking-widest font-bold text-white mb-2">{cat.title}</h3>
+                        <div className="absolute inset-0 bg-transparent p-6 flex flex-col justify-end">
+                          <h3 className="text-lg uppercase tracking-widest font-bold text-black mb-2">{cat.title}</h3>
                           {cat.description && (
-                            <p className="text-xs text-gray-300 font-light leading-relaxed mb-4 line-clamp-2">
+                            <p className="text-xs text-black font-light leading-relaxed mb-4 line-clamp-2">
                               {cat.description}
                             </p>
                           )}
                           <Link 
                             href={cat.linkUrl}
-                            className="text-xs uppercase tracking-widest text-white font-bold inline-flex items-center gap-2 hover:text-gray-300 transition-colors w-fit border-b border-white pb-0.5"
+                            className="text-xs uppercase tracking-widest text-black font-bold inline-flex items-center gap-2 hover:text-black/70 transition-colors w-fit border-b border-black pb-0.5"
                           >
                             {cat.linkText || 'Explore'} &rarr;
                           </Link>
