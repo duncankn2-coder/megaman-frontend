@@ -846,16 +846,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     
                     return (
                       <div key={proj.id || idx} className="flex flex-col gap-6 group">
-                        <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
-                          <Image 
-                            src={imageUrl} 
-                            alt={proj.title}
-                            fill
-                            quality={95}
-                            className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                        </div>
+                        <Link href={`/projects/${proj.slug}`} className="block">
+                          <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 cursor-pointer">
+                            <Image 
+                              src={imageUrl} 
+                              alt={proj.title}
+                              fill
+                              quality={95}
+                              className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                          </div>
+                        </Link>
 
                         <div>
                           <div className="flex gap-4 items-center font-mono">
@@ -863,7 +865,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             <span className="h-[1px] w-8 bg-gray-200"></span>
                             <span className="text-[9px] text-gray-400 tracking-wider uppercase">{proj.location || 'GLOBAL'}</span>
                           </div>
-                          <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mt-2 mb-3">{proj.title}</h3>
+                          <Link href={`/projects/${proj.slug}`}>
+                            <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mt-2 mb-3 hover:text-[#005288] transition-colors cursor-pointer">{proj.title}</h3>
+                          </Link>
                           <p className="text-xs text-gray-500 font-light leading-relaxed">
                             {proj.description}
                           </p>
