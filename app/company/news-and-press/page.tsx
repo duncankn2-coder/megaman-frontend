@@ -115,7 +115,15 @@ export default async function NewsAndPressPage() {
 
                   {/* Title */}
                   <h2 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3 leading-snug group-hover:text-[#005288] transition-colors line-clamp-3 flex-grow">
-                    {article.title}
+                    {article.linkUrl && article.linkUrl !== '#' ? (
+                      <a href={article.linkUrl} target="_blank" rel="noopener noreferrer">
+                        {article.title}
+                      </a>
+                    ) : (
+                      <Link href={`/company/news-and-press/${article.id}`}>
+                        {article.title}
+                      </Link>
+                    )}
                   </h2>
 
                   {/* Summary */}
@@ -127,7 +135,7 @@ export default async function NewsAndPressPage() {
 
                   {/* CTA */}
                   <div className="mt-auto pt-4 border-t border-gray-100">
-                    {article.linkUrl ? (
+                    {article.linkUrl && article.linkUrl !== '#' ? (
                       <a
                         href={article.linkUrl}
                         target="_blank"
@@ -138,9 +146,13 @@ export default async function NewsAndPressPage() {
                         <span>→</span>
                       </a>
                     ) : (
-                      <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">
-                        {article.linkText || 'Press Release'}
-                      </span>
+                      <Link
+                        href={`/company/news-and-press/${article.id}`}
+                        className="text-[10px] uppercase font-bold text-[#005288] tracking-widest flex items-center gap-2 hover:gap-3 transition-all"
+                      >
+                        {article.linkText || 'Read Full Release'}
+                        <span>→</span>
+                      </Link>
                     )}
                   </div>
                 </div>

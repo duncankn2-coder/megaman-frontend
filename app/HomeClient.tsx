@@ -672,20 +672,40 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                             </span>
                           </div>
                           <h3 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3 leading-snug group-hover:text-[#005288] transition-colors line-clamp-3">
-                            {article.title}
+                            {article.linkUrl && article.linkUrl !== '#' ? (
+                              <a href={article.linkUrl} target="_blank" rel="noopener noreferrer">
+                                {article.title}
+                              </a>
+                            ) : (
+                              <Link href={`/company/news-and-press/${article.id}`}>
+                                {article.title}
+                              </Link>
+                            )}
                           </h3>
                           <p className="text-xs text-gray-500 font-light leading-relaxed line-clamp-4">
                             {article.summary}
                           </p>
                         </div>
                         
-                        <button 
-                          onClick={() => alert(`Redirecting to article ${article.title}`)}
-                          className="text-[10px] uppercase font-bold text-gray-700 tracking-widest mt-6 pt-4 border-t border-gray-100 flex items-center justify-between group-hover:text-[#005288] transition-colors cursor-pointer w-full text-left font-sans"
-                        >
-                          <span>{article.linkText || 'Read Press Release'}</span>
-                          <FontAwesomeIcon icon={faArrowRight} className="transform group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        {article.linkUrl && article.linkUrl !== '#' ? (
+                          <a 
+                            href={article.linkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] uppercase font-bold text-gray-700 tracking-widest mt-6 pt-4 border-t border-gray-100 flex items-center justify-between group-hover:text-[#005288] transition-colors cursor-pointer w-full text-left font-sans"
+                          >
+                            <span>{article.linkText || 'Read Press Release'}</span>
+                            <FontAwesomeIcon icon={faArrowRight} className="transform group-hover:translate-x-1 transition-transform" />
+                          </a>
+                        ) : (
+                          <Link 
+                            href={`/company/news-and-press/${article.id}`}
+                            className="text-[10px] uppercase font-bold text-gray-700 tracking-widest mt-6 pt-4 border-t border-gray-100 flex items-center justify-between group-hover:text-[#005288] transition-colors cursor-pointer w-full text-left font-sans"
+                          >
+                            <span>{article.linkText || 'Read Press Release'}</span>
+                            <FontAwesomeIcon icon={faArrowRight} className="transform group-hover:translate-x-1 transition-transform" />
+                          </Link>
+                        )}
                       </div>
                     ))}
                   </div>
