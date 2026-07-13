@@ -842,7 +842,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   {projects.map((proj, idx) => {
-                    const imageUrl = getImageUrl(proj.images);
+                    const imageUrl = getImageUrl(proj.listImage || proj.bannerImage || proj.images);
                     
                     return (
                       <div key={proj.id || idx} className="flex flex-col gap-6 group">
