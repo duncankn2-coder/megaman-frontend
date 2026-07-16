@@ -366,37 +366,43 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {categories.map((cat, idx) => (
-                      <div key={idx} className="relative aspect-square overflow-hidden group shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200">
-                        {cat.image ? (
-                          <Image
-                            src={getImageUrl(cat.image)}
-                            alt={cat.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                            className="object-cover group-hover:scale-105 transition-transform duration-700"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                            <span className="text-gray-400 text-xs font-light">No Image Available</span>
-                          </div>
-                        )}
+                      <Link
+                        href={cat.linkUrl || '#'}
+                        key={idx}
+                        className="flex flex-col group"
+                      >
+                        <div className="relative aspect-square overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300 border border-gray-200 bg-gray-50">
+                          {cat.image ? (
+                            <Image
+                              src={getImageUrl(cat.image)}
+                              alt={cat.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                              className="object-cover group-hover:scale-105 transition-transform duration-700"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                              <span className="text-gray-400 text-xs font-light">No Image Available</span>
+                            </div>
+                          )}
+                        </div>
                         
-                        {/* Overlay with text */}
-                        <div className="absolute inset-0 bg-transparent p-6 flex flex-col justify-end">
-                          <h3 className="text-lg uppercase tracking-widest font-bold text-black mb-2">{cat.title}</h3>
+                        <div className="pt-4 flex flex-col flex-grow">
+                          <h3 className="text-base uppercase tracking-widest font-bold text-gray-900 mb-2 group-hover:text-[#005288] transition-colors">
+                            {cat.title}
+                          </h3>
                           {cat.description && (
-                            <p className="text-xs text-black font-light leading-relaxed mb-4 line-clamp-2">
+                            <p className="text-xs text-gray-500 font-light leading-relaxed mb-4 line-clamp-2">
                               {cat.description}
                             </p>
                           )}
-                          <Link 
-                            href={cat.linkUrl}
-                            className="text-xs uppercase tracking-widest text-black font-bold inline-flex items-center gap-2 hover:text-black/70 transition-colors w-fit border-b border-black pb-0.5"
+                          <span 
+                            className="text-xs uppercase tracking-widest text-[#005288] font-bold inline-flex items-center gap-2 group-hover:text-[#003c64] transition-colors w-fit border-b border-[#005288] pb-0.5 mt-auto"
                           >
                             {cat.linkText || 'Explore'} &rarr;
-                          </Link>
+                          </span>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </section>
