@@ -673,8 +673,25 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {displayNews.map((article, idx) => (
-                      <div key={article.id || idx} className="border border-gray-200 p-6 bg-white flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-md transition-shadow group">
+                      <div key={article.id || idx} className="border border-gray-200 p-6 bg-white flex flex-col justify-between min-h-[450px] shadow-sm hover:shadow-md transition-all duration-300 group">
                         <div>
+                          {/* News Image */}
+                          <div className="relative aspect-[16/10] w-full overflow-hidden bg-white border border-gray-200/50 mb-4">
+                            {article.image ? (
+                              <Image
+                                src={getImageUrl(article.image)}
+                                alt={article.title}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
+                                className="object-contain group-hover:scale-105 transition-transform duration-700"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-gray-400 text-xs font-light">No Image Available</span>
+                              </div>
+                            )}
+                          </div>
+
                           <div className="flex gap-4 items-center text-[9px] font-mono text-gray-400 mb-4 pb-2 border-b border-gray-100 justify-between">
                             <span>{article.category || 'PRESS'}</span>
                             <span className="font-bold text-[#005288]">
