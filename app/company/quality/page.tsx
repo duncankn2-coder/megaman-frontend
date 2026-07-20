@@ -231,45 +231,6 @@ export default function QualityPage() {
         </div>
       </section>
 
-      {/* World-beating Product Innovation Timeline */}
-      <section className="bg-gray-50 border-y border-gray-200 py-24 relative z-10">
-        <div className="container mx-auto px-6 md:px-12 max-w-7xl">
-          <div className="max-w-4xl mx-auto text-center space-y-4 mb-20">
-            <span className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#005288] block">
-              HERITAGE OF PIONEERING LIGHT
-            </span>
-            <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-              World-beating Product Innovation
-            </h2>
-            <div className="h-[2px] w-12 bg-[#005288] mx-auto"></div>
-            <p className="text-xs text-gray-500 font-light max-w-xl mx-auto pt-2">
-              For nearly three decades, MEGAMAN® has led the lighting industry with technological breakthroughs, from early CFL improvements to circular IoT-powered LED engines.
-            </p>
-          </div>
-
-          {/* Timeline Components */}
-          <div className="max-w-4xl mx-auto relative border-l border-gray-200 pl-8 md:pl-12 space-y-12">
-            {innovations.map((item, idx) => (
-              <div key={idx} className="relative group">
-                {/* Timeline Dot */}
-                <div className="absolute -left-[41px] md:-left-[57px] top-1.5 w-6 h-6 rounded-full bg-white border-2 border-gray-200 group-hover:border-[#005288] transition-colors flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#005288] transition-colors"></div>
-                </div>
-
-                <div className="space-y-2">
-                  <span className="inline-block px-3 py-1 bg-[#005288] text-white text-xs font-mono font-bold tracking-wider uppercase">
-                    {item.year}
-                  </span>
-                  <p className="text-sm text-gray-600 font-light leading-relaxed max-w-2xl">
-                    {item.text}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Rigorous Quality Certifications Section */}
       <section className="container mx-auto px-6 md:px-12 max-w-7xl py-24 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
@@ -318,6 +279,45 @@ export default function QualityPage() {
             ))}
           </div>
 
+        </div>
+      </section>
+
+      {/* World-beating Product Innovation Timeline */}
+      <section className="bg-gray-50 border-y border-gray-200 py-24 relative z-10">
+        <div className="container mx-auto px-6 md:px-12 max-w-7xl">
+          <div className="max-w-4xl mx-auto text-center space-y-4 mb-20">
+            <span className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#005288] block">
+              HERITAGE OF PIONEERING LIGHT
+            </span>
+            <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+              World-beating Product Innovation
+            </h2>
+            <div className="h-[2px] w-12 bg-[#005288] mx-auto"></div>
+            <p className="text-xs text-gray-500 font-light max-w-xl mx-auto pt-2">
+              For nearly three decades, MEGAMAN® has led the lighting industry with technological breakthroughs, from early CFL improvements to circular IoT-powered LED engines.
+            </p>
+          </div>
+
+          {/* Timeline Components */}
+          <div className="max-w-4xl mx-auto relative border-l border-gray-200 pl-8 md:pl-12 space-y-12">
+            {innovations.map((item, idx) => (
+              <div key={idx} className="relative group">
+                {/* Timeline Dot */}
+                <div className="absolute -left-[41px] md:-left-[57px] top-1.5 w-6 h-6 rounded-full bg-white border-2 border-gray-200 group-hover:border-[#005288] transition-colors flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#005288] transition-colors"></div>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="inline-block px-3 py-1 bg-[#005288] text-white text-xs font-mono font-bold tracking-wider uppercase">
+                    {item.year}
+                  </span>
+                  <p className="text-sm text-gray-600 font-light leading-relaxed max-w-2xl">
+                    {item.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
