@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faArrowRight, 
   faSeedling, 
   faRecycle,
   faLightbulb,
@@ -12,7 +11,6 @@ import {
   faCompass,
   faLeaf,
   faHandHoldingHeart,
-  faBookOpen,
   faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../../components/Footer';
@@ -301,38 +299,6 @@ export default function EnvironmentAndSustainabilityPage() {
               ))}
             </div>
 
-          </div>
-        </div>
-      </section>
-
-      {/* Section 5: Sustainability Report CTA */}
-      <section className="container mx-auto px-6 md:px-12 max-w-7xl py-24 relative z-10">
-        <div className="bg-slate-900 text-white p-8 md:p-12 text-center space-y-6 max-w-3xl mx-auto shadow-md relative overflow-hidden">
-          {/* Subtle structural pattern */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,82,136,0.15),transparent)] pointer-events-none"></div>
-
-          <div className="relative z-10 space-y-4 max-w-xl mx-auto">
-            <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#005288] text-white mx-auto mb-4">
-              <FontAwesomeIcon icon={faBookOpen} className="text-lg" />
-            </div>
-            
-            <h3 className="text-2xl font-light uppercase tracking-widest leading-tight">
-              MEGAMAN® Sustainability Report
-            </h3>
-            
-            <p className="text-xs text-slate-400 font-light leading-relaxed">
-              Read our comprehensive corporate reports outlining direct ecological audits, energy reduction figures, and lifecycle governance policies.
-            </p>
-
-            <div className="pt-4">
-              <Link 
-                href="/resources/downloads" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#005288] text-white hover:bg-[#003c64] transition-colors text-xs font-mono font-bold uppercase tracking-wider shadow-md"
-              >
-                <span>View Sustainability Report</span>
-                <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
-              </Link>
-            </div>
           </div>
         </div>
       </section>

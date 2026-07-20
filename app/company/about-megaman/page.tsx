@@ -7,8 +7,7 @@ import {
   faArrowRight, 
   faGlobe, 
   faSeedling, 
-  faHistory,
-  faLightbulb
+  faHistory
 } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../../components/Footer';
 
@@ -199,7 +198,7 @@ export default function AboutMegamanPage() {
 
       {/* Section 3: Environmental Commitment & Pillars */}
       <section className="container mx-auto px-6 md:px-12 max-w-7xl py-24 relative z-10">
-        <div className="max-w-4xl mx-auto text-center space-y-8 mb-20">
+        <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="flex items-center justify-center gap-3">
             <span className="h-[2px] w-8 bg-[#005288]"></span>
             <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] font-mono">
@@ -217,46 +216,7 @@ export default function AboutMegamanPage() {
           </p>
         </div>
 
-        {/* Corporate Pillars Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          {/* Pillar 1: Eco-Efficiency */}
-          <div className="border border-gray-200 p-8 bg-white shadow-sm hover:shadow-md transition-shadow relative group">
-            <div className="w-10 h-10 rounded-full bg-[#005288]/10 flex items-center justify-center text-[#005288] mb-6">
-              <FontAwesomeIcon icon={faSeedling} className="text-sm" />
-            </div>
-            <h4 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3">Eco-Efficiency</h4>
-            <p className="text-xs text-gray-500 font-light leading-relaxed">
-              We exclusively engineer low-energy lighting systems. By optimizing lumen-per-watt efficiency, our architectural downlights and lamps substantially decrease greenhouse gas emissions worldwide.
-            </p>
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-[#005288] transition-colors"></div>
-          </div>
 
-          {/* Pillar 2: Circular Lifecycle */}
-          <div className="border border-gray-200 p-8 bg-white shadow-sm hover:shadow-md transition-shadow relative group">
-            <div className="w-10 h-10 rounded-full bg-[#005288]/10 flex items-center justify-center text-[#005288] mb-6">
-              <FontAwesomeIcon icon={faGlobe} className="text-sm" />
-            </div>
-            <h4 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3">Circular Lifecycle</h4>
-            <p className="text-xs text-gray-500 font-light leading-relaxed">
-              From initial product development to disposal and material recycling, we work to minimize plastic waste, use recyclable copper alloy heat sinks, and strictly follow international eco-regulations.
-            </p>
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-[#005288] transition-colors"></div>
-          </div>
-
-          {/* Pillar 3: Tomorrow&apos;s Innovation */}
-          <div className="border border-gray-200 p-8 bg-white shadow-sm hover:shadow-md transition-shadow relative group">
-            <div className="w-10 h-10 rounded-full bg-[#005288]/10 flex items-center justify-center text-[#005288] mb-6">
-              <FontAwesomeIcon icon={faLightbulb} className="text-sm" />
-            </div>
-            <h4 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3">Tomorrow&apos;s Innovation</h4>
-            <p className="text-xs text-gray-500 font-light leading-relaxed">
-              Pioneering smart mesh controls (Matter and Zigbee integrations), dim-to-warm custom modules, and professional LED components to shape a smarter, responsive environment.
-            </p>
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-[#005288] transition-colors"></div>
-          </div>
-
-        </div>
       </section>
 
       {/* CTA section to other company pages */}
