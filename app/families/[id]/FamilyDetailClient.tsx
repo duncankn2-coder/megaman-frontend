@@ -560,7 +560,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       {/* Dynamic Breadcrumbs with clean gray border */}
       <nav className="border-b border-gray-200 bg-gray-50 py-5 relative">
         <div className="container mx-auto px-6 md:px-12 max-w-7xl">
-          <div className="flex items-center space-x-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+          <div className="flex items-center space-x-3 text-sm font-bold uppercase tracking-wider text-gray-500">
             <Link href="/" className="hover:text-[#005288] transition-colors">Home</Link>
             <span className="text-gray-300">/</span>
             <Link href="/products" className="hover:text-[#005288] transition-colors">Products</Link>
@@ -607,7 +607,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 ) : (
                   <div className="text-gray-300 flex flex-col items-center">
                     <FontAwesomeIcon icon={faLightbulb} className="text-5xl text-gray-300 mb-3" />
-                    <span className="text-[10px] tracking-widest uppercase font-bold text-gray-400">MEGAMAN® VISUAL GALLERY</span>
+                    <span className="text-[10px] tracking-widest uppercase font-bold text-gray-400">MEGAMAN<sup>®</sup> VISUAL GALLERY</span>
                   </div>
                 )}
 
@@ -655,17 +655,17 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 </h1>
                 
                 {family.description ? (
-                  <p className="text-gray-500 font-light text-xs leading-relaxed mb-8">
+                  <p className="text-gray-500 font-light text-sm md:text-base leading-relaxed mb-8">
                     {family.description}
                   </p>
                 ) : (
-                  <p className="text-gray-400 font-light text-xs italic leading-relaxed mb-8">
+                  <p className="text-gray-400 font-light text-sm md:text-base italic leading-relaxed mb-8">
                     An elegant product series featuring tool-free mounting, sleek profile design, and low glare emissions, perfectly customized for clean architectural ceilings.
                   </p>
                 )}
 
                 {/* Technical Characteristics Grid (RZB Toledo Features style) */}
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-150">
+                <h3 className="text-xs md:text-sm font-bold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-150">
                   Key Features
                 </h3>
                 <div className="grid grid-cols-1 gap-3.5">
@@ -684,7 +684,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       <div className="w-4 h-4 rounded-full bg-[#005288]/10 flex items-center justify-center mt-0.5 flex-shrink-0">
                         <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[8px]" />
                       </div>
-                      <span className="text-[11px] text-gray-600 leading-relaxed font-light">{feat}</span>
+                      <span className="text-sm text-gray-600 leading-relaxed font-light">{feat}</span>
                     </div>
                   ))}
                 </div>
@@ -939,7 +939,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               unoptimized
                             />
                           ) : (
-                            <div className="text-gray-300 font-mono text-xs uppercase tracking-widest">MEGAMAN® Optic</div>
+                            <div className="text-gray-300 font-mono text-xs uppercase tracking-widest">MEGAMAN<sup>®</sup> Optic</div>
                           )}
                         </div>
 
@@ -1060,7 +1060,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse font-mono">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 text-[9px] font-bold text-gray-500 uppercase tracking-widest">
+                  <tr className="border-b border-gray-200 bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
                     <th className="py-4 pl-4">MM Code</th>
                     <th className="py-4">Model No.</th>
                     <th className="py-4">Luminaire Finish</th>
@@ -1100,7 +1100,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       <tr 
                         key={sku.id} 
                         onClick={() => handleOpenProduct(sku)}
-                        className="text-[11px] hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-100"
+                        className="text-xs md:text-sm hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-100"
                       >
                         <td className="py-4 pl-4 font-bold text-[#005288]">{mmCode}</td>
                         <td className="py-4 font-sans font-medium text-gray-900">{modelNo}</td>
@@ -1115,7 +1115,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         <td className="py-4 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleOpenProduct(sku)}
-                            className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-none transition-all cursor-pointer font-sans shadow-sm"
+                            className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-none transition-all cursor-pointer font-sans shadow-sm"
                           >
                             Specs Drawer
                           </button>
@@ -1241,14 +1241,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                 <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
                                   Optical Innovation Engine
                                 </h4>
-                                <p className="text-xs text-gray-600 font-light leading-relaxed">
+                                <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed">
                                   {activeDrawerProduct.description || parent?.description || "The Toledo-Triona system represents circular rimless optical perfection. Delivers elegant, homogenous distribution across premium corporate environments."}
                                 </p>
 
                                 <div className="grid grid-cols-1 gap-2 pt-2">
                                   <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
                                     <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
-                                    <span>SIDELITE® Lateral optical reflection system</span>
+                                    <span>SIDELITE<sup>®</sup> Lateral optical reflection system</span>
                                   </div>
                                   <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
                                     <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />

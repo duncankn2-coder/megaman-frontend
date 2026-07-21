@@ -3,10 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faArrowRight, 
-  faGlobe, 
-  faSeedling, 
+import {
+  faArrowRight,
+  faSeedling,
   faHistory,
   faLightbulb,
   faCheck,
@@ -14,20 +13,35 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../../components/Footer';
 
+const renderWithSup = (text: string) => {
+  if (!text) return null;
+  const parts = text.split(/(®|™)/g);
+  return parts.map((part, index) => {
+    if (part === '®') {
+      return <sup key={index}>®</sup>;
+    }
+    if (part === '™') {
+      return <sup key={index}>™</sup>;
+    }
+    return part;
+  });
+};
+
 export default function QualityPage() {
   const benefits = [
-    { title: "High energy efficiency", desc: "Delivering the same light levels using about 20% of the electricity.", icon: faSeedling },
-    { title: "Lower carbon footprint", desc: "Generating 80% less CO2 to combat environmental impact.", icon: faGlobe },
-    { title: "Longer life", desc: "LED technology achieves an impressive lifespan of up to 50,000 hours.", icon: faHistory },
-    { title: "LED Technology breakthrough", desc: "Superior thermal management with exceptionally high lumen output.", icon: faLightbulb },
-    { title: "Early payback", desc: "Significantly more cost-effective over its operational lifecycle.", icon: faAward },
-    { title: "Minimal heat production", desc: "Greatly improves operating safety and reduces ambient heat load.", icon: faCheck },
-    { title: "Better lighting experience", desc: "A wide range of colour temperatures tailored for specific atmospheres.", icon: faCheck },
-    { title: "Wide choice of lamps", desc: "Lamps for home, office, industrial, and public buildings (internal and external).", icon: faCheck },
-    { title: "Universal compatibility", desc: "Compatible with the majority of existing systems for quick and easy replacement.", icon: faCheck }
+    { title: "Energy Savings", desc: "Full brightness at a fraction of the power cost.", icon: faSeedling },
+    { title: "Longer Lifespan", desc: "LED achieves up to 100,000hrs.", icon: faHistory },
+    { title: "Advanced R&D", desc: "Breakthrough thermal management and superior light output.", icon: faLightbulb },
+    { title: "Early Payback", desc: "Low initial investment with fast, long-term cost recovery.", icon: faAward },
+    { title: "Tailored Ambiance", desc: "A diverse range of colour temperatures for any setting.", icon: faCheck },
+    { title: "Universal Application", desc: "High-quality solutions for home, office, industry and outdoor use.", icon: faCheck },
+    { title: "Plug-and-Play Retrofitting", desc: "Fully compatible with existing systems for effortless installation.", icon: faCheck }
   ];
 
   const innovations = [
+    { year: "2026", text: "Launched MEGAMAN® dimLINK® technology - a simple and cost-effective solution for step dimming control." },
+    { year: "2024", text: "MEGAMAN® XChange® lighting solution developed as a cross-platform resolution." },
+    { year: "2023", text: "Launched INGENIUM® MATTER smart lighting, works with various platforms." },
     { year: "2022", text: "Infinite IoT lighting solution developed based on Bluetooth Low Energy which is widely adopted in smartphones and tablets." },
     { year: "2019", text: "Total Solution Provider of innovate and design LEDs with high degree of flexibility and adaptability." },
     { year: "2018", text: "Launched innovative Dual Beam Technology (DBT) which empowers to have two beam angles in one single luminaire, achieving both narrow and a wider light shape." },
@@ -50,33 +64,33 @@ export default function QualityPage() {
   ];
 
   const standards = [
-    { 
+    {
       id: "9001",
-      name: "ISO 9001:2015", 
-      title: "Quality Management System", 
-      desc: "Ensuring products consistently meet customer requirements, and that quality is consistently improved.", 
-      image: "/images/quality_logo_1.png" 
+      name: "ISO 9001:2015",
+      title: "Quality Management System",
+      desc: "Ensuring products consistently meet customer requirements, and that quality is consistently improved.",
+      image: "/images/quality_logo_1.png"
     },
-    { 
+    {
       id: "14001",
-      name: "ISO 14001:2015", 
-      title: "Environmental Management", 
-      desc: "Framework to protect the environment and respond to changing environmental conditions in balance with socio-economic needs.", 
-      image: "/images/quality_logo_14001.png" 
+      name: "ISO 14001:2015",
+      title: "Environmental Management",
+      desc: "Framework to protect the environment and respond to changing environmental conditions in balance with socio-economic needs.",
+      image: "/images/quality_logo_14001.png"
     },
-    { 
+    {
       id: "18001",
-      name: "OHSAS 18001:2007", 
-      title: "Occupational Health & Safety", 
-      desc: "International standard specifying requirements for an occupational health and safety management system.", 
-      image: "/images/quality_logo_4.png" 
+      name: "OHSAS 18001:2007",
+      title: "Occupational Health & Safety",
+      desc: "International standard specifying requirements for an occupational health and safety management system.",
+      image: "/images/quality_logo_4.png"
     },
-    { 
+    {
       id: "8000",
-      name: "SA 8000:2014", 
-      title: "Social Accountability System", 
-      desc: "Leading social certification standard promoting decent work and ethical labor practices throughout global supply chains.", 
-      image: "/images/quality_logo_SA8000-BV.jpg" 
+      name: "SA 8000:2014",
+      title: "Social Accountability System",
+      desc: "Leading social certification standard promoting decent work and ethical labor practices throughout global supply chains.",
+      image: "/images/quality_logo_SA8000-BV.jpg"
     }
   ];
 
@@ -95,8 +109,8 @@ export default function QualityPage() {
       {/* Hero Header Banner */}
       <section className="relative bg-slate-900 text-white min-h-[380px] flex items-center overflow-hidden border-b border-gray-200 z-10">
         <div className="absolute inset-0 opacity-80 select-none">
-          <Image 
-            src="/banners/products.jpg" 
+          <Image
+            src="/banners/products.jpg"
             alt="Megaman Quality Assurance Banner"
             fill
             className="object-cover object-center"
@@ -114,11 +128,11 @@ export default function QualityPage() {
                 ENGINEERING STANDARDS • SYSTEM COMPLIANCE
               </span>
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extralight uppercase tracking-widest leading-none">
               QUALITY <span className="font-bold text-[#005288] text-white">ASSURANCE</span>
             </h1>
-            
+
             <p className="text-gray-300 font-light text-sm md:text-base leading-relaxed max-w-2xl">
               Delivering international success through rigorous product testing, innovative engineering standards, and worldwide quality certificates.
             </p>
@@ -139,7 +153,7 @@ export default function QualityPage() {
       {/* Breadcrumb Bar */}
       <div className="bg-gray-100 border-b border-gray-200 py-3.5 px-6 md:px-12 relative z-10">
         <div className="container mx-auto max-w-7xl">
-          <ol className="flex items-center space-x-2 text-[10px] uppercase font-mono tracking-wider text-gray-500">
+          <ol className="flex items-center space-x-2 text-sm font-bold uppercase tracking-wider text-gray-500">
             <li>
               <Link href="/" className="hover:text-[#005288] transition-colors">Home</Link>
             </li>
@@ -158,8 +172,8 @@ export default function QualityPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white p-2 shadow-sm group overflow-hidden">
             <div className="relative w-full h-full overflow-hidden">
-              <Image 
-                src="/images/quality_photo_1.png" 
+              <Image
+                src="/images/quality_photo_1.png"
                 alt="Megaman Quality Control Laboratory"
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
@@ -169,8 +183,8 @@ export default function QualityPage() {
           </div>
           <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white p-2 shadow-sm group overflow-hidden">
             <div className="relative w-full h-full overflow-hidden">
-              <Image 
-                src="/images/quality_photo_2.png" 
+              <Image
+                src="/images/quality_photo_2.png"
                 alt="Luminaires Rigorous Quality Testing"
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
@@ -180,8 +194,8 @@ export default function QualityPage() {
           </div>
           <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white p-2 shadow-sm group overflow-hidden">
             <div className="relative w-full h-full overflow-hidden">
-              <Image 
-                src="/images/quality_photo_3.png" 
+              <Image
+                src="/images/quality_photo_3.png"
                 alt="International Standard Quality Inspection"
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
@@ -202,12 +216,12 @@ export default function QualityPage() {
                 DELIVERING CUSTOMER VALUES
               </span>
               <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900 leading-tight">
-                Excellence in Product Innovation and Quality
+                Engineered for Excellence, Designed for Value
               </h2>
               <div className="h-[2px] w-12 bg-[#005288]"></div>
             </div>
-            <p className="text-sm text-gray-600 font-light leading-relaxed">
-              The international success of MEGAMAN® has been built on the ability of its lighting products to deliver substantial benefits to a wide range of customers globally.
+            <p className="text-base text-gray-700 font-light leading-relaxed">
+              MEGAMAN<sup>®</sup> lighting solutions are recognized globally for delivering outstanding performance, efficiency and reliability across every application:
             </p>
           </div>
 
@@ -217,11 +231,11 @@ export default function QualityPage() {
               <div key={idx} className="border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow relative group">
                 <div className="flex gap-4">
                   <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#005288] shrink-0 mt-0.5">
-                    <FontAwesomeIcon icon={item.icon} className="text-[9px]" />
+                    <FontAwesomeIcon icon={item.icon} className="text-[10px]" />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-1">{item.title}</h4>
-                    <p className="text-xs text-gray-500 font-light leading-relaxed">{item.desc}</p>
+                  <div className="space-y-1">
+                    <h4 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-1">{item.title}</h4>
+                    <p className="text-sm text-gray-500 font-light leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-[#005288] transition-colors"></div>
@@ -234,7 +248,7 @@ export default function QualityPage() {
       {/* Rigorous Quality Certifications Section */}
       <section className="container mx-auto px-6 md:px-12 max-w-7xl py-24 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-          
+
           {/* Left Column: Management systems description */}
           <div className="lg:col-span-5 space-y-6">
             <div className="space-y-3">
@@ -246,15 +260,10 @@ export default function QualityPage() {
               </h2>
               <div className="h-[2px] w-12 bg-[#005288]"></div>
             </div>
-            
-            <p className="text-sm text-gray-600 font-light leading-relaxed">
-              MEGAMAN® products comply with the highest international quality standards. The manufacturing sites and operational systems have achieved global recognition to standard qualifications, assuring reliability and social accountability in all business layers.
-            </p>
 
-            <div className="flex items-center gap-3 text-xs text-gray-500 font-mono">
-              <FontAwesomeIcon icon={faAward} className="text-[#005288]" />
-              <span>CERTIFICATION STANDARD AUDIT LEVEL: PASS</span>
-            </div>
+            <p className="text-base text-gray-700 font-light leading-relaxed">
+              MEGAMAN<sup>®</sup> products comply with the highest quality standards and achieved recognition to the following international standards: ISO 9001:2015, ISO 14001:2015, OHSAS 18001:2007 and SA 8000:2014
+            </p>
           </div>
 
           {/* Right Column: Certification cards */}
@@ -262,18 +271,18 @@ export default function QualityPage() {
             {standards.map((std) => (
               <div key={std.id} className="border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-300 relative group flex flex-col items-center text-center">
                 <div className="relative w-20 h-20 mb-4 flex items-center justify-center overflow-hidden">
-                  <Image 
-                    src={std.image} 
+                  <Image
+                    src={std.image}
                     alt={`${std.name} Standard Certificate`}
                     width={80}
                     height={80}
                     className="object-contain"
                   />
                 </div>
-                
-                <h4 className="text-sm font-bold text-gray-900 tracking-wider font-mono">{std.name}</h4>
-                <span className="text-[10px] text-[#005288] uppercase tracking-widest font-mono font-bold mt-1 mb-2">{std.title}</span>
-                <p className="text-xs text-gray-500 font-light leading-relaxed">{std.desc}</p>
+
+                <h4 className="text-base font-bold text-gray-900 tracking-wider font-mono">{std.name}</h4>
+                <span className="text-xs text-[#005288] uppercase tracking-widest font-mono font-bold mt-1 mb-2">{std.title}</span>
+                <p className="text-sm text-gray-600 font-light leading-relaxed">{std.desc}</p>
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-[#005288] transition-colors"></div>
               </div>
             ))}
@@ -293,8 +302,8 @@ export default function QualityPage() {
               World-beating Product Innovation
             </h2>
             <div className="h-[2px] w-12 bg-[#005288] mx-auto"></div>
-            <p className="text-xs text-gray-500 font-light max-w-xl mx-auto pt-2">
-              For nearly three decades, MEGAMAN® has led the lighting industry with technological breakthroughs, from early CFL improvements to circular IoT-powered LED engines.
+            <p className="text-sm text-gray-600 font-light max-w-xl mx-auto pt-2">
+              For nearly three decades, MEGAMAN<sup>®</sup> has led the lighting industry with technological breakthroughs, from early CFL improvements to circular IoT-powered LED engines.
             </p>
           </div>
 
@@ -311,8 +320,8 @@ export default function QualityPage() {
                   <span className="inline-block px-3 py-1 bg-[#005288] text-white text-xs font-mono font-bold tracking-wider uppercase">
                     {item.year}
                   </span>
-                  <p className="text-sm text-gray-600 font-light leading-relaxed max-w-2xl">
-                    {item.text}
+                  <p className="text-base text-gray-700 font-light leading-relaxed max-w-2xl">
+                    {renderWithSup(item.text)}
                   </p>
                 </div>
               </div>
@@ -326,20 +335,20 @@ export default function QualityPage() {
         <div className="container mx-auto px-6 md:px-12 max-w-7xl flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-2">
             <h4 className="text-xl font-light uppercase tracking-widest">DISCOVER CORPORATE RESPONSIBILITY</h4>
-            <p className="text-xs text-slate-400 font-light max-w-xl">
-              Learn how MEGAMAN® integrates ecological sustainability into raw material lifecycles, and our brand heritage.
+            <p className="text-sm text-slate-400 font-light max-w-xl">
+              Learn how MEGAMAN<sup>®</sup> integrates ecological sustainability into raw material lifecycles, and our brand heritage.
             </p>
           </div>
           <div className="flex flex-wrap gap-4 font-mono text-[10px] uppercase tracking-wider">
-            <Link 
-              href="/company/about-megaman" 
+            <Link
+              href="/company/about-megaman"
               className="border border-white/20 bg-white/5 hover:bg-[#005288] hover:border-[#005288] px-5 py-3 transition-colors flex items-center gap-2"
             >
-              <span>About MEGAMAN®</span>
+              <span>About MEGAMAN<sup>®</sup></span>
               <FontAwesomeIcon icon={faArrowRight} className="text-[8px]" />
             </Link>
-            <Link 
-              href="/company/environment-and-sustainability" 
+            <Link
+              href="/company/environment-and-sustainability"
               className="border border-white/20 bg-white/5 hover:bg-[#005288] hover:border-[#005288] px-5 py-3 transition-colors flex items-center gap-2"
             >
               <span>Environmental Protection</span>

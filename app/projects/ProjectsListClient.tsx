@@ -156,7 +156,7 @@ export default function ProjectsListClient({ initialProjects }: ProjectsListClie
               SHAPING <span className="font-bold text-[#005288] text-white">SPACES</span>
             </h1>
             <p className="text-gray-300 font-light text-sm md:text-base leading-relaxed">
-              MEGAMAN® premium lighting systems are engineered with German precision, bringing dynamic design, energy efficiency, and comfort to award-winning portfolios.
+              MEGAMAN<sup>®</sup> premium lighting systems are engineered with German precision, bringing dynamic design, energy efficiency, and comfort to award-winning portfolios.
             </p>
           </div>
         </div>

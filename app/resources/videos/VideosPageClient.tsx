@@ -5,6 +5,7 @@ import { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../../components/Footer';
+import { renderWithSup } from '../../utils/text';
 
 export interface VideoItem {
   id: string;
@@ -70,7 +71,7 @@ export default function VideosPageClient({ initialVideos }: VideosPageClientProp
               TUTORIALS &amp; <span className="font-bold text-white">VIDEOS</span>
             </h1>
             <p className="text-gray-300 font-light text-sm md:text-base leading-relaxed max-w-2xl">
-              Product tutorials, installation guides, case studies, and corporate films from the MEGAMAN® media library.
+              Product tutorials, installation guides, case studies, and corporate films from the MEGAMAN<sup>®</sup> media library.
             </p>
           </div>
         </div>
@@ -79,7 +80,7 @@ export default function VideosPageClient({ initialVideos }: VideosPageClientProp
       {/* Breadcrumb */}
       <div className="bg-gray-100 border-b border-gray-200 py-3.5 px-6 md:px-12">
         <div className="container mx-auto max-w-7xl">
-          <ol className="flex items-center space-x-2 text-[10px] uppercase font-mono tracking-wider text-gray-500">
+          <ol className="flex items-center space-x-2 text-sm font-bold uppercase tracking-wider text-gray-500">
             <li><Link href="/" className="hover:text-[#005288] transition-colors">Home</Link></li>
             <li className="before:content-['/'] before:mr-2 before:text-gray-300"><span className="text-gray-400">Resources</span></li>
             <li className="before:content-['/'] before:mr-2 before:text-gray-300"><span className="text-gray-800 font-bold">Videos</span></li>
@@ -181,11 +182,11 @@ export default function VideosPageClient({ initialVideos }: VideosPageClientProp
                     </span>
                   </div>
                   <h2 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-2 leading-snug group-hover:text-[#005288] transition-colors line-clamp-2">
-                    {video.title}
+                    {renderWithSup(video.title)}
                   </h2>
                   {video.description && (
-                    <p className="text-xs text-gray-500 font-light leading-relaxed line-clamp-3">
-                      {video.description}
+                    <p className="text-sm md:text-base text-gray-500 font-light leading-relaxed line-clamp-3">
+                      {renderWithSup(video.description)}
                     </p>
                   )}
                 </div>

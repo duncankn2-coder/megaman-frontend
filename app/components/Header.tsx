@@ -13,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
+import { renderWithSup } from '../utils/text';
 
 interface SubmenuItem {
   name: string;
@@ -377,7 +378,7 @@ export default function Header() {
                                     onClick={() => setActiveMenu(null)}
                                     className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
                                   >
-                                    {name}
+                                    {renderWithSup(name)}
                                   </Link>
                                 </li>
                               ))}
@@ -529,7 +530,7 @@ export default function Header() {
                                 onClick={() => toggleMobileSubCategory(sub.name)}
                                 className="w-full flex justify-between items-center py-2.5 px-3 text-[14px] text-blue-100 hover:text-white font-medium text-left focus:outline-none"
                               >
-                                <span>{sub.name}</span>
+                                <span>{renderWithSup(sub.name)}</span>
                                 <FontAwesomeIcon
                                   icon={faChevronDown}
                                   className={`text-[10px] opacity-85 transition-transform duration-200 ${isSubExpanded ? 'rotate-180' : ''}`}
@@ -544,15 +545,15 @@ export default function Header() {
                                       onClick={() => setIsMobileMenuOpen(false)}
                                       className="block py-2 px-3 text-[13px] text-blue-200 hover:text-white hover:bg-[#005288]/40 rounded transition-all"
                                     >
-                                      {subItem.name}
+                                      {renderWithSup(subItem.name)}
                                     </Link>
                                   ))}
                                   <Link
                                     href={sub.path}
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="block py-2 px-3 text-[13px] font-semibold text-white hover:bg-[#005288]/40 rounded transition-all"
+                                    className="block py-2 px-3 text-[13px] font-semibold text-white hover:bg-[#005288]/40 rounded transition-all flex items-center gap-1"
                                   >
-                                    Explore All {sub.name} →
+                                    Explore All {renderWithSup(sub.name)} →
                                   </Link>
                                 </div>
                               )}
@@ -567,7 +568,7 @@ export default function Header() {
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="block py-2.5 px-3 text-[14px] text-blue-100 hover:text-white hover:bg-[#005288]/40 rounded transition-all"
                           >
-                            {sub.name}
+                            {renderWithSup(sub.name)}
                           </Link>
                         );
                       })}

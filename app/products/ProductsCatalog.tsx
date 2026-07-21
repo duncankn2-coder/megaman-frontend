@@ -298,7 +298,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="max-w-2xl">
               <span className="text-xs font-bold uppercase tracking-widest text-[#005288] mb-3 block">
-                MEGAMAN® PRODUCT CATALOG
+                MEGAMAN<sup>®</sup> PRODUCT CATALOG
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight mb-4">
                 Architectural & Technical Lighting
@@ -420,7 +420,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                         </div>
-                        <span className="text-xs text-black font-medium">MEGAMAN® Precision Light</span>
+                        <span className="text-xs text-black font-medium">MEGAMAN<sup>®</sup> Precision Light</span>
                       </div>
                     )}
                     
@@ -446,11 +446,11 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                       
                       {/* Description */}
                       {family.description ? (
-                        <p className="text-black font-light text-sm mt-2.5 leading-relaxed line-clamp-3">
+                        <p className="text-black font-light text-sm md:text-base mt-2.5 leading-relaxed line-clamp-3">
                           {family.description}
                         </p>
                       ) : (
-                        <p className="text-black font-light text-sm mt-2.5 italic opacity-75">
+                        <p className="text-black font-light text-sm md:text-base mt-2.5 italic opacity-75">
                           Explore our full premium lighting collection options under the {family.name} series.
                         </p>
                       )}

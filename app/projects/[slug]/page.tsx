@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { renderWithSup } from '../../utils/text';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faMapMarkerAlt, faBuilding, faSlidersH, faLightbulb, faCube, faServer } from '@fortawesome/free-solid-svg-icons';
 
@@ -225,8 +226,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <h2 className="text-[11px] font-bold font-mono uppercase tracking-[0.25em] text-[#005288]">
               PROJECT OVERVIEW & NARRATIVE
             </h2>
-            <p className="text-gray-600 font-light text-sm md:text-base leading-relaxed whitespace-pre-line">
-              {project.description || "Detailed case study description is currently being formatted. MEGAMAN® high-performance optical gear delivers premium luminance control and low glare parameters."}
+            <p className="text-gray-600 font-light text-base md:text-lg leading-relaxed whitespace-pre-line">
+              {renderWithSup(project.description || "Detailed case study description is currently being formatted. MEGAMAN® high-performance optical gear delivers premium luminance control and low glare parameters.")}
             </p>
           </div>
 
@@ -371,7 +372,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               ARCHITECTURAL INTEGRITY
             </h3>
             <p className="text-xs text-slate-400 font-mono uppercase tracking-wider">
-              MEGAMAN® system parameters governing advanced project layouts.
+              MEGAMAN<sup>®</sup> system parameters governing advanced project layouts.
             </p>
           </div>
 

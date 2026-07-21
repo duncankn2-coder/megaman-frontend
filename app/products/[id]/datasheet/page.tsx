@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import PrintController from './PrintController';
+import { renderWithSup } from '../../../utils/text';
 
 interface Product {
   id: string;
@@ -149,7 +150,7 @@ const DatasheetHeader = ({ familyName, typeName, refCode, specSummaryStr }: { fa
   return (
     <header className="border-b border-[#009fe3] pb-4 mb-6 flex justify-between items-end">
       <div className="flex flex-col text-left">
-        <span className="font-bold text-2xl tracking-wide text-[#009fe3] uppercase leading-none mb-1 font-sans whitespace-nowrap">{familyName}</span>
+        <span className="font-bold text-2xl tracking-wide text-[#009fe3] uppercase leading-none mb-1 font-sans whitespace-nowrap">{renderWithSup(familyName)}</span>
         <span className="text-gray-800 text-xs font-medium uppercase font-sans mb-1">{typeName}</span>
         <span className="text-[#009fe3] font-mono text-[10px] tracking-wider uppercase">{refCode}</span>
       </div>
@@ -181,7 +182,7 @@ const TechSection = ({ title, specs }: { title: string; specs: { label: string; 
         {specs.map((row, idx) => (
           <div key={idx} className="grid grid-cols-[55%_45%] py-1 border-b border-gray-100 items-baseline">
             <span className="text-gray-500 font-semibold uppercase">{row.label}</span>
-            <span className="text-gray-900 font-bold text-left pl-2">{row.value}</span>
+            <span className="text-gray-900 font-bold text-left pl-2">{renderWithSup(row.value)}</span>
           </div>
         ))}
       </div>

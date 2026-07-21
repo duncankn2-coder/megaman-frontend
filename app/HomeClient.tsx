@@ -280,7 +280,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                         </h1>
 
                         {currentSlideData.description && (
-                          <p className="text-xs md:text-sm text-gray-500 font-light max-w-md leading-relaxed">
+                          <p className="text-sm md:text-base text-gray-500 font-light max-w-md leading-relaxed">
                             {currentSlideData.description}
                           </p>
                         )}
@@ -467,7 +467,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                                 className="object-contain p-6 sharpen-media"
                               />
                             ) : (
-                              <div className="text-gray-300 font-mono text-xs uppercase tracking-widest">MEGAMAN® Optic</div>
+                              <div className="text-gray-300 font-mono text-xs uppercase tracking-widest">MEGAMAN<sup>®</sup> Optic</div>
                             )}
                           </div>
 
@@ -709,7 +709,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                               </Link>
                             )}
                           </h3>
-                          <p className="text-xs text-gray-500 font-light leading-relaxed line-clamp-4">
+                          <p className="text-sm text-gray-500 font-light leading-relaxed line-clamp-4">
                             {article.summary}
                           </p>
                         </div>
@@ -842,7 +842,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                   <div className="text-[#005288] font-mono text-3xl mb-6">04</div>
                   <h3 className="text-xl uppercase tracking-widest font-bold text-gray-900 mb-4">SMART CONTROLS</h3>
                   <p className="text-xs text-gray-500 font-light leading-relaxed mb-6">
-                    INGENIUM® Matter mesh controllers, sensors, and professional TECOH® LED modules for in-fixture specifications.
+                    INGENIUM<sup>®</sup> Matter mesh controllers, sensors, and professional TECOH<sup>®</sup> LED modules for in-fixture specifications.
                   </p>
                 </div>
                 <div className="border-t border-gray-150 pt-4 flex flex-col justify-between">
@@ -949,7 +949,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                     <span className="font-bold text-[#005288]">24 MAY 2026</span>
                   </div>
                   <h3 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-3 leading-snug group-hover:text-[#005288] transition-colors">
-                    INGENIUM® Matter Smart Lighting Mesh Rolled Out Globally
+                    INGENIUM<sup>®</sup> Matter Smart Lighting Mesh Rolled Out Globally
                   </h3>
                   <p className="text-xs text-gray-500 font-light leading-relaxed">
                     Megaman announces the international deployment of our new Matter-compliant smart LED nodes and control relays, bringing seamless mesh reliability and dynamic CCT circadian tuning.
@@ -1081,7 +1081,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
 
         {/* Copy / Legals row */}
         <div className="max-w-7xl mx-auto border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-400 font-light gap-4">
-          <p>&copy; {new Date().getFullYear()} MEGAMAN®. ALL RIGHTS RESERVED. POWERED BY ARCHITECTURAL STANDARDS.</p>
+          <p>&copy; {new Date().getFullYear()} MEGAMAN<sup>®</sup>. ALL RIGHTS RESERVED. POWERED BY ARCHITECTURAL STANDARDS.</p>
           <div className="flex gap-6 uppercase tracking-wider font-mono">
             <Link href="#" className="hover:text-[#005288] transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-[#005288] transition-colors">Terms of Use</Link>

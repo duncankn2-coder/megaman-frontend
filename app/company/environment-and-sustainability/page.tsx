@@ -10,7 +10,6 @@ import {
   faEye,
   faCompass,
   faLeaf,
-  faHandHoldingHeart,
   faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../../components/Footer';
@@ -47,14 +46,7 @@ export default function EnvironmentAndSustainabilityPage() {
     { title: "Design for environment", desc: "Prioritizing modular assembly for simple component replacement and circular end-of-life recovery.", icon: faCompass }
   ];
 
-  const activities = [
-    { title: "WWF Earth Hour Support", desc: "Active global corporate participant in reducing electrical footprints annually.", year: "Annual Partner" },
-    { title: "Sponsoring 'Go Green'", desc: "Publication sponsorships promoting ecological sustainability guides.", year: "Educational Campaign" },
-    { title: "SDI 'Climate Action' Program", desc: "Partnership with Sustainable Development International to align operations with carbon reduction plans.", year: "International Alliance" },
-    { title: "Friends of the Earth 'Dim it 621'", desc: "Advocating for the reduction of light pollution and excessive architectural outdoor projection.", year: "Community Campaign" },
-    { title: "WWF Walk for Nature", desc: "Sponsorship of local community ecological walks to fund biodiverse habitat conservation.", year: "Eco Sponsorship" },
-    { title: "HKSEA Art of Light", desc: "Encouraging young designers to innovate energy-efficient light installations and smart designs.", year: "Design Incubation" }
-  ];
+
 
   return (
     <div className="bg-[#fcfcfc] text-gray-800 min-h-screen pb-0 font-sans selection:bg-[#005288] selection:text-white relative overflow-hidden">
@@ -95,8 +87,8 @@ export default function EnvironmentAndSustainabilityPage() {
               ENVIRONMENT & <span className="font-bold text-[#005288] text-white">SUSTAINABILITY</span>
             </h1>
             
-            <p className="text-gray-300 font-light text-sm md:text-base leading-relaxed max-w-2xl">
-              Emphasising a high priority in reducing environmental impact, from product development to disposal and recycling, MEGAMAN® offers lighting solutions that substantially benefit consumers as well as the planet.
+            <p className="text-gray-300 font-light text-base md:text-lg leading-relaxed max-w-2xl">
+              Emphasising a high priority in reducing environmental impact, from product development to disposal and recycling, MEGAMAN<sup>®</sup> offers lighting solutions that substantially benefit consumers as well as the planet.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-2 font-mono text-[9px] uppercase tracking-wider">
@@ -115,7 +107,7 @@ export default function EnvironmentAndSustainabilityPage() {
       {/* Breadcrumb Bar */}
       <div className="bg-gray-100 border-b border-gray-200 py-3.5 px-6 md:px-12 relative z-10">
         <div className="container mx-auto max-w-7xl">
-          <ol className="flex items-center space-x-2 text-[10px] uppercase font-mono tracking-wider text-gray-500">
+          <ol className="flex items-center space-x-2 text-sm font-bold uppercase tracking-wider text-gray-500">
             <li>
               <Link href="/" className="hover:text-[#005288] transition-colors">Home</Link>
             </li>
@@ -144,14 +136,14 @@ export default function EnvironmentAndSustainabilityPage() {
               <div className="h-[2px] w-12 bg-[#005288]"></div>
             </div>
 
-            <p className="text-sm text-gray-600 font-light leading-relaxed">
-              MEGAMAN® is passionately dedicated in enhancing the quality of life and conserving the environment. By setting environmental management as one of our highest priorities, MEGAMAN® is committed to reducing the environmental impact arising across the product life cycle, which is from design, manufacture, packaging and transportation, use, disposal and recycle.
+            <p className="text-base text-gray-700 font-light leading-relaxed">
+              MEGAMAN<sup>®</sup> is passionately dedicated in enhancing the quality of life and conserving the environment. By setting environmental management as one of our highest priorities, MEGAMAN<sup>®</sup> is committed to reducing the environmental impact arising across the product life cycle, which is from design, manufacture, packaging and transportation, use, disposal and recycle.
             </p>
 
             <div className="border-l-4 border-[#005288] bg-gray-50 p-6 space-y-2">
               <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 font-mono">OUR MISSION SENTENCE</span>
               <h4 className="text-lg font-bold font-serif italic text-[#005288] leading-none">“BUILDING A BETTER TOMORROW”</h4>
-              <p className="text-xs text-gray-500 font-light leading-relaxed">
+              <p className="text-sm text-gray-600 font-light leading-relaxed">
                 Striving to incorporate sustainable protocols at every stage, assuring carbon footprint minimization and circular operations.
               </p>
             </div>
@@ -166,8 +158,8 @@ export default function EnvironmentAndSustainabilityPage() {
                     <FontAwesomeIcon icon={point.icon} className="text-sm text-[#005288]" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-1">{point.title}</h4>
-                    <p className="text-xs text-gray-500 font-light leading-relaxed">{point.desc}</p>
+                    <h4 className="text-base font-bold uppercase tracking-wider text-gray-900 mb-1">{point.title}</h4>
+                    <p className="text-sm text-gray-600 font-light leading-relaxed">{point.desc}</p>
                   </div>
                 </div>
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-[#005288] transition-colors"></div>
@@ -188,8 +180,8 @@ export default function EnvironmentAndSustainabilityPage() {
               Environmental Objectives
             </h2>
             <div className="h-[2px] w-12 bg-[#005288] mx-auto"></div>
-            <p className="text-xs text-gray-500 font-light max-w-xl mx-auto pt-2">
-              MEGAMAN® translates our mission statement into tangible, auditable operational milestones across global facilities.
+            <p className="text-sm text-gray-600 font-light max-w-xl mx-auto pt-2">
+              MEGAMAN<sup>®</sup> translates our mission statement into tangible, auditable operational milestones across global facilities.
             </p>
           </div>
 
@@ -199,10 +191,10 @@ export default function EnvironmentAndSustainabilityPage() {
                 <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#005288] mb-4 group-hover:scale-110 transition-transform duration-300">
                   <FontAwesomeIcon icon={obj.icon} className="text-base" />
                 </div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900 mb-2 leading-tight min-h-[32px] flex items-center justify-center">
+                <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-2 leading-tight min-h-[32px] flex items-center justify-center">
                   {obj.title}
                 </h4>
-                <p className="text-[11px] text-gray-400 font-light leading-relaxed">
+                <p className="text-xs text-gray-500 font-light leading-relaxed">
                   {obj.desc}
                 </p>
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-[#005288] transition-colors"></div>
@@ -232,7 +224,7 @@ export default function EnvironmentAndSustainabilityPage() {
               <h3 className="text-2xl font-light uppercase tracking-widest text-gray-900 leading-tight">
                 Sustainable Development & Design for Environment
               </h3>
-              <p className="text-sm text-gray-600 font-light leading-relaxed">
+              <p className="text-base text-gray-700 font-light leading-relaxed">
                 Our internal **&ldquo;Design for Environment&rdquo;** program guides every stage of product development. Our target is to create eco-friendly lamps offering high energy-efficiency, minimum environmental footprints, zero hazardous substances (fully RoHS compliant), maximized durability, and complete component recyclability.
               </p>
             </div>
@@ -240,68 +232,7 @@ export default function EnvironmentAndSustainabilityPage() {
         </div>
       </section>
 
-      {/* Section 4: Social Responsibility */}
-      <section className="bg-gray-50 border-y border-gray-200 py-24 relative z-10">
-        <div className="container mx-auto px-6 md:px-12 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-            
-            {/* Left: CSR Context */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="space-y-3">
-                <span className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#005288] block">
-                  CORPORATE CITIZENSHIP
-                </span>
-                <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900 leading-tight">
-                  Running a Socially Responsible Business
-                </h2>
-                <div className="h-[2px] w-12 bg-[#005288]"></div>
-              </div>
 
-              <p className="text-sm text-gray-600 font-light leading-relaxed">
-                MEGAMAN® takes its social responsibility seriously and has been actively involved in a wide variety of ecological, community, and educational projects worldwide. 
-              </p>
-              
-              <div className="space-y-4 text-xs text-gray-500 font-light leading-relaxed">
-                <p>
-                  <strong>Environmental Protection:</strong> Active publishing of green books, participating in local and global green events, and designing innovative energy-saving light sources.
-                </p>
-                <p>
-                  <strong>Nurturing Talent:</strong> Collaboration with design organizations and universities—such as the Royal College of Art, UK—to research and formulate sustainable lighting concepts.
-                </p>
-                <p>
-                  <strong>Society Care:</strong> Providing donations, direct relief assistance, and reconstruction support in the aftermath of natural disasters.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 text-xs text-gray-500 font-mono pt-2">
-                <FontAwesomeIcon icon={faHandHoldingHeart} className="text-[#005288]" />
-                <span>MEGAMAN® SOCIAL COMMITMENT</span>
-              </div>
-            </div>
-
-            {/* Right: Activities Grid */}
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {activities.map((act, idx) => (
-                <div key={idx} className="border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-300 relative group flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <span className="inline-block text-[9px] font-bold uppercase tracking-wider font-mono px-2 py-0.5 bg-gray-100 text-gray-600 rounded-none">
-                      {act.year}
-                    </span>
-                    <h4 className="text-sm font-bold uppercase tracking-wider text-gray-900">
-                      {act.title}
-                    </h4>
-                    <p className="text-xs text-gray-400 font-light leading-relaxed">
-                      {act.desc}
-                    </p>
-                  </div>
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-[#005288] transition-colors"></div>
-                </div>
-              ))}
-            </div>
-
-          </div>
-        </div>
-      </section>
 
       {/* Reusable Footer Component */}
       <Footer />

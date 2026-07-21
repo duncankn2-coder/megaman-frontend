@@ -69,7 +69,7 @@ export default function Footer() {
 
       {/* Copy / Legals row */}
       <div className="max-w-7xl mx-auto border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-400 font-light gap-4">
-        <p>&copy; {new Date().getFullYear()} MEGAMAN®. ALL RIGHTS RESERVED. POWERED BY ARCHITECTURAL STANDARDS.</p>
+        <p>&copy; {new Date().getFullYear()} MEGAMAN<sup>®</sup>. ALL RIGHTS RESERVED. POWERED BY ARCHITECTURAL STANDARDS.</p>
         <div className="flex gap-6 uppercase tracking-wider font-mono">
           <Link href="#" className="hover:text-[#005288] transition-colors">Privacy Policy</Link>
           <Link href="#" className="hover:text-[#005288] transition-colors">Terms of Use</Link>

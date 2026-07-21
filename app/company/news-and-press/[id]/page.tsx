@@ -107,7 +107,7 @@ function LexicalRenderer({ content }: { content: any }) {
       case 'root':
         return <div key={index} className="space-y-6">{children}</div>;
       case 'paragraph':
-        return <div key={index} className="text-gray-600 font-light leading-relaxed text-sm md:text-base mb-4">{children}</div>;
+        return <div key={index} className="text-gray-600 font-light leading-relaxed text-base md:text-lg mb-4">{children}</div>;
       case 'heading':
         const Tag = node.tag || 'h2';
         const headingClasses: Record<string, string> = {
@@ -122,9 +122,9 @@ function LexicalRenderer({ content }: { content: any }) {
         return <Tag key={index} className={className}>{children}</Tag>;
       case 'list':
         if (node.tag === 'ol') {
-          return <ol key={index} className="list-decimal pl-6 space-y-2 my-4 text-gray-600 font-light text-sm md:text-base">{children}</ol>;
+          return <ol key={index} className="list-decimal pl-6 space-y-2 my-4 text-gray-600 font-light text-base md:text-lg">{children}</ol>;
         }
-        return <ul key={index} className="list-disc pl-6 space-y-2 my-4 text-gray-600 font-light text-sm md:text-base">{children}</ul>;
+        return <ul key={index} className="list-disc pl-6 space-y-2 my-4 text-gray-600 font-light text-base md:text-lg">{children}</ul>;
       case 'listitem':
         return <li key={index}>{children}</li>;
       case 'quote':
@@ -202,7 +202,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
       {/* Breadcrumb */}
       <div className="bg-gray-100 border-b border-gray-200 py-3 px-6 md:px-12">
         <div className="container mx-auto max-w-5xl">
-          <ol className="flex items-center space-x-2 text-[10px] uppercase font-mono tracking-wider text-gray-500">
+          <ol className="flex items-center space-x-2 text-sm font-bold uppercase tracking-wider text-gray-500">
             <li><Link href="/" className="hover:text-[#005288] transition-colors">Home</Link></li>
             <li className="before:content-['/'] before:mr-2 before:text-gray-300"><span className="text-gray-400">Company</span></li>
             <li className="before:content-['/'] before:mr-2 before:text-gray-300">

@@ -49,7 +49,7 @@ export default function AboutMegamanPage() {
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extralight uppercase tracking-widest leading-none">
-              ABOUT <span className="font-bold text-[#005288] text-white">MEGAMAN®</span>
+              ABOUT <span className="font-bold text-[#005288] text-white">MEGAMAN<sup>®</sup></span>
             </h1>
             
             <p className="text-gray-300 font-light text-sm md:text-base leading-relaxed max-w-2xl">
@@ -73,7 +73,7 @@ export default function AboutMegamanPage() {
       {/* Breadcrumb Bar */}
       <div className="bg-gray-100 border-b border-gray-200 py-3.5 px-6 md:px-12 relative z-10">
         <div className="container mx-auto max-w-7xl">
-          <ol className="flex items-center space-x-2 text-[10px] uppercase font-mono tracking-wider text-gray-500">
+          <ol className="flex items-center space-x-2 text-sm font-bold uppercase tracking-wider text-gray-500">
             <li>
               <Link href="/" className="hover:text-[#005288] transition-colors">Home</Link>
             </li>
@@ -98,13 +98,13 @@ export default function AboutMegamanPage() {
                 GLOBAL LEADER IN ECO-LIGHTING
               </span>
               <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900 leading-tight">
-                MEGAMAN® - Leading the World in Energy Efficient Lighting
+                MEGAMAN<sup>®</sup> - Leading the World in Energy Efficient Lighting
               </h2>
               <div className="h-[2px] w-12 bg-[#005288]"></div>
             </div>
 
-            <p className="text-sm text-gray-600 font-light leading-relaxed font-sans">
-              MEGAMAN® is a global brand to have exclusively provided energy-efficient lighting products throughout its lifetime. Originated in Germany, the brand has gone from strength to strength over 25 years since its inception in 1994; and has come from developing the industry&apos;s first classic shaped CFL to now boasting a full range of metal halide replacement LEDs, launching revolutionary Smart Lighting Solution, a full range of LED Components and a suite of LED luminaires.
+            <p className="text-base text-gray-700 font-light leading-relaxed font-sans">
+              MEGAMAN<sup>®</sup> is a global brand in high-performance, energy-efficient lighting and an innovative leader in LED bulbs and luminaires, with technology targeting a sustainable solution. MEGAMAN<sup>®</sup> originated in Germany, our inception since 1994. MEGAMAN<sup>®</sup> products and service offering have evolved over time to meet the every-changing demands of the dynamic market. By setting environmental management as one of the company&apos;s highest priorities, MEGAMAN<sup>®</sup> delivers brilliant lighting solutions engineered to brighten us today and protect our world for tomorrow.
             </p>
 
             {/* Micro Stats Cards */}
@@ -112,17 +112,17 @@ export default function AboutMegamanPage() {
               <div className="border border-gray-200 bg-white p-4 text-center shadow-sm">
                 <FontAwesomeIcon icon={faHistory} className="text-[#005288] text-lg mb-2" />
                 <span className="block text-xl font-bold text-gray-900 font-mono">1994</span>
-                <span className="text-[9px] uppercase tracking-wider text-gray-400 font-mono">Established</span>
+                <span className="text-[11px] uppercase tracking-wider text-gray-500 font-mono">incorporated</span>
               </div>
               <div className="border border-gray-200 bg-white p-4 text-center shadow-sm">
                 <FontAwesomeIcon icon={faGlobe} className="text-[#005288] text-lg mb-2" />
-                <span className="block text-xl font-bold text-gray-900 font-mono">GER</span>
-                <span className="text-[9px] uppercase tracking-wider text-gray-400 font-mono">Brand Origin</span>
+                <span className="block text-xl font-bold text-gray-900 font-mono">GERMANY</span>
+                <span className="text-[11px] uppercase tracking-wider text-gray-500 font-mono">originated</span>
               </div>
               <div className="border border-gray-200 bg-white p-4 text-center shadow-sm">
                 <FontAwesomeIcon icon={faSeedling} className="text-[#005288] text-lg mb-2" />
                 <span className="block text-xl font-bold text-gray-900 font-mono">100%</span>
-                <span className="text-[9px] uppercase tracking-wider text-gray-400 font-mono">Eco-Efficient</span>
+                <span className="text-[11px] uppercase tracking-wider text-gray-500 font-mono">committed to sustainability</span>
               </div>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function AboutMegamanPage() {
             <div className="relative aspect-video w-full border border-gray-200 shadow-md overflow-hidden bg-slate-900">
               <iframe 
                 className="w-full h-full object-cover" 
-                src="https://www.youtube.com/embed/E8vXpMvPILk?rel=0&amp;autohide=1&amp;showinfo=0&amp;fs=0" 
+                src="https://www.youtube.com/embed/0YZaNLINlVY?rel=0&amp;autohide=1&amp;showinfo=0&amp;fs=0" 
                 title="MEGAMAN® Corporate Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -179,15 +179,18 @@ export default function AboutMegamanPage() {
                 </h3>
               </div>
 
-              <div className="space-y-4 text-sm text-gray-600 font-light leading-relaxed font-sans">
+              <div className="space-y-4 text-base text-gray-700 font-light leading-relaxed font-sans">
                 <p>
                   A glowing sphere of light is symbolic of life. Light’s power is in its ability to provide a dynamic focus in an ever-changing universe. Light is alive, radiating its colourful character and sparkling vibrancy to the world.
                 </p>
                 <p>
-                  It is no secret that artificial light enhances life, work and play. It permits work to be carried out efficiently and comfortably in any office. It enables easy, safe travel underground and during the darkest hours of the night. It provides quality time for music concerts, theatre performances and evening football games. Artificial light allows time to be effectively used, any hour of the day, as needed.
+                  Artificial light transforms how we live, work, and play. It drives workplace productivity, ensures safe travel at any hour, and brings evening entertainment to life. By overcoming the limits of daylight, modern lighting allows us to make the most of every hour of the day.
                 </p>
                 <p>
-                  MEGAMAN® is recognised around the world as a provider of energy-saving lighting solutions that make a positive difference to the quality of life. With its innovative LED lighting products in a variety of sizes, shapes, colour temperatures and features, MEGAMAN® offers a way of life that substantially benefits consumers as well as the environment.
+                  MEGAMAN<sup>®</sup> is dedicated to enhancing the quality of life through innovation. We offer a diverse range of advanced LED solutions—spanning various shapes, sizes, and colour temperatures—designed to benefit both consumers and the environment. By embedding eco-conscious practices across our entire product lifecycle to achieve sustainability, we deliver innovative lighting solutions that protect our world. MEGAMAN<sup>®</sup> continues to pioneer sustainable technologies that illuminate a better tomorrow for all.
+                </p>
+                <p className="font-semibold text-lg text-[#005288] pt-2">
+                  MEGAMAN<sup>®</sup> - The light that lights up the world in a sustainable and socially responsible way.
                 </p>
               </div>
             </div>
@@ -208,15 +211,76 @@ export default function AboutMegamanPage() {
           </div>
 
           <h3 className="text-2xl md:text-3xl font-light uppercase tracking-widest text-gray-900 leading-snug">
-            MEGAMAN® - The light that lights up the world in a <span className="font-bold text-[#005288]">sustainable</span> and <span className="font-bold text-[#005288]">socially responsible</span> way.
+            MEGAMAN<sup>®</sup> - The light that lights up the world in a <span className="font-bold text-[#005288]">sustainable</span> and <span className="font-bold text-[#005288]">socially responsible</span> way.
           </h3>
 
-          <p className="text-sm text-gray-500 font-light leading-relaxed max-w-2xl mx-auto">
-            With an emphasis on reducing the environmental impact, from product development to disposal and recycling, MEGAMAN® leads the way with its innovations and new lighting technology, striving for a better tomorrow for all.
+          <p className="text-base text-gray-600 font-light leading-relaxed max-w-2xl mx-auto">
+            With an emphasis on reducing the environmental impact, from product development to disposal and recycling, MEGAMAN<sup>®</sup> leads the way with its innovations and new lighting technology, striving for a better tomorrow for all.
           </p>
         </div>
+      </section>
 
+      {/* Section 4: Design Philosophy */}
+      <section className="bg-gray-50 border-t border-gray-200 py-24 relative z-10">
+        <div className="container mx-auto px-6 md:px-12 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            
+            {/* Left Column: Narrative */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold font-mono uppercase tracking-[0.2em] text-[#005288] block">
+                  PRODUCT VISION
+                </span>
+                <h3 className="text-3xl font-light uppercase tracking-widest text-gray-900 leading-tight">
+                  Design Philosophy
+                </h3>
+                <div className="h-[2px] w-12 bg-[#005288]"></div>
+              </div>
+              
+              <p className="text-base text-gray-700 font-light leading-relaxed font-sans">
+                Our design philosophy unites modular flexibility and intelligent control with an uncompromising commitment to sustainability and effortless convenience.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4 pt-4 text-xs font-mono uppercase tracking-wider text-gray-600">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-[#005288] shrink-0"></span>
+                  <span>Flexibility</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-[#005288] shrink-0"></span>
+                  <span>Convenience</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-[#005288] shrink-0"></span>
+                  <span>Sustainability</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-[#005288] shrink-0"></span>
+                  <span>Intelligence</span>
+                </div>
+              </div>
+            </div>
 
+            {/* Right Column: Image Display */}
+            <div className="lg:col-span-7 flex justify-center">
+              <div className="relative w-full aspect-[4/1] bg-white p-4 border border-gray-200 shadow-sm group overflow-hidden">
+                <div className="relative w-full h-full">
+                  <Image 
+                    src="/images/design-philosophy.png" 
+                    alt="Megaman Design Philosophy: Flexibility, Convenience, Sustainability, Intelligence"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 700px"
+                    className="object-contain group-hover:scale-102 transition-transform duration-500"
+                  />
+                </div>
+                {/* Crosshairs styling accents */}
+                <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-[#005288]/40"></div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[#005288]/40"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </section>
 
       {/* CTA section to other company pages */}
@@ -224,8 +288,8 @@ export default function AboutMegamanPage() {
         <div className="container mx-auto px-6 md:px-12 max-w-7xl flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-2">
             <h4 className="text-xl font-light uppercase tracking-widest">WANT TO DISCOVER MORE?</h4>
-            <p className="text-xs text-slate-400 font-light max-w-xl">
-              Learn about our certification systems, environmental report metrics, quality standards, and the awards MEGAMAN® has won over the years.
+            <p className="text-sm text-slate-400 font-light max-w-xl">
+              Learn about our certification systems, environmental report metrics, quality standards, and the awards MEGAMAN<sup>®</sup> has won over the years.
             </p>
           </div>
           <div className="flex flex-wrap gap-4 font-mono text-[10px] uppercase tracking-wider">

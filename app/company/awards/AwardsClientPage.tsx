@@ -155,7 +155,7 @@ export default function AwardsClientPage({ initialAwards }: AwardsClientPageProp
             </h1>
             
             <p className="text-gray-300 font-light text-sm md:text-base leading-relaxed max-w-2xl">
-              MEGAMAN® has been endorsed globally by international bodies for Environmental Achievement, Quality Standards, Technological Innovation, and CSR Management.
+              MEGAMAN<sup>®</sup> has been endorsed globally by international bodies for Environmental Achievement, Quality Standards, Technological Innovation, and CSR Management.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-2 font-mono text-[9px] uppercase tracking-wider">
@@ -174,7 +174,7 @@ export default function AwardsClientPage({ initialAwards }: AwardsClientPageProp
       {/* Breadcrumb Bar */}
       <div className="bg-gray-100 border-b border-gray-200 py-3.5 px-6 md:px-12 relative z-10">
         <div className="container mx-auto max-w-7xl">
-          <ol className="flex items-center space-x-2 text-[10px] uppercase font-mono tracking-wider text-gray-500">
+          <ol className="flex items-center space-x-2 text-sm font-bold uppercase tracking-wider text-gray-500">
             <li>
               <Link href="/" className="hover:text-[#005288] transition-colors">Home</Link>
             </li>
@@ -298,7 +298,7 @@ export default function AwardsClientPage({ initialAwards }: AwardsClientPageProp
               href="/company/about-megaman" 
               className="border border-white/20 bg-white/5 hover:bg-[#005288] hover:border-[#005288] px-5 py-3 transition-colors flex items-center gap-2"
             >
-              <span>About MEGAMAN®</span>
+              <span>About MEGAMAN<sup>®</sup></span>
               <FontAwesomeIcon icon={faArrowRight} className="text-[8px]" />
             </Link>
             <Link 

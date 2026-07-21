@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { renderWithSup } from '../../utils/text';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faArrowRight, 
@@ -139,7 +140,7 @@ export default function HospitalityProjectsPage() {
             </h1>
             
             <p className="text-gray-300 font-light text-sm md:text-base leading-relaxed">
-              In premium hotel and hospitality design, light is not merely functional—it shapes the atmospheric identity, reinforces architectural spaces, and orchestrates comfort. Explore how MEGAMAN®&apos;s state-of-the-art engineering elevates emotional luxury.
+              In premium hotel and hospitality design, light is not merely functional—it shapes the atmospheric identity, reinforces architectural spaces, and orchestrates comfort. Explore how MEGAMAN<sup>®</sup>&apos;s state-of-the-art engineering elevates emotional luxury.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4 font-mono text-[9px] uppercase tracking-wider">
@@ -398,7 +399,7 @@ export default function HospitalityProjectsPage() {
               {/* Specs & Link Card */}
               <div className="p-6 md:p-8 flex flex-col flex-grow justify-between bg-white">
                 <div>
-                  <h3 className="text-base font-bold text-gray-900 group-hover:text-[#005288] transition-colors">{prod.title}</h3>
+                  <h3 className="text-base font-bold text-gray-900 group-hover:text-[#005288] transition-colors">{renderWithSup(prod.title)}</h3>
                   <p className="text-xs text-gray-500 font-light mt-3 leading-relaxed">
                     {prod.desc}
                   </p>

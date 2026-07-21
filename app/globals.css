@@ -5,6 +5,7 @@
   --foreground: #f3f4f6;
   --accent-blue: #005288;
   --accent-gold: #e2c285;
+  font-size: 125%;
 }
 
 @theme inline {
