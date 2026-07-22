@@ -342,11 +342,29 @@ const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string =>
 };
 
 export default function FamilyDetailClient({ family }: FamilyDetailClientProps) {
+  const activeParams = family.selectedParameters || [
+    'mmCode',
+    'modelNo',
+    'colour',
+    'wattage',
+    'luminousFlux',
+    'colourTemperature',
+    'cri',
+    'efficacy',
+    'ip',
+    'connector'
+  ];
+
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [powerFilter, setPowerFilter] = useState('All');
   const [colorTempFilter, setColorTempFilter] = useState('All');
+  const [finishFilter, setFinishFilter] = useState('All');
+  const [ipFilter, setIpFilter] = useState('All');
+  const [baseFilter, setBaseFilter] = useState('All');
+  const [voltageFilter, setVoltageFilter] = useState('All');
+  const [gearFilter, setGearFilter] = useState('All');
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
   const [skus, setSkus] = useState<any[]>([]);
   const [isLoadingSkus, setIsLoadingSkus] = useState(true);
@@ -464,6 +482,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const filtersData = useMemo(() => {
     const powers = new Set<string>();
     const colorTemps = new Set<string>();
+    const finishes = new Set<string>();
+    const ips = new Set<string>();
+    const bases = new Set<string>();
+    const voltages = new Set<string>();
+    const gears = new Set<string>();
     
     const productIdsWithSkus = new Set(
       skus.map(s => {
@@ -490,13 +513,29 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     combinedSkus.forEach(item => {
       const pwr = item.wattage || getSkuSpec(item, ['power', 'System power', 'wattage']);
       const ct = item.colourTemperature || getSkuSpec(item, ['colourTemperature', 'Color Temperature', 'CCT']);
+      const col = item.colour || getSkuSpec(item, ['colour', 'color', 'Colour', 'Color']);
+      const ipVal = item.ip || getSkuSpec(item, ['ipRating', 'IP rating', 'IP Rating', 'ip']);
+      const baseVal = item.lampBase || getSkuSpec(item, ['lampBase', 'lamp base']);
+      const voltVal = item.voltage || getSkuSpec(item, ['voltage', 'Voltage']);
+      const gearVal = item.connector || getSkuSpec(item, ['controlGear', 'control_gear', 'Control gear']);
+
       if (pwr && pwr !== '—') powers.add(pwr);
       if (ct && ct !== '—') colorTemps.add(ct);
+      if (col && col !== '—') finishes.add(col);
+      if (ipVal && ipVal !== '—') ips.add(ipVal);
+      if (baseVal && baseVal !== '—') bases.add(baseVal);
+      if (voltVal && voltVal !== '—') voltages.add(voltVal);
+      if (gearVal && gearVal !== '—') gears.add(gearVal);
     });
 
     return {
       powers: Array.from(powers),
-      colorTemps: Array.from(colorTemps)
+      colorTemps: Array.from(colorTemps),
+      finishes: Array.from(finishes),
+      ips: Array.from(ips),
+      bases: Array.from(bases),
+      voltages: Array.from(voltages),
+      gears: Array.from(gears)
     };
   }, [family.products, skus]);
 
@@ -529,9 +568,19 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     return combinedSkus.filter(sku => {
       const pwr = sku.wattage || getSkuSpec(sku, ['power', 'System power', 'wattage']);
       const ct = sku.colourTemperature || getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT']);
+      const col = sku.colour || getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color']);
+      const ipVal = sku.ip || getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip']);
+      const baseVal = sku.lampBase || getSkuSpec(sku, ['lampBase', 'lamp base']);
+      const voltVal = sku.voltage || getSkuSpec(sku, ['voltage', 'Voltage']);
+      const gearVal = sku.connector || getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear']);
       
       const matchesPower = powerFilter === 'All' || pwr === powerFilter || pwr.replace(/[^\d]/g, '') === powerFilter.replace(/[^\d]/g, '');
       const matchesColorTemp = colorTempFilter === 'All' || ct === colorTempFilter || ct.replace(/[^\d]/g, '') === colorTempFilter.replace(/[^\d]/g, '');
+      const matchesFinish = finishFilter === 'All' || col === finishFilter;
+      const matchesIp = ipFilter === 'All' || ipVal === ipFilter;
+      const matchesBase = baseFilter === 'All' || baseVal === baseFilter;
+      const matchesVoltage = voltageFilter === 'All' || voltVal === voltageFilter;
+      const matchesGear = gearFilter === 'All' || gearVal === gearFilter;
       
       const parentName = typeof sku.product === 'object' ? sku.product?.name : '';
       const matchesSearch = searchQuery === '' || 
@@ -539,9 +588,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         (sku.modelNumber && sku.modelNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (parentName && parentName.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      return matchesPower && matchesColorTemp && matchesSearch;
+      return matchesPower && matchesColorTemp && matchesFinish && matchesIp && matchesBase && matchesVoltage && matchesGear && matchesSearch;
     });
-  }, [family.products, skus, powerFilter, colorTempFilter, searchQuery]);
+  }, [family.products, skus, powerFilter, colorTempFilter, finishFilter, ipFilter, baseFilter, voltageFilter, gearFilter, searchQuery]);
 
   return (
     <div className="bg-[#fcfcfc] text-gray-800 min-h-screen pb-24 relative font-sans selection:bg-[#005288] selection:text-white">
@@ -1021,7 +1070,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               </div>
 
               {/* Power Filter */}
-              {filtersData.powers.length > 0 && (
+              {activeParams.includes('wattage') && filtersData.powers.length > 0 && (
                 <select
                   value={powerFilter}
                   onChange={(e) => setPowerFilter(e.target.value)}
@@ -1035,7 +1084,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               )}
 
               {/* Color Temp Filter */}
-              {filtersData.colorTemps.length > 0 && (
+              {activeParams.includes('colourTemperature') && filtersData.colorTemps.length > 0 && (
                 <select
                   value={colorTempFilter}
                   onChange={(e) => setColorTempFilter(e.target.value)}
@@ -1045,7 +1094,77 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   {filtersData.colorTemps.map(ct => (
                     <option key={ct} value={ct}>{ct}</option>
                   ))}
-                        </select>
+                </select>
+              )}
+
+              {/* Finish Filter */}
+              {activeParams.includes('colour') && filtersData.finishes.length > 0 && (
+                <select
+                  value={finishFilter}
+                  onChange={(e) => setFinishFilter(e.target.value)}
+                  className="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#005288] transition-all cursor-pointer font-mono shadow-sm"
+                >
+                  <option value="All">All Finishes</option>
+                  {filtersData.finishes.map(col => (
+                    <option key={col} value={col}>{col}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* IP Rating Filter */}
+              {activeParams.includes('ip') && filtersData.ips.length > 0 && (
+                <select
+                  value={ipFilter}
+                  onChange={(e) => setIpFilter(e.target.value)}
+                  className="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#005288] transition-all cursor-pointer font-mono shadow-sm"
+                >
+                  <option value="All">All IP Ratings</option>
+                  {filtersData.ips.map(ipVal => (
+                    <option key={ipVal} value={ipVal}>{ipVal}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Cap / Base Filter */}
+              {activeParams.includes('lampBase') && filtersData.bases.length > 0 && (
+                <select
+                  value={baseFilter}
+                  onChange={(e) => setBaseFilter(e.target.value)}
+                  className="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#005288] transition-all cursor-pointer font-mono shadow-sm"
+                >
+                  <option value="All">All Bases</option>
+                  {filtersData.bases.map(baseVal => (
+                    <option key={baseVal} value={baseVal}>{baseVal}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Voltage Filter */}
+              {activeParams.includes('voltage') && filtersData.voltages.length > 0 && (
+                <select
+                  value={voltageFilter}
+                  onChange={(e) => setVoltageFilter(e.target.value)}
+                  className="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#005288] transition-all cursor-pointer font-mono shadow-sm"
+                >
+                  <option value="All">All Voltages</option>
+                  {filtersData.voltages.map(voltVal => (
+                    <option key={voltVal} value={voltVal}>{voltVal}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Control Gear Filter */}
+              {activeParams.includes('connector') && filtersData.gears.length > 0 && (
+                <select
+                  value={gearFilter}
+                  onChange={(e) => setGearFilter(e.target.value)}
+                  className="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#005288] transition-all cursor-pointer font-mono shadow-sm"
+                >
+                  <option value="All">All Control Gear</option>
+                  {filtersData.gears.map(gearVal => (
+                    <option key={gearVal} value={gearVal}>{gearVal}</option>
+                  ))}
+                </select>
               )}
             </div>
           </div>
@@ -1061,16 +1180,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <table className="w-full text-left border-collapse font-mono">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    <th className="py-4 pl-4">MM Code</th>
-                    <th className="py-4">Model No.</th>
-                    <th className="py-4">Luminaire Finish</th>
-                    <th className="py-4 text-center">Power</th>
-                    <th className="py-4 text-center">Luminous Flux</th>
-                    <th className="py-4 text-center">CCT (K)</th>
-                    <th className="py-4 text-center">CRI</th>
-                    <th className="py-4 text-center">Efficacy</th>
-                    <th className="py-4 text-center">IP</th>
-                    <th className="py-4 text-center">Control Gear</th>
+                    {activeParams.includes('mmCode') && <th className="py-4 pl-4">MM Code</th>}
+                    {activeParams.includes('modelNo') && <th className="py-4">Model No.</th>}
+                    {activeParams.includes('colour') && <th className="py-4">Luminaire Finish</th>}
+                    {activeParams.includes('wattage') && <th className="py-4 text-center">Power</th>}
+                    {activeParams.includes('luminousFlux') && <th className="py-4 text-center">Luminous Flux</th>}
+                    {activeParams.includes('colourTemperature') && <th className="py-4 text-center">CCT (K)</th>}
+                    {activeParams.includes('cri') && <th className="py-4 text-center">CRI</th>}
+                    {activeParams.includes('efficacy') && <th className="py-4 text-center">Efficacy</th>}
+                    {activeParams.includes('ip') && <th className="py-4 text-center">IP</th>}
+                    {activeParams.includes('connector') && <th className="py-4 text-center">Control Gear</th>}
+                    {activeParams.includes('lampBase') && <th className="py-4 text-center">Lamp Base</th>}
+                    {activeParams.includes('voltage') && <th className="py-4 text-center">Voltage</th>}
                     <th className="py-4 pr-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -1102,16 +1223,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         onClick={() => handleOpenProduct(sku)}
                         className="text-xs md:text-sm hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-100"
                       >
-                        <td className="py-4 pl-4 font-bold text-[#005288]">{mmCode}</td>
-                        <td className="py-4 font-sans font-medium text-gray-900">{modelNo}</td>
-                        <td className="py-4 text-gray-500">{color}</td>
-                        <td className="py-4 text-center font-bold text-gray-900">{power}</td>
-                        <td className="py-4 text-center">{flux}</td>
-                        <td className="py-4 text-center">{cct}</td>
-                        <td className="py-4 text-center">{cri}</td>
-                        <td className="py-4 text-center text-[#005288] font-bold">{efficacy}</td>
-                        <td className="py-4 text-center font-bold">{ip}</td>
-                        <td className="py-4 text-center text-gray-500 font-sans">{control}</td>
+                        {activeParams.includes('mmCode') && <td className="py-4 pl-4 font-bold text-[#005288]">{mmCode}</td>}
+                        {activeParams.includes('modelNo') && <td className="py-4 font-sans font-medium text-gray-900">{modelNo}</td>}
+                        {activeParams.includes('colour') && <td className="py-4 text-gray-500">{color}</td>}
+                        {activeParams.includes('wattage') && <td className="py-4 text-center font-bold text-gray-900">{power}</td>}
+                        {activeParams.includes('luminousFlux') && <td className="py-4 text-center">{flux}</td>}
+                        {activeParams.includes('colourTemperature') && <td className="py-4 text-center">{cct}</td>}
+                        {activeParams.includes('cri') && <td className="py-4 text-center">{cri}</td>}
+                        {activeParams.includes('efficacy') && <td className="py-4 text-center text-[#005288] font-bold">{efficacy}</td>}
+                        {activeParams.includes('ip') && <td className="py-4 text-center font-bold">{ip}</td>}
+                        {activeParams.includes('connector') && <td className="py-4 text-center text-gray-500 font-sans">{control}</td>}
+                        {activeParams.includes('lampBase') && <td className="py-4 text-center text-gray-500 font-sans">{sku.lampBase || getSkuSpec(sku, ['lampBase', 'lamp base'], '—')}</td>}
+                        {activeParams.includes('voltage') && <td className="py-4 text-center text-gray-500 font-sans">{sku.voltage || getSkuSpec(sku, ['voltage', 'Voltage'], '—')}</td>}
                         <td className="py-4 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleOpenProduct(sku)}

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faGlobe,
-  faUser,
   faSearch,
   faChevronDown,
   faBars,
@@ -480,12 +479,7 @@ export default function Header() {
           >
             <FontAwesomeIcon icon={faSearch} className="text-[14px]" />
           </button>
-          <button
-            aria-label="User profile"
-            className="w-9 h-9 rounded-full border border-blue-200/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
-          >
-            <FontAwesomeIcon icon={faUser} className="text-[14px]" />
-          </button>
+
 
           {/* Hamburger Menu (Mobile Only) */}
           <button
