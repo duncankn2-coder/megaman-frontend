@@ -1312,6 +1312,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     });
 
                     const displayCcts = cctsToRender.length > 0 ? cctsToRender : (allCcts.length > 0 ? allCcts : ['—']);
+                    const N = displayCcts.length;
 
                     return (
                       <Fragment key={sku.id}>
@@ -1351,19 +1352,19 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                 !isFirst ? 'bg-gray-50/20' : ''
                               }`}
                             >
-                              {activeParams.includes('mmCode') && (
-                                <td className="py-1.5 pl-4 font-bold text-[#005288]">
-                                  {isFirst ? mmCode : ''}
+                              {activeParams.includes('mmCode') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 pl-4 font-bold text-[#005288] align-middle bg-white">
+                                  {mmCode}
                                 </td>
                               )}
-                              {activeParams.includes('modelNo') && (
-                                <td className="py-1.5 font-sans font-medium text-gray-900">
-                                  {isFirst ? modelNo : ''}
+                              {activeParams.includes('modelNo') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 font-sans font-medium text-gray-900 align-middle bg-white">
+                                  {modelNo}
                                 </td>
                               )}
-                              {activeParams.includes('colour') && (
-                                <td className="py-1.5 text-gray-500">
-                                  {isFirst ? color : ''}
+                              {activeParams.includes('colour') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 text-gray-500 align-middle bg-white">
+                                  {color}
                                 </td>
                               )}
                               {activeParams.includes('wattage') && (
@@ -1381,9 +1382,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   {subCct}
                                 </td>
                               )}
-                              {activeParams.includes('cri') && (
-                                <td className="py-1.5 text-center">
-                                  {isFirst ? cri : ''}
+                              {activeParams.includes('cri') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 text-center align-middle bg-white">
+                                  {cri}
                                 </td>
                               )}
                               {activeParams.includes('efficacy') && (
@@ -1391,44 +1392,36 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   {efficacy}
                                 </td>
                               )}
-                              {activeParams.includes('ip') && (
-                                <td className="py-1.5 text-center font-bold">
-                                  {isFirst ? ip : ''}
+                              {activeParams.includes('ip') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 text-center font-bold align-middle bg-white">
+                                  {ip}
                                 </td>
                               )}
-                              {activeParams.includes('connector') && (
-                                <td className="py-1.5 text-center text-gray-500 font-sans">
-                                  {isFirst ? control : ''}
+                              {activeParams.includes('connector') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 text-center text-gray-500 font-sans align-middle bg-white">
+                                  {control}
                                 </td>
                               )}
-                              {activeParams.includes('lampBase') && (
-                                <td className="py-1.5 text-center text-gray-500 font-sans">
-                                  {isFirst ? getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type'], '—') : ''}
+                              {activeParams.includes('lampBase') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 text-center text-gray-500 font-sans align-middle bg-white">
+                                  {getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type'], '—')}
                                 </td>
                               )}
-                              {activeParams.includes('voltage') && (
-                                <td className="py-1.5 text-center text-gray-500 font-sans">
-                                  {isFirst ? getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—') : ''}
+                              {activeParams.includes('voltage') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 text-center text-gray-500 font-sans align-middle bg-white">
+                                  {getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—')}
                                 </td>
                               )}
-                              <td className="py-1.5 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
-                                {isFirst ? (
+                              {isFirst && (
+                                <td rowSpan={N} className="py-1.5 pr-4 text-right align-middle bg-white" onClick={(e) => e.stopPropagation()}>
                                   <button
                                     onClick={() => handleOpenProduct(sku)}
                                     className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-none transition-all cursor-pointer font-sans shadow-sm"
                                   >
                                     Specs Drawer
                                   </button>
-                                ) : (
-                                  <button
-                                    className="invisible px-2.5 py-1 text-[10px] border border-transparent select-none pointer-events-none"
-                                    tabIndex={-1}
-                                    aria-hidden="true"
-                                  >
-                                    Specs Drawer
-                                  </button>
-                                )}
-                              </td>
+                                </td>
+                              )}
                             </tr>
                           );
                         })}
