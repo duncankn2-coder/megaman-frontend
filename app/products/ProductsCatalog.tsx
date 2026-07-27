@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faArrowRight, faFilter, faTimes, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faFilter, faTimes, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 interface Product {
   id: string;
@@ -28,7 +28,11 @@ interface Family {
   description?: string;
   media: MediaItem[];
   products: Product[];
-  categories?: { id: string; name: string }[];
+  categories?: {
+    id: string;
+    name: string;
+    image?: { url: string; alt?: string; filename?: string } | string | null;
+  }[];
 }
 
 interface ProductsCatalogProps {
@@ -101,7 +105,7 @@ const resolveCategories = (family: Family): string[] => {
         catLower.includes('lamp') ||
         catLower.includes('bulb')
       ) {
-        cats.add('Lamps');
+        cats.add('LED Lamps');
       }
       if (
         catLower.includes('bulkhead') ||
@@ -115,14 +119,14 @@ const resolveCategories = (family: Family): string[] => {
         catLower.includes('high bay') ||
         catLower.includes('wall')
       ) {
-        cats.add('Indoor Lighting');
+        cats.add('Indoor Luminaires');
       }
       if (
         catLower.includes('floodlight') ||
         catLower.includes('garden') ||
         catLower.includes('outdoor')
       ) {
-        cats.add('Outdoor Lighting');
+        cats.add('Outdoor Luminaires');
       }
       if (
         catLower.includes('exit') ||
@@ -161,7 +165,7 @@ const resolveCategories = (family: Family): string[] => {
     name.includes('dim-to-warm') ||
     name.includes('360')
   ) {
-    cats.add('Lamps');
+    cats.add('LED Lamps');
   }
   if (
     name.includes('downlight') || 
@@ -176,14 +180,14 @@ const resolveCategories = (family: Family): string[] => {
     name.includes('wall lamp') ||
     name.includes('damp proof')
   ) {
-    cats.add('Indoor Lighting');
+    cats.add('Indoor Luminaires');
   }
   if (
     name.includes('floodlight') || 
     name.includes('garden') || 
     name.includes('outdoor')
   ) {
-    cats.add('Outdoor Lighting');
+    cats.add('Outdoor Luminaires');
   }
   if (
     name.includes('exit') || 
@@ -218,9 +222,9 @@ const resolveCategories = (family: Family): string[] => {
 
 const CATEGORIES = [
   'All',
-  'Lamps',
-  'Indoor Lighting',
-  'Outdoor Lighting',
+  'LED Lamps',
+  'Indoor Luminaires',
+  'Outdoor Luminaires',
   'Emergency Lighting',
   'Light Management',
   'Drivers',
@@ -236,7 +240,16 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
 
   // Sync state with URL params when URL changes
   useEffect(() => {
-    const category = searchParams.get('category') || 'All';
+    let category = searchParams.get('category') || 'All';
+    // Map URL category params to our new display names
+    const catLower = category.toLowerCase();
+    if (catLower === 'lamps' || catLower === 'led lamps') category = 'LED Lamps';
+    else if (catLower === 'indoor' || catLower === 'indoor lighting' || catLower === 'indoor luminaires') category = 'Indoor Luminaires';
+    else if (catLower === 'outdoor' || catLower === 'outdoor lighting' || catLower === 'outdoor luminaires') category = 'Outdoor Luminaires';
+    else if (catLower === 'emergency' || catLower === 'emergency lighting') category = 'Emergency Lighting';
+    else if (catLower === 'light management' || catLower === 'iot') category = 'Light Management';
+    else if (catLower === 'drivers') category = 'Drivers';
+    
     const search = searchParams.get('search') || '';
     setSelectedCategory(category);
     setSearchQuery(search);
@@ -248,6 +261,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
     if (category === 'All') {
       params.delete('category');
     } else {
+      // Set simplified string for URL cleaness, or matching tag
       params.set('category', category);
     }
     // Clear search when changing main categories to prevent conflicts
@@ -290,22 +304,51 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
     });
   }, [enrichedFamilies, selectedCategory, searchQuery]);
 
+  // Find category object with image dynamically from families
+  const selectedCategoryObj = useMemo(() => {
+    if (selectedCategory === 'All') return null;
+    for (const family of families) {
+      if (family.categories) {
+        for (const cat of family.categories) {
+          if (cat.name?.toLowerCase() === selectedCategory.toLowerCase() && cat.image) {
+            return cat;
+          }
+        }
+      }
+    }
+    return null;
+  }, [families, selectedCategory]);
+
   return (
     <div className="bg-[#fafafa] min-h-screen pb-24">
       {/* Premium Minimalist Hero Header */}
       <section className="bg-white border-b border-gray-100 py-16 md:py-24">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="max-w-2xl">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#005288] mb-3 block">
-                MEGAMAN<sup>®</sup> PRODUCT CATALOG
-              </span>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight mb-4">
-                Architectural & Technical Lighting
-              </h1>
-              <p className="text-gray-500 font-light text-base md:text-lg leading-relaxed">
-                Discover our high-precision product portfolio. Explore innovative, energy-efficient luminaires and smart control systems engineered to enrich modern spaces.
-              </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex flex-col md:flex-row gap-6 md:items-center max-w-4xl">
+              {selectedCategoryObj && (
+                <div className="relative w-24 h-24 md:w-32 md:h-32 flex-shrink-0 bg-gray-50 border border-gray-100 overflow-hidden rounded-xl shadow-sm group">
+                  <Image
+                    src={getImageUrl(selectedCategoryObj.image)}
+                    alt={selectedCategoryObj.name}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+              )}
+              <div className="max-w-2xl">
+                <span className="text-xs font-bold uppercase tracking-widest text-[#005288] mb-3 block">
+                  {selectedCategory === 'All' ? 'MEGAMAN® PRODUCT CATALOG' : `MEGAMAN® ${selectedCategory.toUpperCase()}`}
+                </span>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight mb-4">
+                  {selectedCategory === 'All' ? 'Architectural & Technical Lighting' : selectedCategory}
+                </h1>
+                <p className="text-gray-500 font-light text-base md:text-lg leading-relaxed">
+                  {selectedCategory === 'All'
+                    ? 'Discover our high-precision product portfolio. Explore innovative, energy-efficient luminaires and smart control systems engineered to enrich modern spaces.'
+                    : `Explore our premium range of ${selectedCategory.toLowerCase()} solutions, built with state-of-the-art thermal engineering and visual comfort specifications.`}
+                </p>
+              </div>
             </div>
             
             {/* Search Input Box */}
@@ -389,87 +432,108 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-            {filteredFamilies.map((family) => {
-              const categoryTag = family.resolvedCategories[0] || 'Others';
-              const imageItem = family.media?.find(m => m.type === 'image');
-              
-              return (
-                <Link
-                  key={family.id}
-                  href={`/families/${family.id}`}
-                  className="group flex flex-col bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100/50"
-                >
-                  {/* Aspect Square Image Canvas */}
-                  <div className="relative aspect-square w-full bg-transparent overflow-hidden flex items-center justify-center">
-                    {imageItem ? (
-                      <Image
-                        src={getImageUrl(imageItem)}
-                        alt={imageItem.alt || family.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-contain p-8 transition-transform duration-500 group-hover:scale-105"
-                        priority={false}
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
-                        {/* Elegant Geometric Vector Wireframe Placeholder */}
-                        <div className="w-20 h-20 border-2 border-dashed border-gray-200 rounded-full flex items-center justify-center mb-3 animate-pulse">
-                          <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                          </svg>
-                        </div>
-                        <span className="text-xs text-black font-medium">MEGAMAN<sup>®</sup> Precision Light</span>
+          <div>
+            {(() => {
+              // Grouped mode vs single mode
+              // If All is selected, we group by each main category
+              const categoriesToRender = selectedCategory === 'All' 
+                ? CATEGORIES.filter(c => c !== 'All')
+                : [selectedCategory];
+
+              return categoriesToRender.map((category) => {
+                const familiesInCategory = filteredFamilies.filter(family => 
+                  family.resolvedCategories.includes(category)
+                );
+
+                if (familiesInCategory.length === 0) return null;
+
+                return (
+                  <div key={category} className="mb-20">
+                    {/* Category Section Title with premium style */}
+                    <div className="border-b border-gray-150 pb-4 mb-8">
+                      <div className="flex items-center gap-3">
+                        <span className="h-5 w-1 bg-[#005288]" />
+                        <h2 className="text-xl md:text-2xl font-bold uppercase tracking-wider text-gray-900">
+                          {category}
+                        </h2>
+                        <span className="text-xs text-gray-400 font-mono font-bold bg-gray-100 px-2 py-0.5 rounded">
+                          {familiesInCategory.length}
+                        </span>
                       </div>
-                    )}
-                    
-                    {/* Corner Tag */}
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-gray-100 px-3 py-1 rounded-full shadow-sm">
-                      <span className="text-[10px] font-bold text-black tracking-wider uppercase">
-                        {categoryTag}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Details Card Section */}
-                  <div className="p-6 md:p-8 flex flex-col flex-grow justify-between bg-white border-t border-gray-50">
-                    <div>
-                      {/* Family Name */}
-                      <h2 className="text-xl font-bold text-black group-hover:text-black transition-colors leading-tight flex items-center justify-between">
-                        <span>{family.name}</span>
-                        <FontAwesomeIcon
-                          icon={faChevronRight}
-                          className="text-[10px] text-gray-400 group-hover:text-black group-hover:translate-x-1.5 transition-all duration-300"
-                        />
-                      </h2>
-                      
-                      {/* Description */}
-                      {family.description ? (
-                        <p className="text-black font-light text-sm md:text-base mt-2.5 leading-relaxed line-clamp-3">
-                          {family.description}
-                        </p>
-                      ) : (
-                        <p className="text-black font-light text-sm md:text-base mt-2.5 italic opacity-75">
-                          Explore our full premium lighting collection options under the {family.name} series.
-                        </p>
-                      )}
+                      <p className="text-xs text-gray-400 font-light mt-1.5 pl-4 max-w-2xl leading-relaxed">
+                        {category === 'LED Lamps' && 'Classic retrofit lightbulbs, decorative filament series, high-efficacy reflector lamps, and custom linear tubes.'}
+                        {category === 'Indoor Luminaires' && 'Deep-recessed low-glare downlights, adjustable track fixtures, continuous profiles, and customizable panels.'}
+                        {category === 'Outdoor Luminaires' && 'High-performance architectural floodlights, spike garden lamps, and IP-rated municipal bulkheads.'}
+                        {category === 'Emergency Lighting' && 'Standalone backup twinspots, egress pathway exit signs, and central battery compliance accessories.'}
+                        {category === 'Light Management' && 'Intelligent smart nodes, Ingenium IoT components, and circadian rhythm tuning networks.'}
+                        {category === 'Drivers' && 'High-reliability constant current drivers and custom dimming interfaces.'}
+                        {category === 'Others' && 'Specialty light sources and related system options.'}
+                      </p>
                     </div>
 
-                    {/* Footer Specifications & CTA */}
-                    <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-                      <span className="text-xs text-black font-semibold tracking-wider uppercase">
-                        {family.products?.length || 0} Model Variations
-                      </span>
-                      <span className="text-xs font-bold text-black group-hover:underline flex items-center gap-1">
-                        View Models
-                        <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
-                      </span>
+                    {/* Cards Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+                      {familiesInCategory.map((family) => {
+                        const categoryTag = family.resolvedCategories[0] || 'Others';
+                        const imageItem = family.media?.find(m => m.type === 'image');
+                        
+                        return (
+                          <Link
+                            key={family.id}
+                            href={`/families/${family.id}`}
+                            className="group flex flex-col bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100/50"
+                          >
+                            {/* Aspect Square Image Canvas */}
+                            <div className="relative aspect-square w-full bg-transparent overflow-hidden flex items-center justify-center">
+                              {imageItem ? (
+                                <Image
+                                  src={getImageUrl(imageItem)}
+                                  alt={imageItem.alt || family.name}
+                                  fill
+                                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                  className="object-contain p-8 transition-transform duration-500 group-hover:scale-105"
+                                  priority={false}
+                                  unoptimized
+                                />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
+                                  {/* Elegant Geometric Vector Wireframe Placeholder */}
+                                  <div className="w-20 h-20 border-2 border-dashed border-gray-200 rounded-full flex items-center justify-center mb-3 animate-pulse">
+                                    <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                    </svg>
+                                  </div>
+                                  <span className="text-xs text-black font-medium">MEGAMAN<sup>®</sup> Precision Light</span>
+                                </div>
+                              )}
+                              
+                              {/* Corner Tag */}
+                              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-gray-100 px-3 py-1 rounded-full shadow-sm">
+                                <span className="text-[10px] font-bold text-black tracking-wider uppercase">
+                                  {categoryTag}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Details Card Section */}
+                            <div className="p-5 bg-white border-t border-gray-50">
+                              {/* Family Name */}
+                              <h2 className="text-base font-bold text-black group-hover:text-[#005288] transition-colors leading-tight flex items-center justify-between">
+                                <span>{family.name}</span>
+                                <FontAwesomeIcon
+                                  icon={faChevronRight}
+                                  className="text-[10px] text-gray-400 group-hover:text-[#005288] group-hover:translate-x-1.5 transition-all duration-300"
+                                />
+                              </h2>
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
-                </Link>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         )}
       </main>

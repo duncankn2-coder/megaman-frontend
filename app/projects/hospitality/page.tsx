@@ -431,7 +431,7 @@ export default function HospitalityProjectsPage() {
               Schedule a Professional Lighting Consultation
             </h3>
             <p className="text-xs text-gray-500 leading-relaxed font-light">
-              Access DIALux planning files, compliance certificates, and Revit BIM object databases. Our professional planning engineers are ready to support your next project matching and verification.
+              Access DIALux planning files and compliance certificates. Our professional planning engineers are ready to support your next project matching and verification.
             </p>
           </div>
 
@@ -444,7 +444,7 @@ export default function HospitalityProjectsPage() {
               PLANNING BROCHURE
             </button>
             <button 
-              onClick={() => alert('Revit BIM Object and DIALux ULD databases are available for direct access. Please contact Megaman Engineering.')}
+              onClick={() => alert('DIALux ULD databases are available for direct access. Please contact Megaman Engineering.')}
               className="bg-[#005288] text-white hover:bg-[#003c64] text-xs font-bold uppercase tracking-widest px-6 py-4 transition-all flex items-center justify-center gap-2 shadow-sm rounded-none font-sans"
             >
               <FontAwesomeIcon icon={faBookOpen} />

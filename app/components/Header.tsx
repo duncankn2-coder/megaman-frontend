@@ -55,7 +55,7 @@ const navItems: NavItem[] = [
         name: 'Indoor Lighting',
         path: '/products?category=Indoor%20Lighting',
         items: [
-          { name: 'Bulkhead', path: '/products?category=Indoor%20Lighting&search=Bulkhead' },
+          { name: 'Ceiling', path: '/products?category=Indoor%20Lighting&search=Ceiling' },
           { name: 'Downlight', path: '/products?category=Indoor%20Lighting&search=Downlight' },
           { name: 'Damp Proof Batten', path: '/products?category=Indoor%20Lighting&search=Damp%20Proof%20Batten' },
           { name: 'Indoor Batten', path: '/products?category=Indoor%20Lighting&search=Indoor%20Batten' },
@@ -64,7 +64,6 @@ const navItems: NavItem[] = [
           { name: 'Track Lighting', path: '/products?category=Indoor%20Lighting&search=Track%20Lighting' },
           { name: 'Under Cabinet', path: '/products?category=Indoor%20Lighting&search=Under%20Cabinet' },
           { name: 'Wall Lamp', path: '/products?category=Indoor%20Lighting&search=Wall%20Lamp' },
-          { name: 'Indoor Ceiling', path: '/products?category=Indoor%20Lighting&search=Indoor%20Ceiling' },
         ],
       },
       {
@@ -207,7 +206,7 @@ export default function Header() {
             return (
               <div
                 key={item.name}
-                className="relative"
+                className="static"
                 onMouseEnter={() => handleMouseEnter(item.name)}
               >
                 <button
@@ -226,235 +225,245 @@ export default function Header() {
                 {/* Dropdown Panel */}
                 {isOpen && (
                   item.name === 'Products' ? (
-                    <div className="absolute left-1/2 -translate-x-1/2 mt-3.5 w-[960px] lg:w-[1020px] xl:w-[1140px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-3 duration-200">
-                      <div className="grid grid-cols-12 bg-gradient-to-r from-[#005288]/5 to-transparent border-b border-gray-50 px-8 py-5">
-                        <div className="col-span-8">
-                          <span className="text-[10px] tracking-widest font-bold text-[#005288] uppercase block mb-1">
-                            {item.tagline}
-                          </span>
-                          <h4 className="text-xl font-bold text-gray-900">{item.name} Catalog</h4>
-                        </div>
-                        <div className="col-span-4 flex items-center justify-end">
-                          <Link 
-                            href={item.path} 
-                            onClick={() => setActiveMenu(null)}
-                            className="text-xs font-semibold text-[#005288] hover:text-[#003c64] flex items-center gap-2 group/cta transition-colors"
-                          >
-                            Explore Full Catalog
-                            <FontAwesomeIcon icon={faArrowRight} className="text-[10px] transition-transform duration-300 group-hover/cta:translate-x-1" />
-                          </Link>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-4 gap-6 p-8 bg-gray-50/50">
-                        {/* Column 1: Lamps */}
-                        <div className="space-y-4">
-                          <div>
-                            <Link 
-                              href="/products?category=Lamps" 
-                              onClick={() => setActiveMenu(null)}
-                              className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-3 block border-b border-gray-100 pb-1.5"
-                            >
-                              Lamps
-                            </Link>
-                            <ul className="space-y-1">
-                              {[
-                                'Classic Bulbs', 'Filament Lamps', '360° Illumination', 
-                                'Golden Filament', 'Reflector Lamps', 'LED Tubes', 
-                                'Special Applications', 'Decorative', 'Dim-to-Warm', 'Mega Efficiency'
-                              ].map((name) => (
-                                <li key={name}>
-                                  <Link
-                                    href={`/products?category=Lamps&search=${encodeURIComponent(name)}`}
-                                    onClick={() => setActiveMenu(null)}
-                                    className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
-                                  >
-                                    {name}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-
-                        {/* Column 2: Indoor Lighting */}
-                        <div className="space-y-4">
-                          <div>
-                            <Link 
-                              href="/products?category=Indoor%20Lighting" 
-                              onClick={() => setActiveMenu(null)}
-                              className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-3 block border-b border-gray-100 pb-1.5"
-                            >
-                              Indoor Lighting
-                            </Link>
-                            <ul className="space-y-1">
-                              {[
-                                'Bulkhead', 'Downlight', 'Damp Proof Batten', 'Indoor Batten', 
-                                'High Bay', 'Panel', 'Track Lighting', 'Under Cabinet', 
-                                'Wall Lamp', 'Indoor Ceiling'
-                              ].map((name) => (
-                                <li key={name}>
-                                  <Link
-                                    href={`/products?category=Indoor%20Lighting&search=${encodeURIComponent(name)}`}
-                                    onClick={() => setActiveMenu(null)}
-                                    className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
-                                  >
-                                    {name}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-
-                        {/* Column 3: Outdoor & Emergency */}
-                        <div className="space-y-6">
-                          <div>
-                            <Link 
-                              href="/products?category=Outdoor%20Lighting" 
-                              onClick={() => setActiveMenu(null)}
-                              className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
-                            >
-                              Outdoor Lighting
-                            </Link>
-                            <ul className="space-y-1">
-                              {['Floodlight', 'Bulkhead', 'Garden Lighting'].map((name) => (
-                                <li key={name}>
-                                  <Link
-                                    href={`/products?category=Outdoor%20Lighting&search=${encodeURIComponent(name)}`}
-                                    onClick={() => setActiveMenu(null)}
-                                    className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
-                                  >
-                                    {name}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
+                    <div className="absolute top-full left-0 right-0 w-full bg-white shadow-2xl border-t border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="container mx-auto px-4 py-8">
+                        <div className="grid grid-cols-12 gap-8">
+                          {/* Left Panel - Catalog Promo */}
+                          <div className="col-span-3 bg-gradient-to-br from-[#005288] to-[#003457] p-8 text-white rounded-2xl flex flex-col justify-between shadow-md">
+                            <div>
+                              <span className="text-[10px] tracking-widest font-bold text-blue-300 uppercase block mb-2">
+                                {item.tagline}
+                              </span>
+                              <h4 className="text-2xl font-bold mb-4">{item.name}</h4>
+                              <p className="text-[13px] text-blue-100 leading-relaxed font-light mb-6">
+                                {item.description}
+                              </p>
+                            </div>
+                            <div>
+                              <Link 
+                                href={item.path} 
+                                onClick={() => setActiveMenu(null)}
+                                className="inline-flex items-center gap-2 text-xs font-semibold text-white bg-[#005e9c] hover:bg-[#004e82] px-4 py-2.5 rounded-lg transition-all duration-200 group/cta shadow-sm hover:shadow"
+                              >
+                                Explore Full Catalog
+                                <FontAwesomeIcon icon={faArrowRight} className="text-[10px] transition-transform duration-300 group-hover/cta:translate-x-1" />
+                              </Link>
+                            </div>
                           </div>
 
-                          <div>
-                            <Link 
-                              href="/products?category=Emergency%20Lighting" 
-                              onClick={() => setActiveMenu(null)}
-                              className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
-                            >
-                              Emergency Lighting
-                            </Link>
-                            <ul className="space-y-1">
-                              {[
-                                'Exit Box', 'Exit Sign', 'Emergency Module', 'Recessed Downlight', 
-                                'Slim Bulkhead', 'Surface Mounted Downlight', 'Twinspot'
-                              ].map((name) => (
-                                <li key={name}>
-                                  <Link
-                                    href={`/products?category=Emergency%20Lighting&search=${encodeURIComponent(name)}`}
-                                    onClick={() => setActiveMenu(null)}
-                                    className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
-                                  >
-                                    {name}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
+                          {/* Right Panel - Product Categories Grid */}
+                          <div className="col-span-9 grid grid-cols-4 gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                            {/* Column 1: Lamps */}
+                            <div className="space-y-4 bg-white p-5 rounded-xl border border-gray-100/80 shadow-sm">
+                              <div>
+                                <Link 
+                                  href="/products?category=Lamps" 
+                                  onClick={() => setActiveMenu(null)}
+                                  className="text-xs font-bold uppercase tracking-wider text-[#005288] hover:text-[#003c64] transition-colors mb-3 block border-b border-gray-100 pb-1.5"
+                                >
+                                  Lamps
+                                </Link>
+                                <ul className="space-y-1">
+                                  {[
+                                    'Classic Bulbs', 'Filament Lamps', '360° Illumination', 
+                                    'Golden Filament', 'Reflector Lamps', 'LED Tubes', 
+                                    'Special Applications', 'Decorative', 'Dim-to-Warm', 'Mega Efficiency'
+                                  ].map((name) => (
+                                    <li key={name}>
+                                      <Link
+                                        href={`/products?category=Lamps&search=${encodeURIComponent(name)}`}
+                                        onClick={() => setActiveMenu(null)}
+                                        className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
+                                      >
+                                        {name}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
 
-                        {/* Column 4: Light Management & Others */}
-                        <div className="space-y-6">
-                          <div>
-                            <Link 
-                              href="/products?category=Light%20Management" 
-                              onClick={() => setActiveMenu(null)}
-                              className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-[#005288] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
-                            >
-                              Light Management
-                            </Link>
-                            <ul className="space-y-1">
-                              {['NGENIUM® Matter', 'Infinite IoT Lighting'].map((name) => (
-                                <li key={name}>
-                                  <Link
-                                    href={`/products?category=Light%20Management&search=${encodeURIComponent(name.replace(/®/g, ''))}`}
-                                    onClick={() => setActiveMenu(null)}
-                                    className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
-                                  >
-                                    {renderWithSup(name)}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                            {/* Column 2: Indoor Lighting */}
+                            <div className="space-y-4 bg-white p-5 rounded-xl border border-gray-100/80 shadow-sm">
+                              <div>
+                                <Link 
+                                  href="/products?category=Indoor%20Lighting" 
+                                  onClick={() => setActiveMenu(null)}
+                                  className="text-xs font-bold uppercase tracking-wider text-[#005288] hover:text-[#003c64] transition-colors mb-3 block border-b border-gray-100 pb-1.5"
+                                >
+                                  Indoor Lighting
+                                </Link>
+                                <ul className="space-y-1">
+                                  {[
+                                    'Ceiling', 'Downlight', 'Damp Proof Batten', 'Indoor Batten', 
+                                    'High Bay', 'Panel', 'Track Lighting', 'Under Cabinet', 
+                                    'Wall Lamp'
+                                  ].map((name) => (
+                                    <li key={name}>
+                                      <Link
+                                        href={`/products?category=Indoor%20Lighting&search=${encodeURIComponent(name)}`}
+                                        onClick={() => setActiveMenu(null)}
+                                        className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
+                                      >
+                                        {name}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
 
-                          <div>
-                            <span className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block border-b border-gray-100 pb-1.5">
-                              Technical & Extras
-                            </span>
-                            <ul className="space-y-2">
-                              {['Drivers', 'Others'].map((name) => (
-                                <li key={name}>
-                                  <Link
-                                    href={`/products?category=${encodeURIComponent(name)}`}
-                                    onClick={() => setActiveMenu(null)}
-                                    className="inline-flex items-center text-[14px] font-semibold text-gray-800 hover:text-[#005288] hover:translate-x-1 transition-all duration-150"
-                                  >
-                                    {name}
-                                    <FontAwesomeIcon icon={faArrowRight} className="text-[10px] ml-1.5 opacity-60 hover:opacity-100" />
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
+                            {/* Column 3: Outdoor & Emergency */}
+                            <div className="space-y-5 bg-white p-5 rounded-xl border border-gray-100/80 shadow-sm flex flex-col justify-between">
+                              <div>
+                                <Link 
+                                  href="/products?category=Outdoor%20Lighting" 
+                                  onClick={() => setActiveMenu(null)}
+                                  className="text-xs font-bold uppercase tracking-wider text-[#005288] hover:text-[#003c64] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
+                                >
+                                  Outdoor Lighting
+                                </Link>
+                                <ul className="space-y-1">
+                                  {['Floodlight', 'Bulkhead', 'Garden Lighting'].map((name) => (
+                                    <li key={name}>
+                                      <Link
+                                        href={`/products?category=Outdoor%20Lighting&search=${encodeURIComponent(name)}`}
+                                        onClick={() => setActiveMenu(null)}
+                                        className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
+                                      >
+                                        {name}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              <div className="pt-2">
+                                <Link 
+                                  href="/products?category=Emergency%20Lighting" 
+                                  onClick={() => setActiveMenu(null)}
+                                  className="text-xs font-bold uppercase tracking-wider text-[#005288] hover:text-[#003c64] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
+                                >
+                                  Emergency Lighting
+                                </Link>
+                                <ul className="space-y-1">
+                                  {[
+                                    'Exit Box', 'Exit Sign', 'Emergency Module', 'Recessed Downlight', 
+                                    'Slim Bulkhead', 'Surface Mounted Downlight', 'Twinspot'
+                                  ].map((name) => (
+                                    <li key={name}>
+                                      <Link
+                                        href={`/products?category=Emergency%20Lighting&search=${encodeURIComponent(name)}`}
+                                        onClick={() => setActiveMenu(null)}
+                                        className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
+                                      >
+                                        {name}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+
+                            {/* Column 4: Light Management & Technical/Extras */}
+                            <div className="space-y-5 bg-white p-5 rounded-xl border border-gray-100/80 shadow-sm flex flex-col justify-between">
+                              <div>
+                                <Link 
+                                  href="/products?category=Light%20Management" 
+                                  onClick={() => setActiveMenu(null)}
+                                  className="text-xs font-bold uppercase tracking-wider text-[#005288] hover:text-[#003c64] transition-colors mb-2 block border-b border-gray-100 pb-1.5"
+                                >
+                                  Light Management
+                                </Link>
+                                <ul className="space-y-1">
+                                  {['NGENIUM® Matter', 'Infinite IoT Lighting'].map((name) => (
+                                    <li key={name}>
+                                      <Link
+                                        href={`/products?category=Light%20Management&search=${encodeURIComponent(name.replace(/®/g, ''))}`}
+                                        onClick={() => setActiveMenu(null)}
+                                        className="block text-[13px] py-1 text-gray-600 hover:text-[#005288] hover:translate-x-1 transition-all duration-150 font-medium"
+                                      >
+                                        {renderWithSup(name)}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              <div className="pt-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block border-b border-gray-100 pb-1.5">
+                                  Technical & Extras
+                                </span>
+                                <ul className="space-y-2">
+                                  {['Drivers', 'Others'].map((name) => (
+                                    <li key={name}>
+                                      <Link
+                                        href={`/products?category=${encodeURIComponent(name)}`}
+                                        onClick={() => setActiveMenu(null)}
+                                        className="inline-flex items-center text-[13px] font-semibold text-gray-800 hover:text-[#005288] hover:translate-x-1 transition-all duration-150"
+                                      >
+                                        {name}
+                                        <FontAwesomeIcon icon={faArrowRight} className="text-[9px] ml-1.5 opacity-60 hover:opacity-100" />
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="absolute left-1/2 -translate-x-1/2 mt-3.5 w-[640px] bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-3 duration-200">
-                      <div className="grid grid-cols-12">
-                        {/* Left Promo / Highlight Panel */}
-                        <div className="col-span-5 bg-gradient-to-br from-[#005288] to-[#003457] p-6 text-white flex flex-col justify-between">
-                          <div>
-                            <span className="text-[10px] tracking-widest font-bold text-blue-300 uppercase block mb-1">
-                              {item.tagline}
-                            </span>
-                            <h4 className="text-xl font-bold mb-3">{item.name}</h4>
-                            <p className="text-xs text-blue-100 leading-relaxed font-light">
-                              {item.description}
-                            </p>
+                    <div className="absolute top-full left-0 right-0 w-full bg-white shadow-2xl border-t border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="container mx-auto px-4 py-8">
+                        <div className="grid grid-cols-12 gap-8">
+                          {/* Left Promo / Highlight Panel */}
+                          <div className="col-span-3 bg-gradient-to-br from-[#005288] to-[#003457] p-8 text-white rounded-2xl flex flex-col justify-between shadow-md">
+                            <div>
+                              <span className="text-[10px] tracking-widest font-bold text-blue-300 uppercase block mb-2">
+                                {item.tagline}
+                              </span>
+                              <h4 className="text-2xl font-bold mb-4">{item.name}</h4>
+                              <p className="text-[13px] text-blue-100 leading-relaxed font-light mb-6">
+                                {item.description}
+                              </p>
+                            </div>
+                            <div>
+                              <Link
+                                href={item.path}
+                                onClick={() => setActiveMenu(null)}
+                                className="inline-flex items-center gap-2 text-xs font-semibold text-white bg-[#005e9c] hover:bg-[#004e82] px-4 py-2.5 rounded-lg transition-all duration-200 group/cta shadow-sm hover:shadow"
+                              >
+                                Explore All {item.name}
+                                <FontAwesomeIcon icon={faArrowRight} className="text-[10px] transition-transform duration-300 group-hover/cta:translate-x-1" />
+                              </Link>
+                            </div>
                           </div>
-                          <div className="mt-8 pt-4 border-t border-blue-400/30">
-                            <Link
-                              href={item.path}
-                              onClick={() => setActiveMenu(null)}
-                              className="text-xs font-semibold text-white hover:text-blue-200 flex items-center gap-2 group/cta"
-                            >
-                              Explore All {item.name}
-                              <FontAwesomeIcon icon={faArrowRight} className="text-[10px] transition-transform duration-300 group-hover/cta:translate-x-1" />
-                            </Link>
-                          </div>
-                        </div>
 
-                        {/* Right Submenu List */}
-                        <div className="col-span-7 p-6 bg-gray-50 flex flex-col justify-center">
-                          <ul className="space-y-1">
-                            {item.submenu.map((sub) => (
-                              <li key={sub.name}>
+                          {/* Right Submenu List */}
+                          <div className="col-span-9 flex items-center">
+                            <div className="grid grid-cols-3 gap-6 w-full bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                              {item.submenu.map((sub) => (
                                 <Link
+                                  key={sub.name}
                                   href={sub.path}
                                   onClick={() => setActiveMenu(null)}
-                                  className="block px-4 py-3 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-100 transition-all duration-200 group"
+                                  className="block p-5 bg-white hover:bg-[#005288]/5 rounded-xl border border-gray-100 hover:border-[#005288]/20 hover:shadow-sm transition-all duration-200 group"
                                 >
                                   <div className="flex justify-between items-center">
-                                    <span className="text-[14px] font-medium text-gray-800 group-hover:text-[#005288] transition-colors">
+                                    <span className="text-[15px] font-semibold text-gray-800 group-hover:text-[#005288] transition-colors">
                                       {sub.name}
                                     </span>
                                     <FontAwesomeIcon
                                       icon={faArrowRight}
-                                      className="text-[10px] text-gray-300 group-hover:text-[#005288] opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200"
+                                      className="text-xs text-gray-400 group-hover:text-[#005288] translate-x-0 group-hover:translate-x-1 transition-all duration-200"
                                     />
                                   </div>
                                 </Link>
-                              </li>
-                            ))}
-                          </ul>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

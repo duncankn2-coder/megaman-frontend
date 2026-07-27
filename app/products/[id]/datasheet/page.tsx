@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import { Metadata } from 'next';
 import Image from 'next/image';
 import PrintController from './PrintController';
@@ -342,7 +342,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   const specSummaryStr = specSummaryParts.join(' ');
 
   // Check if this product is a light source (lamp) or a luminaire.
-  const isLuminaire = getSpec('luminaire_category') !== '' || !getSpec('new_erp_model_no');
+  const isLuminaire = false;
 
   // -------------------------------------------------------------
   // LUMINAIRE SPECIFICATION LISTS (RESTORED ORIGINAL LAYOUT)

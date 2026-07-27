@@ -18,7 +18,6 @@ import {
   faCogs,
   faGlobe,
   faChartLine,
-  faArrowRight,
   faChevronLeft,
   faChevronRight,
   faProjectDiagram
@@ -42,7 +41,6 @@ interface Product {
   datasheetPdf?: MediaFile | null;
   photometryLdt?: MediaFile | null;
   photometryIes?: MediaFile | null;
-  bimRevit?: MediaFile | null;
   techDocControlGear?: MediaFile | null;
   techDocContainingProduct?: MediaFile | null;
   techDocLightSource?: MediaFile | null;
@@ -86,6 +84,7 @@ interface Family {
   features?: { id?: string; feature: string }[];
   symbols?: SymbolItem[];
   layout?: Block[];
+  selectedParameters?: string[];
 }
 
 interface FamilyDetailClientProps {
@@ -367,13 +366,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [gearFilter, setGearFilter] = useState('All');
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
   const [skus, setSkus] = useState<any[]>([]);
-  const [isLoadingSkus, setIsLoadingSkus] = useState(true);
 
   useEffect(() => {
     async function fetchSkus() {
       const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null);
       if (validProducts.length === 0) {
-        setIsLoadingSkus(false);
         return;
       }
       try {
@@ -387,8 +384,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         }
       } catch (err) {
         console.error('Error fetching SKUs in FamilyDetailClient:', err);
-      } finally {
-        setIsLoadingSkus(false);
       }
     }
     fetchSkus();
@@ -1182,7 +1177,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
                     {activeParams.includes('mmCode') && <th className="py-4 pl-4">MM Code</th>}
                     {activeParams.includes('modelNo') && <th className="py-4">Model No.</th>}
-                    {activeParams.includes('colour') && <th className="py-4">Luminaire Finish</th>}
+                    {activeParams.includes('colour') && <th className="py-4">Finish / Colour</th>}
                     {activeParams.includes('wattage') && <th className="py-4 text-center">Power</th>}
                     {activeParams.includes('luminousFlux') && <th className="py-4 text-center">Luminous Flux</th>}
                     {activeParams.includes('colourTemperature') && <th className="py-4 text-center">CCT (K)</th>}
@@ -1201,21 +1196,19 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const mmCode = sku.name;
                     const modelNo = parent?.name || sku.modelNumber || '—';
                     
-                    const color = sku.colour || getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color'], '—');
-                    const power = sku.wattage || getSkuSpec(sku, ['power', 'System power', 'wattage'], '—');
-                    const flux = getSkuSpec(sku, ['luminousFlux', 'Luminous flux', 'flux', 'lumens'], '—');
-                    const cct = sku.colourTemperature || getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT'], '—');
+                    const color = getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color', 'fitting_colour'], '—');
+                    const power = getSkuSpec(sku, ['power', 'System power', 'wattage', 'on_mode_power_w'], '—');
+                    const flux = getSkuSpec(sku, ['luminousFlux', 'Luminous flux', 'flux', 'lumens', 'total_luminous_flux_lm', 'useful_luminous_flux_lm'], '—');
+                    const cct = getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k'], '—');
                     const cri = getSkuSpec(sku, ['cri', 'CRI', 'Colour rendering index', 'ra'], '—');
-                    const ip = sku.ip || getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip'], '—');
-                    const control = sku.connector || getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear'], '—');
+                    const ip = getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip'], '—');
+                    const control = getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear', 'connector', 'type_terminal block', 'cap_type'], '—');
                     
                     const numFlux = parseInt(flux);
                     const numPower = parseFloat(power);
                     const efficacy = (!isNaN(numFlux) && !isNaN(numPower) && numPower > 0) 
                       ? `${Math.round(numFlux / numPower)} lm/W`
                       : '—';
-
-                    const rowImage = sku.isFallbackProduct ? sku.images : (parent?.images || sku.images);
 
                     return (
                       <tr 
@@ -1233,8 +1226,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         {activeParams.includes('efficacy') && <td className="py-4 text-center text-[#005288] font-bold">{efficacy}</td>}
                         {activeParams.includes('ip') && <td className="py-4 text-center font-bold">{ip}</td>}
                         {activeParams.includes('connector') && <td className="py-4 text-center text-gray-500 font-sans">{control}</td>}
-                        {activeParams.includes('lampBase') && <td className="py-4 text-center text-gray-500 font-sans">{sku.lampBase || getSkuSpec(sku, ['lampBase', 'lamp base'], '—')}</td>}
-                        {activeParams.includes('voltage') && <td className="py-4 text-center text-gray-500 font-sans">{sku.voltage || getSkuSpec(sku, ['voltage', 'Voltage'], '—')}</td>}
+                        {activeParams.includes('lampBase') && <td className="py-4 text-center text-gray-500 font-sans">{getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type'], '—')}</td>}
+                        {activeParams.includes('voltage') && <td className="py-4 text-center text-gray-500 font-sans">{getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—')}</td>}
                         <td className="py-4 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleOpenProduct(sku)}
@@ -1320,7 +1313,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       }`}
                     >
                       <FontAwesomeIcon icon={faChartLine} />
-                      Photometrics & BIM
+                      Photometrics
                     </button>
                   </div>
 
@@ -1518,7 +1511,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       </div>
                     )}
 
-                    {/* TAB 3: PHOTOMETRICS & BIM (Vector light curves & CADs) */}
+                    {/* TAB 3: PHOTOMETRICS (Vector light curves & CADs) */}
                     {activeModalTab === 'photometrics' && (
                       <div className="space-y-6 animate-fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
@@ -1551,14 +1544,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           {/* Right: Technical Downloads List */}
                           <div className="md:col-span-7 space-y-4">
                             <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
-                              CAD, BIM & Architectural Databases
+                              CAD & Architectural Databases
                             </h4>
                             
                             {(() => {
                               const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                               const ldtFile = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
                               const iesFile = activeDrawerProduct.photometryIes || parent?.photometryIes;
-                              const bimFile = activeDrawerProduct.bimRevit || parent?.bimRevit;
                               
                               return (
                                 <div className="grid grid-cols-1 gap-2 text-xs">
@@ -1575,13 +1567,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   >
                                     <span>IES DATA SHEET CALCULATIONS [IES]</span>
                                     <FontAwesomeIcon icon={faDownload} />
-                                  </button>
-                                  <button 
-                                    onClick={() => handleDownloadFile(bimFile, 'BIM Revit Object is available on request. Please contact Megaman support.')}
-                                    className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                  >
-                                    <span>BIM OBJECT DATABASE [REVIT]</span>
-                                    <FontAwesomeIcon icon={faGlobe} />
                                   </button>
                                 </div>
                               );
