@@ -16,7 +16,6 @@ import {
   faSlidersH,
   faSearch,
   faCogs,
-  faGlobe,
   faChartLine,
   faChevronLeft,
   faChevronRight,
@@ -343,7 +342,7 @@ const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string =>
 const parseCcts = (cctStr: string): string[] => {
   if (!cctStr || cctStr === '—') return [];
   
-  let clean = cctStr.trim();
+  const clean = cctStr.trim();
   
   // Check if it matches a sequence of 4-digit numbers like "300040006500"
   if (/^\d{8,16}$/.test(clean) && clean.length % 4 === 0) {
