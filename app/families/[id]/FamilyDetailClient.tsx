@@ -1366,8 +1366,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   {color}
                                 </td>
                               )}
-                              {activeParams.includes('wattage') && (
-                                <td className="py-1.5 text-center font-bold text-gray-900">
+                              {activeParams.includes('wattage') && isFirst && (
+                                <td rowSpan={N} className="py-1.5 text-center font-bold text-gray-900 align-middle bg-white">
                                   {power}
                                 </td>
                               )}
