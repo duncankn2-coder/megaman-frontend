@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -340,6 +340,68 @@ const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string =>
   return defaultValue;
 };
 
+const parseCcts = (cctStr: string): string[] => {
+  if (!cctStr || cctStr === '—') return [];
+  
+  let clean = cctStr.trim();
+  
+  // Check if it matches a sequence of 4-digit numbers like "300040006500"
+  if (/^\d{8,16}$/.test(clean) && clean.length % 4 === 0) {
+    const parts: string[] = [];
+    for (let i = 0; i < clean.length; i += 4) {
+      parts.push(clean.substring(i, i + 4) + 'K');
+    }
+    return parts;
+  }
+  
+  const splitParts = clean.split(/[\/,;+]/).map(p => p.trim()).filter(Boolean);
+  return splitParts.map(p => {
+    let part = p;
+    if (/^\d+$/.test(part)) {
+      part += 'K';
+    } else if (/^\d+k$/i.test(part)) {
+      part = part.toUpperCase();
+    }
+    return part;
+  });
+};
+
+const parseFluxMap = (fluxStr: string): Record<string, string> => {
+  const result: Record<string, string> = {};
+  if (!fluxStr || fluxStr === '—') return result;
+
+  if (fluxStr.includes('@')) {
+    const regex = /([0-9\/\s+]+)\s*@\s*([0-9a-zA-Z\/\+]+)/g;
+    let match;
+    while ((match = regex.exec(fluxStr)) !== null) {
+      const fluxVal = match[1].trim();
+      const cctCondition = match[2].trim();
+      
+      const ccts = parseCcts(cctCondition);
+      for (const cct of ccts) {
+        result[cct] = fluxVal;
+      }
+    }
+  }
+  return result;
+};
+
+const getFluxForCct = (fluxStr: string, targetCct: string, cctIndex: number, totalCcts: number): string => {
+  if (!fluxStr || fluxStr === '—') return '—';
+  
+  const fluxMap = parseFluxMap(fluxStr);
+  if (fluxMap[targetCct]) {
+    return fluxMap[targetCct];
+  }
+  
+  const fluxParts = fluxStr.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
+  if (fluxParts.length === totalCcts && cctIndex < fluxParts.length) {
+    return fluxParts[cctIndex];
+  }
+  
+  return fluxStr;
+};
+
 export default function FamilyDetailClient({ family }: FamilyDetailClientProps) {
   const activeParams = family.selectedParameters || [
     'mmCode',
@@ -514,8 +576,22 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       const voltVal = item.voltage || getSkuSpec(item, ['voltage', 'Voltage']);
       const gearVal = item.connector || getSkuSpec(item, ['controlGear', 'control_gear', 'Control gear']);
 
-      if (pwr && pwr !== '—') powers.add(pwr);
-      if (ct && ct !== '—') colorTemps.add(ct);
+      if (pwr && pwr !== '—') {
+        const parts = pwr.split(/[\/+]/).map((p: string) => p.trim()).filter(Boolean);
+        parts.forEach((p: string) => {
+          let normalized = p;
+          if (/^\d+(\.\d+)?$/.test(p)) {
+            normalized = p + 'W';
+          } else if (/^\d+(\.\d+)?\s*w$/i.test(p)) {
+            normalized = p.toUpperCase().replace(/\s+/g, '');
+          }
+          powers.add(normalized);
+        });
+      }
+      if (ct && ct !== '—') {
+        const parts = parseCcts(ct);
+        parts.forEach(c => colorTemps.add(c));
+      }
       if (col && col !== '—') finishes.add(col);
       if (ipVal && ipVal !== '—') ips.add(ipVal);
       if (baseVal && baseVal !== '—') bases.add(baseVal);
@@ -523,9 +599,17 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       if (gearVal && gearVal !== '—') gears.add(gearVal);
     });
 
+    const sortNumeric = (arr: string[]) => {
+      return arr.sort((a, b) => {
+        const na = parseFloat(a.replace(/[^\d.]/g, '')) || 0;
+        const nb = parseFloat(b.replace(/[^\d.]/g, '')) || 0;
+        return na - nb;
+      });
+    };
+
     return {
-      powers: Array.from(powers),
-      colorTemps: Array.from(colorTemps),
+      powers: sortNumeric(Array.from(powers)),
+      colorTemps: sortNumeric(Array.from(colorTemps)),
       finishes: Array.from(finishes),
       ips: Array.from(ips),
       bases: Array.from(bases),
@@ -569,8 +653,23 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       const voltVal = sku.voltage || getSkuSpec(sku, ['voltage', 'Voltage']);
       const gearVal = sku.connector || getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear']);
       
-      const matchesPower = powerFilter === 'All' || pwr === powerFilter || pwr.replace(/[^\d]/g, '') === powerFilter.replace(/[^\d]/g, '');
-      const matchesColorTemp = colorTempFilter === 'All' || ct === colorTempFilter || ct.replace(/[^\d]/g, '') === colorTempFilter.replace(/[^\d]/g, '');
+      const matchesPower = powerFilter === 'All' || pwr === powerFilter || (() => {
+        const powerParts = pwr.split(/[\/+]/).map((p: string) => p.trim()).filter(Boolean);
+        return powerParts.some((part: string) => {
+          const partNum = part.replace(/[^\d.]/g, '');
+          const filterNum = powerFilter.replace(/[^\d.]/g, '');
+          return partNum === filterNum;
+        });
+      })();
+
+      const matchesColorTemp = colorTempFilter === 'All' || ct === colorTempFilter || (() => {
+        const cctParts = parseCcts(ct);
+        return cctParts.some((part: string) => {
+          const partNum = part.replace(/[^\d]/g, '');
+          const filterNum = colorTempFilter.replace(/[^\d]/g, '');
+          return partNum === filterNum;
+        });
+      })();
       const matchesFinish = finishFilter === 'All' || col === finishFilter;
       const matchesIp = ipFilter === 'All' || ipVal === ipFilter;
       const matchesBase = baseFilter === 'All' || baseVal === baseFilter;
@@ -1175,19 +1274,19 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <table className="w-full text-left border-collapse font-mono">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    {activeParams.includes('mmCode') && <th className="py-4 pl-4">MM Code</th>}
-                    {activeParams.includes('modelNo') && <th className="py-4">Model No.</th>}
-                    {activeParams.includes('colour') && <th className="py-4">Finish / Colour</th>}
-                    {activeParams.includes('wattage') && <th className="py-4 text-center">Power</th>}
-                    {activeParams.includes('luminousFlux') && <th className="py-4 text-center">Luminous Flux</th>}
-                    {activeParams.includes('colourTemperature') && <th className="py-4 text-center">CCT (K)</th>}
-                    {activeParams.includes('cri') && <th className="py-4 text-center">CRI</th>}
-                    {activeParams.includes('efficacy') && <th className="py-4 text-center">Efficacy</th>}
-                    {activeParams.includes('ip') && <th className="py-4 text-center">IP</th>}
-                    {activeParams.includes('connector') && <th className="py-4 text-center">Control Gear</th>}
-                    {activeParams.includes('lampBase') && <th className="py-4 text-center">Lamp Base</th>}
-                    {activeParams.includes('voltage') && <th className="py-4 text-center">Voltage</th>}
-                    <th className="py-4 pr-4 text-right">Actions</th>
+                    {activeParams.includes('mmCode') && <th className="py-1.5 pl-4">MM Code</th>}
+                    {activeParams.includes('modelNo') && <th className="py-1.5">Model No.</th>}
+                    {activeParams.includes('colour') && <th className="py-1.5">Finish / Colour</th>}
+                    {activeParams.includes('wattage') && <th className="py-1.5 text-center">Power</th>}
+                    {activeParams.includes('luminousFlux') && <th className="py-1.5 text-center">Luminous Flux</th>}
+                    {activeParams.includes('colourTemperature') && <th className="py-1.5 text-center">CCT (K)</th>}
+                    {activeParams.includes('cri') && <th className="py-1.5 text-center">CRI</th>}
+                    {activeParams.includes('efficacy') && <th className="py-1.5 text-center">Efficacy</th>}
+                    {activeParams.includes('ip') && <th className="py-1.5 text-center">IP</th>}
+                    {activeParams.includes('connector') && <th className="py-1.5 text-center">Control Gear</th>}
+                    {activeParams.includes('lampBase') && <th className="py-1.5 text-center">Lamp Base</th>}
+                    {activeParams.includes('voltage') && <th className="py-1.5 text-center">Voltage</th>}
+                    <th className="py-1.5 pr-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-150 text-gray-700">
@@ -1204,39 +1303,136 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const ip = getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip'], '—');
                     const control = getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear', 'connector', 'type_terminal block', 'cap_type'], '—');
                     
-                    const numFlux = parseInt(flux);
-                    const numPower = parseFloat(power);
-                    const efficacy = (!isNaN(numFlux) && !isNaN(numPower) && numPower > 0) 
-                      ? `${Math.round(numFlux / numPower)} lm/W`
-                      : '—';
+                    const allCcts = parseCcts(cct);
+                    const cctsToRender = allCcts.filter(part => {
+                      if (colorTempFilter === 'All') return true;
+                      const partNum = part.replace(/[^\d]/g, '');
+                      const filterNum = colorTempFilter.replace(/[^\d]/g, '');
+                      return partNum === filterNum;
+                    });
+
+                    const displayCcts = cctsToRender.length > 0 ? cctsToRender : (allCcts.length > 0 ? allCcts : ['—']);
 
                     return (
-                      <tr 
-                        key={sku.id} 
-                        onClick={() => handleOpenProduct(sku)}
-                        className="text-xs md:text-sm hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-100"
-                      >
-                        {activeParams.includes('mmCode') && <td className="py-4 pl-4 font-bold text-[#005288]">{mmCode}</td>}
-                        {activeParams.includes('modelNo') && <td className="py-4 font-sans font-medium text-gray-900">{modelNo}</td>}
-                        {activeParams.includes('colour') && <td className="py-4 text-gray-500">{color}</td>}
-                        {activeParams.includes('wattage') && <td className="py-4 text-center font-bold text-gray-900">{power}</td>}
-                        {activeParams.includes('luminousFlux') && <td className="py-4 text-center">{flux}</td>}
-                        {activeParams.includes('colourTemperature') && <td className="py-4 text-center">{cct}</td>}
-                        {activeParams.includes('cri') && <td className="py-4 text-center">{cri}</td>}
-                        {activeParams.includes('efficacy') && <td className="py-4 text-center text-[#005288] font-bold">{efficacy}</td>}
-                        {activeParams.includes('ip') && <td className="py-4 text-center font-bold">{ip}</td>}
-                        {activeParams.includes('connector') && <td className="py-4 text-center text-gray-500 font-sans">{control}</td>}
-                        {activeParams.includes('lampBase') && <td className="py-4 text-center text-gray-500 font-sans">{getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type'], '—')}</td>}
-                        {activeParams.includes('voltage') && <td className="py-4 text-center text-gray-500 font-sans">{getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—')}</td>}
-                        <td className="py-4 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => handleOpenProduct(sku)}
-                            className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-none transition-all cursor-pointer font-sans shadow-sm"
-                          >
-                            Specs Drawer
-                          </button>
-                        </td>
-                      </tr>
+                      <Fragment key={sku.id}>
+                        {displayCcts.map((subCct, i) => {
+                          const originalIndex = allCcts.indexOf(subCct);
+                          const cctIndex = originalIndex >= 0 ? originalIndex : 0;
+                          const subFlux = getFluxForCct(flux, subCct, cctIndex, allCcts.length);
+
+                          const fluxParts = subFlux.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
+                          const powerParts = power.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
+                          
+                          let efficacy = '—';
+                          if (fluxParts.length > 0 && powerParts.length > 0) {
+                            const efficacies = fluxParts.map((f, idx) => {
+                              const p = powerParts[idx] || powerParts[0];
+                              const numF = parseInt(f);
+                              const numP = parseFloat(p);
+                              return (!isNaN(numF) && !isNaN(numP) && numP > 0) ? Math.round(numF / numP) : null;
+                            }).filter(val => val !== null) as number[];
+                            
+                            if (efficacies.length > 1) {
+                              const minEff = Math.min(...efficacies);
+                              const maxEff = Math.max(...efficacies);
+                              efficacy = minEff === maxEff ? `${minEff} lm/W` : `${minEff}-${maxEff} lm/W`;
+                            } else if (efficacies.length === 1) {
+                              efficacy = `${efficacies[0]} lm/W`;
+                            }
+                          }
+
+                          const isFirst = i === 0;
+
+                          return (
+                            <tr 
+                              key={`${sku.id}-sub-${subCct}`} 
+                              onClick={() => handleOpenProduct(sku)}
+                              className={`text-xs md:text-sm hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-100 ${
+                                !isFirst ? 'bg-gray-50/20' : ''
+                              }`}
+                            >
+                              {activeParams.includes('mmCode') && (
+                                <td className="py-1.5 pl-4 font-bold text-[#005288]">
+                                  {isFirst ? mmCode : ''}
+                                </td>
+                              )}
+                              {activeParams.includes('modelNo') && (
+                                <td className="py-1.5 font-sans font-medium text-gray-900">
+                                  {isFirst ? modelNo : ''}
+                                </td>
+                              )}
+                              {activeParams.includes('colour') && (
+                                <td className="py-1.5 text-gray-500">
+                                  {isFirst ? color : ''}
+                                </td>
+                              )}
+                              {activeParams.includes('wattage') && (
+                                <td className="py-1.5 text-center font-bold text-gray-900">
+                                  {power}
+                                </td>
+                              )}
+                              {activeParams.includes('luminousFlux') && (
+                                <td className="py-1.5 text-center">
+                                  {subFlux}
+                                </td>
+                              )}
+                              {activeParams.includes('colourTemperature') && (
+                                <td className="py-1.5 text-center font-bold text-gray-800">
+                                  {subCct}
+                                </td>
+                              )}
+                              {activeParams.includes('cri') && (
+                                <td className="py-1.5 text-center">
+                                  {isFirst ? cri : ''}
+                                </td>
+                              )}
+                              {activeParams.includes('efficacy') && (
+                                <td className="py-1.5 text-center text-[#005288] font-bold">
+                                  {efficacy}
+                                </td>
+                              )}
+                              {activeParams.includes('ip') && (
+                                <td className="py-1.5 text-center font-bold">
+                                  {isFirst ? ip : ''}
+                                </td>
+                              )}
+                              {activeParams.includes('connector') && (
+                                <td className="py-1.5 text-center text-gray-500 font-sans">
+                                  {isFirst ? control : ''}
+                                </td>
+                              )}
+                              {activeParams.includes('lampBase') && (
+                                <td className="py-1.5 text-center text-gray-500 font-sans">
+                                  {isFirst ? getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type'], '—') : ''}
+                                </td>
+                              )}
+                              {activeParams.includes('voltage') && (
+                                <td className="py-1.5 text-center text-gray-500 font-sans">
+                                  {isFirst ? getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—') : ''}
+                                </td>
+                              )}
+                              <td className="py-1.5 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                {isFirst ? (
+                                  <button
+                                    onClick={() => handleOpenProduct(sku)}
+                                    className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-none transition-all cursor-pointer font-sans shadow-sm"
+                                  >
+                                    Specs Drawer
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="invisible px-2.5 py-1 text-[10px] border border-transparent select-none pointer-events-none"
+                                    tabIndex={-1}
+                                    aria-hidden="true"
+                                  >
+                                    Specs Drawer
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </Fragment>
                     );
                   })}
                 </tbody>
