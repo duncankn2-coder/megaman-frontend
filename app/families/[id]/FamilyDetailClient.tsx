@@ -1271,21 +1271,21 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse font-mono">
-                <thead>
+                <thead className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 shadow-sm">
                   <tr className="border-b border-gray-200 bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    {activeParams.includes('mmCode') && <th className="py-1.5 pl-4">MM Code</th>}
-                    {activeParams.includes('modelNo') && <th className="py-1.5">Model No.</th>}
-                    {activeParams.includes('colour') && <th className="py-1.5">Finish / Colour</th>}
-                    {activeParams.includes('wattage') && <th className="py-1.5 text-center">Power</th>}
-                    {activeParams.includes('luminousFlux') && <th className="py-1.5 text-center">Luminous Flux</th>}
-                    {activeParams.includes('colourTemperature') && <th className="py-1.5 text-center">CCT (K)</th>}
-                    {activeParams.includes('cri') && <th className="py-1.5 text-center">CRI</th>}
-                    {activeParams.includes('efficacy') && <th className="py-1.5 text-center">Efficacy</th>}
-                    {activeParams.includes('ip') && <th className="py-1.5 text-center">IP</th>}
-                    {activeParams.includes('connector') && <th className="py-1.5 text-center">Control Gear</th>}
-                    {activeParams.includes('lampBase') && <th className="py-1.5 text-center">Lamp Base</th>}
-                    {activeParams.includes('voltage') && <th className="py-1.5 text-center">Voltage</th>}
-                    <th className="py-1.5 pr-4 text-right">Actions</th>
+                    {activeParams.includes('mmCode') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 pl-4 border-b border-gray-200 shadow-sm">MM Code</th>}
+                    {activeParams.includes('modelNo') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 border-b border-gray-200 shadow-sm">Model No.</th>}
+                    {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 border-b border-gray-200 shadow-sm">Finish / Colour</th>}
+                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">Power</th>}
+                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">Luminous Flux</th>}
+                    {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">CCT (K)</th>}
+                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">CRI</th>}
+                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">Efficacy</th>}
+                    {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">IP</th>}
+                    {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">Control Gear</th>}
+                    {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">Lamp Base</th>}
+                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 text-center border-b border-gray-200 shadow-sm">Voltage</th>}
+                    <th className="sticky top-[68px] lg:top-[76px] z-20 bg-gray-50 py-1.5 pr-4 text-right border-b border-gray-200 shadow-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-150 text-gray-700">
