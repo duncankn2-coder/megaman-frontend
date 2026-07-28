@@ -1271,21 +1271,21 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
           ) : (
             <div className="overflow-x-auto lg:overflow-visible">
               <table className="w-full text-left border-collapse font-mono">
-                <thead className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 shadow-md">
+                <thead className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 shadow-md">
                   <tr className="border-b border-gray-300 bg-gray-100 text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    {activeParams.includes('mmCode') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 pl-4 border-b border-gray-300 shadow-sm">MM Code</th>}
-                    {activeParams.includes('modelNo') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 border-b border-gray-300 shadow-sm">Model No.</th>}
-                    {activeParams.includes('colour') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 border-b border-gray-300 shadow-sm">Finish / Colour</th>}
-                    {activeParams.includes('wattage') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Power</th>}
-                    {activeParams.includes('luminousFlux') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Luminous Flux</th>}
-                    {activeParams.includes('colourTemperature') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">CCT (K)</th>}
-                    {activeParams.includes('cri') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">CRI</th>}
-                    {activeParams.includes('efficacy') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Efficacy</th>}
-                    {activeParams.includes('ip') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">IP</th>}
-                    {activeParams.includes('connector') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Control Gear</th>}
-                    {activeParams.includes('lampBase') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Lamp Base</th>}
-                    {activeParams.includes('voltage') && <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Voltage</th>}
-                    <th className="sticky top-[76px] lg:top-[112px] z-30 bg-gray-100 py-2.5 pr-4 text-right border-b border-gray-300 shadow-sm">Actions</th>
+                    {activeParams.includes('mmCode') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 pl-4 border-b border-gray-300 shadow-sm">MM Code</th>}
+                    {activeParams.includes('modelNo') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 border-b border-gray-300 shadow-sm">Model No.</th>}
+                    {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 border-b border-gray-300 shadow-sm">Finish / Colour</th>}
+                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Power</th>}
+                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Luminous Flux</th>}
+                    {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">CCT (K)</th>}
+                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">CRI</th>}
+                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Efficacy</th>}
+                    {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">IP</th>}
+                    {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Control Gear</th>}
+                    {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Lamp Base</th>}
+                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Voltage</th>}
+                    <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 pr-4 text-right border-b border-gray-300 shadow-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-150 text-gray-700">
