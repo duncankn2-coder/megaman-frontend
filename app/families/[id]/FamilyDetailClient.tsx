@@ -180,6 +180,28 @@ const getMediaUrl = (media: any): string => {
   return '';
 };
 
+// Helper to clean up and deduplicate raw IP values (e.g. "IP65/IP65" -> "IP65")
+const formatIpRating = (ipStr: string): string => {
+  if (!ipStr || ipStr === '—' || ipStr === 'undefined' || ipStr === 'null') return '—';
+  
+  const clean = String(ipStr).trim();
+  const parts = clean.split(/[\/,;]/).map(p => p.trim()).filter(Boolean);
+  
+  const normalizedParts = parts.map(p => {
+    if (/^ip\d+/i.test(p)) {
+      return p.toUpperCase();
+    }
+    return p;
+  });
+
+  const unique = Array.from(new Set(normalizedParts));
+  if (unique.length === 1) {
+    return unique[0];
+  }
+  
+  return unique.join('/');
+};
+
 // Helper to expand lookups with database schema keys dynamically
 const expandSpecNames = (specNames: string[]): string[] => {
   const expanded = [...specNames];
@@ -187,51 +209,93 @@ const expandSpecNames = (specNames: string[]): string[] => {
     const lower = name.toLowerCase();
     if (lower.includes('flux') || lower.includes('lumen')) {
       expanded.push(
-        'useful_luminous_flux_lm',
         'total_luminous_flux_lm',
+        'useful_luminous_flux_lm',
         'light_source_useful_luminous_flux_lm',
-        'useful_luminous_flux',
         'total_luminous_flux',
-        'light_source_useful_luminous_flux'
+        'useful_luminous_flux',
+        'light_source_useful_luminous_flux',
+        'flux',
+        'lumens'
       );
     }
     if (lower.includes('cct') || lower.includes('temp')) {
-      expanded.push('cct_k');
+      expanded.push('cct_k', 'cct', 'colourtemperature', 'colortemperature', 'colour_temp', 'colortemp');
     }
     if (lower.includes('colour') || lower.includes('color')) {
-      expanded.push('fitting_colour');
+      expanded.push('fitting_colour', 'colour', 'color', 'luminaires_color');
     }
     if (lower.includes('power') || lower.includes('watt') || lower.includes('system power')) {
-      expanded.push('on_mode_power_w');
+      expanded.push('on_mode_power_w', 'wattage', 'power', 'on_mode_power', 'light_source_on_mode_power_w', 'energy_consumption_on_mode');
+    }
+    if (lower.includes('efficacy')) {
+      expanded.push('total_mains_efficacy_lmw', 'luminous_efficacy', 'efficacy', 'total_efficacy_lmw', 'mains_efficacy');
     }
     if (lower.includes('ip')) {
-      expanded.push('ip');
+      expanded.push('ip', 'ip_rating', 'iprating');
     }
     if (lower.includes('cri') || lower.includes('ra') || lower.includes('rendering')) {
-      expanded.push('ra', 'colour_rendering_index', 'color_rendering_index');
+      expanded.push('ra', 'cri', 'colour_rendering_index', 'color_rendering_index', 'cri_lower_80');
     }
     if (lower.includes('gear') || lower.includes('control') || lower.includes('connector')) {
-      expanded.push('type_terminal block', 'cap_type', 'driver_type', 'driver_model');
+      expanded.push('type_terminal block', 'cap_type', 'driver_type', 'driver_model', 'dimming_type', 'control_gear');
     }
   }
   return Array.from(new Set(expanded));
 };
 
 // Extraction utility for technical parameters inside product specifications JSON (RZB Style)
-const getProductSpec = (product: Product, specNames: string[], defaultValue = '—'): string => {
+const getProductSpec = (productObj: any, specNames: string[], defaultValue = '—'): string => {
+  if (!productObj) return defaultValue;
+
+  const targetProduct = productObj.product && typeof productObj.product === 'object' ? productObj.product : productObj;
   const expandedNames = expandSpecNames(specNames);
-  
-  if (!product.specifications) {
-    if (expandedNames.some(name => name.includes('power')) && product.power) return product.power;
-    if (expandedNames.some(name => name.includes('colourTemperature')) && product.colourTemperature) return product.colourTemperature;
-    if (expandedNames.some(name => name.includes('colour')) && product.colour) return product.colour;
-    return defaultValue;
+
+  // 1. Try specifications JSON (on targetProduct or productObj)
+  const specs = (targetProduct.specifications || productObj.specifications) as Record<string, unknown> | undefined;
+  if (specs) {
+    for (const name of expandedNames) {
+      if (specs[name] !== undefined && specs[name] !== null) {
+        const val = String(specs[name]).trim();
+        if (val !== '' && val !== 'undefined' && val !== 'null') {
+          return val;
+        }
+      }
+    }
   }
 
-  const specs = product.specifications as Record<string, unknown>;
+  // 2. Try parsed description specifications
+  const desc = targetProduct.description || productObj.description || '';
+  if (desc) {
+    const descSpecs = parseDescriptionSpecs(desc);
+    for (const name of expandedNames) {
+      if (descSpecs[name] !== undefined && String(descSpecs[name]).trim() !== '') {
+        return descSpecs[name];
+      }
+    }
+  }
+
+  // 3. Try direct attributes
   for (const name of expandedNames) {
-    if (specs[name] !== undefined && specs[name] !== null) {
-      return String(specs[name]);
+    if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
+      if (targetProduct.name && targetProduct.name !== '—') return targetProduct.name;
+      if (productObj.name && productObj.name !== '—') return productObj.name;
+      if (productObj.modelNumber) return productObj.modelNumber;
+    }
+    if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && (targetProduct.power || targetProduct.wattage || productObj.wattage || productObj.power)) {
+      return targetProduct.power || targetProduct.wattage || productObj.wattage || productObj.power;
+    }
+    if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && (targetProduct.colourTemperature || targetProduct.colorTemperature || productObj.colourTemperature)) {
+      return targetProduct.colourTemperature || targetProduct.colorTemperature || productObj.colourTemperature;
+    }
+    if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && (targetProduct.colour || targetProduct.color || productObj.colour)) {
+      return targetProduct.colour || targetProduct.color || productObj.colour;
+    }
+    if ((name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') && (targetProduct.ip || productObj.ip)) {
+      return targetProduct.ip || productObj.ip;
+    }
+    if ((name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type') && (targetProduct.connector || productObj.connector)) {
+      return targetProduct.connector || productObj.connector;
     }
   }
 
@@ -287,55 +351,61 @@ const parseDescriptionSpecs = (desc: string): Record<string, string> => {
 const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string => {
   if (!sku) return defaultValue;
   
+  const parent = sku.product && typeof sku.product === 'object' ? sku.product : null;
   const expandedNames = expandSpecNames(specNames);
 
-  if (sku.isFallbackProduct || !sku.product) {
-    const descSpecs = parseDescriptionSpecs(sku.description || '');
-    const productVal = getProductSpec(sku, expandedNames, defaultValue);
-    if (productVal && productVal !== '—') return productVal;
-    
+  // 1. Try SKU specifications JSON first (holds SKU or General Data spreadsheet values)
+  if (sku.specifications) {
     for (const name of expandedNames) {
-      if (descSpecs[name] !== undefined) return descSpecs[name];
+      if (sku.specifications[name] !== undefined && sku.specifications[name] !== null) {
+        const val = String(sku.specifications[name]).trim();
+        if (val !== '' && val !== 'undefined' && val !== 'null') return val;
+      }
     }
-    return defaultValue;
   }
-  
-  const parent = typeof sku.product === 'object' ? sku.product : null;
-  const descSpecs = parseDescriptionSpecs(parent?.description || sku.description || '');
-  
-  for (const name of expandedNames) {
-    // 1. Try SKU specifications JSON first (holds imported General Data spreadsheet values)
-    if (sku.specifications && sku.specifications[name] !== undefined && sku.specifications[name] !== null) {
-      return String(sku.specifications[name]);
-    }
-    
-    // 2. Try Parent specifications JSON
-    if (parent?.specifications && parent.specifications[name] !== undefined && parent.specifications[name] !== null) {
-      return String(parent.specifications[name]);
-    }
 
-    // 3. Try parsed description specifications (from parent or SKU description string)
-    if (descSpecs[name] !== undefined) {
+  // 2. Try Parent Product specifications JSON (holds General Data spreadsheet values)
+  if (parent?.specifications) {
+    for (const name of expandedNames) {
+      if (parent.specifications[name] !== undefined && parent.specifications[name] !== null) {
+        const val = String(parent.specifications[name]).trim();
+        if (val !== '' && val !== 'undefined' && val !== 'null') return val;
+      }
+    }
+  }
+
+  // 3. Try parsed description specifications (from parent or SKU description string)
+  const descSpecs = parseDescriptionSpecs(parent?.description || sku.description || '');
+  for (const name of expandedNames) {
+    if (descSpecs[name] !== undefined && String(descSpecs[name]).trim() !== '') {
       return descSpecs[name];
     }
+  }
 
-    // 4. Fallback to direct attributes
+  // 4. Fallback to direct attributes on SKU
+  for (const name of expandedNames) {
     if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
-      if (sku.name) return sku.name;
+      if (sku.name && sku.name !== '—') return sku.name;
     }
     if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && sku.colour) return sku.colour;
     if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && sku.wattage) return sku.wattage;
     if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && sku.colourTemperature) return sku.colourTemperature;
     if ((name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') && sku.ip) return sku.ip;
     if ((name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type') && sku.connector) return sku.connector;
-    
-    if (parent) {
+    if ((name === 'voltage' || name === 'Voltage' || name === 'rated_voltage_v') && sku.voltage) return sku.voltage;
+    if ((name === 'lampBase' || name === 'lamp base' || name === 'cap_type') && sku.lampBase) return sku.lampBase;
+  }
+
+  // 5. Fallback to direct attributes on Parent Product
+  if (parent) {
+    for (const name of expandedNames) {
       if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && (parent.power || parent.wattage)) return parent.power || parent.wattage;
       if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && (parent.colourTemperature || parent.colorTemperature)) return parent.colourTemperature || parent.colorTemperature;
       if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && (parent.colour || parent.color)) return parent.colour || parent.color;
       if (name === 'customer_model_no_new' && parent.name) return parent.name;
     }
   }
+
   return defaultValue;
 };
 
@@ -556,24 +626,26 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     const fallbackSkus = productsWithoutSkus.map(p => ({
       id: p.id,
       name: '—',
-      colour: p.colour || getProductSpec(p, ['colour', 'color', 'Colour', 'Color']),
-      wattage: p.power || getProductSpec(p, ['power', 'System power', 'wattage']),
-      colourTemperature: p.colourTemperature || getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT']),
+      colour: p.colour || getProductSpec(p, ['colour', 'color', 'Colour', 'Color', 'fitting_colour']),
+      wattage: p.power || (p as any).wattage || getProductSpec(p, ['power', 'System power', 'wattage', 'on_mode_power_w']),
+      colourTemperature: p.colourTemperature || (p as any).colorTemperature || getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']),
       isFallbackProduct: true,
       product: p,
       modelNumber: p.name,
+      specifications: p.specifications,
+      description: p.description,
     }));
 
     const combinedSkus = [...skus, ...fallbackSkus];
 
     combinedSkus.forEach(item => {
-      const pwr = item.wattage || getSkuSpec(item, ['power', 'System power', 'wattage']);
-      const ct = item.colourTemperature || getSkuSpec(item, ['colourTemperature', 'Color Temperature', 'CCT']);
-      const col = item.colour || getSkuSpec(item, ['colour', 'color', 'Colour', 'Color']);
-      const ipVal = item.ip || getSkuSpec(item, ['ipRating', 'IP rating', 'IP Rating', 'ip']);
-      const baseVal = item.lampBase || getSkuSpec(item, ['lampBase', 'lamp base']);
-      const voltVal = item.voltage || getSkuSpec(item, ['voltage', 'Voltage']);
-      const gearVal = item.connector || getSkuSpec(item, ['controlGear', 'control_gear', 'Control gear']);
+      const pwr = getSkuSpec(item, ['power', 'System power', 'wattage', 'on_mode_power_w']);
+      const ct = getSkuSpec(item, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']);
+      const col = getSkuSpec(item, ['colour', 'color', 'Colour', 'Color', 'fitting_colour']);
+      const ipVal = formatIpRating(getSkuSpec(item, ['ipRating', 'IP rating', 'IP Rating', 'ip']));
+      const baseVal = getSkuSpec(item, ['lampBase', 'lamp base', 'cap_type']);
+      const voltVal = getSkuSpec(item, ['voltage', 'Voltage', 'rated_voltage_v']);
+      const gearVal = getSkuSpec(item, ['controlGear', 'control_gear', 'Control gear', 'type_terminal block']);
 
       if (pwr && pwr !== '—') {
         const parts = pwr.split(/[\/+]/).map((p: string) => p.trim()).filter(Boolean);
@@ -631,26 +703,28 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     const fallbackSkus = productsWithoutSkus.map(p => ({
       id: p.id,
       name: '—',
-      colour: p.colour || getProductSpec(p, ['colour', 'color', 'Colour', 'Color']),
-      wattage: p.power || getProductSpec(p, ['power', 'System power', 'wattage']),
-      colourTemperature: p.colourTemperature || getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT']),
-      ip: getProductSpec(p, ['ipRating', 'IP rating', 'IP Rating']),
-      connector: getProductSpec(p, ['controlGear', 'control_gear', 'Control gear']),
+      colour: p.colour || getProductSpec(p, ['colour', 'color', 'Colour', 'Color', 'fitting_colour']),
+      wattage: p.power || (p as any).wattage || getProductSpec(p, ['power', 'System power', 'wattage', 'on_mode_power_w']),
+      colourTemperature: p.colourTemperature || (p as any).colorTemperature || getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']),
+      ip: getProductSpec(p, ['ipRating', 'IP rating', 'IP Rating', 'ip']),
+      connector: getProductSpec(p, ['controlGear', 'control_gear', 'Control gear', 'type_terminal block']),
       isFallbackProduct: true,
       product: p,
       modelNumber: p.name,
+      specifications: p.specifications,
+      description: p.description,
     }));
 
     const combinedSkus = [...skus, ...fallbackSkus];
 
     return combinedSkus.filter(sku => {
-      const pwr = sku.wattage || getSkuSpec(sku, ['power', 'System power', 'wattage']);
-      const ct = sku.colourTemperature || getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT']);
-      const col = sku.colour || getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color']);
-      const ipVal = sku.ip || getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip']);
-      const baseVal = sku.lampBase || getSkuSpec(sku, ['lampBase', 'lamp base']);
-      const voltVal = sku.voltage || getSkuSpec(sku, ['voltage', 'Voltage']);
-      const gearVal = sku.connector || getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear']);
+      const pwr = getSkuSpec(sku, ['power', 'System power', 'wattage', 'on_mode_power_w']);
+      const ct = getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']);
+      const col = getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color', 'fitting_colour']);
+      const ipVal = formatIpRating(getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip']));
+      const baseVal = getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type']);
+      const voltVal = getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v']);
+      const gearVal = getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear', 'type_terminal block']);
       
       const matchesPower = powerFilter === 'All' || pwr === powerFilter || (() => {
         const powerParts = pwr.split(/[\/+]/).map((p: string) => p.trim()).filter(Boolean);
@@ -1273,33 +1347,37 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <table className="w-full text-left border-collapse font-mono">
                 <thead className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 shadow-md">
                   <tr className="border-b border-gray-300 bg-gray-100 text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    {activeParams.includes('mmCode') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 pl-4 border-b border-gray-300 shadow-sm">MM Code</th>}
-                    {activeParams.includes('modelNo') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 border-b border-gray-300 shadow-sm">Model No.</th>}
-                    {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 border-b border-gray-300 shadow-sm">Finish / Colour</th>}
-                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Power</th>}
-                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Luminous Flux</th>}
-                    {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">CCT (K)</th>}
-                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">CRI</th>}
-                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Efficacy</th>}
-                    {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">IP</th>}
-                    {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Control Gear</th>}
-                    {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Lamp Base</th>}
-                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 text-center border-b border-gray-300 shadow-sm">Voltage</th>}
-                    <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-2.5 pr-4 text-right border-b border-gray-300 shadow-sm">Actions</th>
+                    {activeParams.includes('mmCode') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">MM Code</th>}
+                    {activeParams.includes('modelNo') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">Model No.</th>}
+                    {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">Finish / Colour</th>}
+                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Power</th>}
+                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Luminous Flux</th>}
+                    {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">CCT (K)</th>}
+                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">CRI</th>}
+                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Efficacy</th>}
+                    {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">IP</th>}
+                    {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Control Gear</th>}
+                    {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Lamp Base</th>}
+                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Voltage</th>}
+                    <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-right border-b border-gray-300 shadow-sm whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-150 text-gray-700">
-                  {filteredSkus.map((sku) => {
+                <tbody className="divide-y divide-gray-200/70 text-gray-700">
+                  {filteredSkus.map((sku, modelIndex) => {
                     const parent = typeof sku.product === 'object' ? sku.product : null;
                     const mmCode = sku.name;
                     const modelNo = parent?.name || sku.modelNumber || '—';
                     
+                    const isEvenModel = modelIndex % 2 === 0;
+                    const modelBgClass = isEvenModel ? 'bg-white' : 'bg-[#f4f8fc]';
+                    const modelHoverClass = isEvenModel ? 'hover:bg-blue-50/50' : 'hover:bg-blue-100/40';
+
                     const color = getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color', 'fitting_colour'], '—');
                     const power = getSkuSpec(sku, ['power', 'System power', 'wattage', 'on_mode_power_w'], '—');
                     const flux = getSkuSpec(sku, ['luminousFlux', 'Luminous flux', 'flux', 'lumens', 'total_luminous_flux_lm', 'useful_luminous_flux_lm'], '—');
                     const cct = getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k'], '—');
                     const cri = getSkuSpec(sku, ['cri', 'CRI', 'Colour rendering index', 'ra'], '—');
-                    const ip = getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip'], '—');
+                    const ip = formatIpRating(getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip'], '—'));
                     const control = getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear', 'connector', 'type_terminal block', 'cap_type'], '—');
                     
                     const allCcts = parseCcts(cct);
@@ -1323,8 +1401,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const fluxParts = subFlux.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
                           const powerParts = power.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
                           
-                          let efficacy = '—';
-                          if (fluxParts.length > 0 && powerParts.length > 0) {
+                          let efficacy = getSkuSpec(sku, ['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy'], '—');
+                          if (efficacy === '—' && fluxParts.length > 0 && powerParts.length > 0) {
                             const efficacies = fluxParts.map((f, idx) => {
                               const p = powerParts[idx] || powerParts[0];
                               const numF = parseInt(f);
@@ -1340,6 +1418,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               efficacy = `${efficacies[0]} lm/W`;
                             }
                           }
+                          if (efficacy !== '—' && !efficacy.toLowerCase().includes('lm/w') && !isNaN(parseFloat(efficacy))) {
+                            efficacy = `${efficacy} lm/W`;
+                          }
 
                           const isFirst = i === 0;
 
@@ -1347,72 +1428,70 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             <tr 
                               key={`${sku.id}-sub-${subCct}`} 
                               onClick={() => handleOpenProduct(sku)}
-                              className={`text-xs md:text-sm hover:bg-gray-50 hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-100 ${
-                                !isFirst ? 'bg-gray-50/20' : ''
-                              }`}
+                              className={`text-xs md:text-sm ${modelBgClass} ${modelHoverClass} hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-200/70`}
                             >
                               {activeParams.includes('mmCode') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 pl-4 font-bold text-[#005288] align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 font-bold text-[#005288] align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {mmCode}
                                 </td>
                               )}
                               {activeParams.includes('modelNo') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 font-sans font-medium text-gray-900 align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 font-sans font-medium text-gray-900 align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {modelNo}
                                 </td>
                               )}
                               {activeParams.includes('colour') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 text-gray-500 align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 text-gray-600 align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {color}
                                 </td>
                               )}
                               {activeParams.includes('wattage') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 text-center font-bold text-gray-900 align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-bold text-gray-900 align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {power}
                                 </td>
                               )}
                               {activeParams.includes('luminousFlux') && (
-                                <td className="py-1.5 text-center">
+                                <td className="py-2.5 px-4 text-center whitespace-nowrap">
                                   {subFlux}
                                 </td>
                               )}
                               {activeParams.includes('colourTemperature') && (
-                                <td className="py-1.5 text-center font-bold text-gray-800">
+                                <td className="py-2.5 px-4 text-center font-bold text-gray-800 whitespace-nowrap">
                                   {subCct}
                                 </td>
                               )}
                               {activeParams.includes('cri') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 text-center align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {cri}
                                 </td>
                               )}
                               {activeParams.includes('efficacy') && (
-                                <td className="py-1.5 text-center text-[#005288] font-bold">
+                                <td className="py-2.5 px-4 text-center text-[#005288] font-bold whitespace-nowrap">
                                   {efficacy}
                                 </td>
                               )}
                               {activeParams.includes('ip') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 text-center font-bold align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-bold align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {ip}
                                 </td>
                               )}
                               {activeParams.includes('connector') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 text-center text-gray-500 font-sans align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {control}
                                 </td>
                               )}
                               {activeParams.includes('lampBase') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 text-center text-gray-500 font-sans align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type'], '—')}
                                 </td>
                               )}
                               {activeParams.includes('voltage') && isFirst && (
-                                <td rowSpan={N} className="py-1.5 text-center text-gray-500 font-sans align-middle bg-white">
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—')}
                                 </td>
                               )}
                               {isFirst && (
-                                <td rowSpan={N} className="py-1.5 pr-4 text-right align-middle bg-white" onClick={(e) => e.stopPropagation()}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-right align-middle ${modelBgClass} whitespace-nowrap`} onClick={(e) => e.stopPropagation()}>
                                   <button
                                     onClick={() => handleOpenProduct(sku)}
                                     className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-none transition-all cursor-pointer font-sans shadow-sm"
