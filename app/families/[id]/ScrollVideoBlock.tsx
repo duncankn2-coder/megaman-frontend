@@ -223,13 +223,15 @@ export default function ScrollVideoBlock({ block }: ScrollVideoBlockProps) {
           ></div>
         </div>
 
-        {/* Section Subtitle Badge (Fixed top center) */}
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-3 bg-black/40 backdrop-blur-md px-5 py-2 border border-white/10">
-          <span className="w-2 h-2 rounded-full bg-[#005288] animate-pulse"></span>
-          <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-gray-300">
-            {block.subtitle || 'INTERACTIVE EXPERIENCE'}
-          </span>
-        </div>
+        {/* Section Subtitle Badge (Fixed top center - rendered only if block.subtitle exists) */}
+        {block.subtitle && (
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-3 bg-black/40 backdrop-blur-md px-5 py-2 border border-white/10">
+            <span className="w-2 h-2 rounded-full bg-[#005288] animate-pulse"></span>
+            <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-gray-300">
+              {block.subtitle}
+            </span>
+          </div>
+        )}
 
         {/* Storytelling Captions Stack */}
         <div className="container mx-auto px-6 md:px-12 max-w-7xl relative z-20 w-full h-full flex items-center">
@@ -283,17 +285,6 @@ export default function ScrollVideoBlock({ block }: ScrollVideoBlockProps) {
               </div>
             );
           })}
-        </div>
-
-        {/* Bottom Scroll Prompt Indicator */}
-        <div 
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 transition-opacity duration-500"
-          style={{ opacity: scrollProgress > 0.92 ? 0 : 1 }}
-        >
-          <span className="text-[9px] uppercase tracking-widest text-gray-400 font-mono">SCROLL TO SCRUB</span>
-          <div className="w-5 h-8 border-2 border-white/20 rounded-full flex justify-center p-1">
-            <div className="w-1 h-2 bg-[#005288] rounded-full animate-bounce"></div>
-          </div>
         </div>
 
       </div>
