@@ -209,7 +209,9 @@ export default function Header() {
                 className="static"
                 onMouseEnter={() => handleMouseEnter(item.name)}
               >
-                <button
+                <Link
+                  href={item.path}
+                  onClick={() => setActiveMenu(null)}
                   className={`px-4 py-2 font-medium text-[15px] rounded-md transition-all duration-200 flex items-center gap-1.5 focus:outline-none ${isOpen
                       ? 'bg-[#004a7b] text-white'
                       : 'text-white hover:bg-[#005e9c]/50 hover:text-white'
@@ -220,39 +222,15 @@ export default function Header() {
                     icon={faChevronDown}
                     className={`text-[10px] opacity-80 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
                   />
-                </button>
+                </Link>
 
                 {/* Dropdown Panel */}
                 {isOpen && (
                   item.name === 'Products' ? (
                     <div className="absolute top-full left-0 right-0 w-full bg-white shadow-2xl border-t border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-3 duration-200">
                       <div className="container mx-auto px-4 py-8">
-                        <div className="grid grid-cols-12 gap-8">
-                          {/* Left Panel - Catalog Promo */}
-                          <div className="col-span-3 bg-gradient-to-br from-[#005288] to-[#003457] p-8 text-white rounded-2xl flex flex-col justify-between shadow-md">
-                            <div>
-                              <span className="text-[10px] tracking-widest font-bold text-blue-300 uppercase block mb-2">
-                                {item.tagline}
-                              </span>
-                              <h4 className="text-2xl font-bold mb-4">{item.name}</h4>
-                              <p className="text-[13px] text-blue-100 leading-relaxed font-light mb-6">
-                                {item.description}
-                              </p>
-                            </div>
-                            <div>
-                              <Link 
-                                href={item.path} 
-                                onClick={() => setActiveMenu(null)}
-                                className="inline-flex items-center gap-2 text-xs font-semibold text-white bg-[#005e9c] hover:bg-[#004e82] px-4 py-2.5 rounded-lg transition-all duration-200 group/cta shadow-sm hover:shadow"
-                              >
-                                Explore Full Catalog
-                                <FontAwesomeIcon icon={faArrowRight} className="text-[10px] transition-transform duration-300 group-hover/cta:translate-x-1" />
-                              </Link>
-                            </div>
-                          </div>
-
-                          {/* Right Panel - Product Categories Grid */}
-                          <div className="col-span-9 grid grid-cols-4 gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                        {/* Product Categories Grid */}
+                        <div className="w-full grid grid-cols-4 gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
                             {/* Column 1: Lamps */}
                             <div className="space-y-4 bg-white p-5 rounded-xl border border-gray-100/80 shadow-sm">
                               <div>
@@ -413,56 +391,30 @@ export default function Header() {
                           </div>
                         </div>
                       </div>
-                    </div>
                   ) : (
                     <div className="absolute top-full left-0 right-0 w-full bg-white shadow-2xl border-t border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-3 duration-200">
                       <div className="container mx-auto px-4 py-8">
-                        <div className="grid grid-cols-12 gap-8">
-                          {/* Left Promo / Highlight Panel */}
-                          <div className="col-span-3 bg-gradient-to-br from-[#005288] to-[#003457] p-8 text-white rounded-2xl flex flex-col justify-between shadow-md">
-                            <div>
-                              <span className="text-[10px] tracking-widest font-bold text-blue-300 uppercase block mb-2">
-                                {item.tagline}
-                              </span>
-                              <h4 className="text-2xl font-bold mb-4">{item.name}</h4>
-                              <p className="text-[13px] text-blue-100 leading-relaxed font-light mb-6">
-                                {item.description}
-                              </p>
-                            </div>
-                            <div>
+                        {/* Submenu List */}
+                        <div className="w-full flex items-center">
+                          <div className={`grid ${item.submenu.length >= 4 ? (item.submenu.length === 5 ? 'grid-cols-5' : 'grid-cols-4') : 'grid-cols-3'} gap-6 w-full bg-gray-50/50 p-6 rounded-2xl border border-gray-100`}>
+                            {item.submenu.map((sub) => (
                               <Link
-                                href={item.path}
+                                key={sub.name}
+                                href={sub.path}
                                 onClick={() => setActiveMenu(null)}
-                                className="inline-flex items-center gap-2 text-xs font-semibold text-white bg-[#005e9c] hover:bg-[#004e82] px-4 py-2.5 rounded-lg transition-all duration-200 group/cta shadow-sm hover:shadow"
+                                className="block p-5 bg-white hover:bg-[#005288]/5 rounded-xl border border-gray-100 hover:border-[#005288]/20 hover:shadow-sm transition-all duration-200 group"
                               >
-                                Explore All {item.name}
-                                <FontAwesomeIcon icon={faArrowRight} className="text-[10px] transition-transform duration-300 group-hover/cta:translate-x-1" />
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[15px] font-semibold text-gray-800 group-hover:text-[#005288] transition-colors">
+                                    {sub.name}
+                                  </span>
+                                  <FontAwesomeIcon
+                                    icon={faArrowRight}
+                                    className="text-xs text-gray-400 group-hover:text-[#005288] translate-x-0 group-hover:translate-x-1 transition-all duration-200"
+                                  />
+                                </div>
                               </Link>
-                            </div>
-                          </div>
-
-                          {/* Right Submenu List */}
-                          <div className="col-span-9 flex items-center">
-                            <div className="grid grid-cols-3 gap-6 w-full bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-                              {item.submenu.map((sub) => (
-                                <Link
-                                  key={sub.name}
-                                  href={sub.path}
-                                  onClick={() => setActiveMenu(null)}
-                                  className="block p-5 bg-white hover:bg-[#005288]/5 rounded-xl border border-gray-100 hover:border-[#005288]/20 hover:shadow-sm transition-all duration-200 group"
-                                >
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-[15px] font-semibold text-gray-800 group-hover:text-[#005288] transition-colors">
-                                      {sub.name}
-                                    </span>
-                                    <FontAwesomeIcon
-                                      icon={faArrowRight}
-                                      className="text-xs text-gray-400 group-hover:text-[#005288] translate-x-0 group-hover:translate-x-1 transition-all duration-200"
-                                    />
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
+                            ))}
                           </div>
                         </div>
                       </div>
