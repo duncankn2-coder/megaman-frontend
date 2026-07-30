@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ScrollVideoBlock from './ScrollVideoBlock';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faDownload, 
@@ -51,6 +52,7 @@ interface MediaItem {
   alt?: string;
   filename?: string;
   type: 'image' | 'video';
+  description?: string;
 }
 
 interface SymbolItem {
@@ -830,6 +832,15 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
               </div>
 
+              {/* Optional Image Description Slot */}
+              {activeMedia?.description && (
+                <div className="bg-white border-l-2 border-[#005288] border-y border-r border-gray-200 p-4 shadow-sm transition-all duration-300">
+                  <p className="text-xs md:text-sm text-gray-600 font-light leading-relaxed">
+                    {activeMedia.description}
+                  </p>
+                </div>
+              )}
+
               {/* Thumbnails grid with fine borders */}
               {mediaList.length > 1 && (
                 <div className="grid grid-cols-5 gap-3">
@@ -837,6 +848,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     <button
                       key={media.id}
                       onClick={() => setActiveMediaIndex(idx)}
+                      title={media.description || media.alt || ''}
                       className={`relative aspect-video bg-white border focus:outline-none transition-all cursor-pointer shadow-sm ${
                         activeMediaIndex === idx
                           ? 'border-[#005288] ring-1 ring-[#005288]/30 bg-[#005288]/5'
@@ -960,8 +972,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       </section>
 
       {/* Dynamic CMS Layout Sections (Rendered above Technical Configurator) */}
-      {family.layout && family.layout.map((block, blockIdx) => {
+      {(family.layout && family.layout.length > 0 ? family.layout : [{ blockType: 'scrollVideo' }]).map((block, blockIdx) => {
         switch (block.blockType) {
+          case 'scrollVideo': {
+            return <ScrollVideoBlock key={`scroll-video-${blockIdx}`} block={block} />;
+          }
+
           case 'editorial': {
             const isSplitLeft = block.layout === 'split-left';
             const isSplitRight = block.layout === 'split-right';
@@ -1359,7 +1375,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Control Gear</th>}
                     {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Lamp Base</th>}
                     {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Voltage</th>}
-                    <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-right border-b border-gray-300 shadow-sm whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200/70 text-gray-700">
@@ -1488,16 +1503,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               {activeParams.includes('voltage') && isFirst && (
                                 <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—')}
-                                </td>
-                              )}
-                              {isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-right align-middle ${modelBgClass} whitespace-nowrap`} onClick={(e) => e.stopPropagation()}>
-                                  <button
-                                    onClick={() => handleOpenProduct(sku)}
-                                    className="bg-white hover:bg-[#005288] hover:text-white border border-gray-300 hover:border-transparent text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-none transition-all cursor-pointer font-sans shadow-sm"
-                                  >
-                                    Specs Drawer
-                                  </button>
                                 </td>
                               )}
                             </tr>

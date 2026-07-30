@@ -21,6 +21,7 @@ interface MediaItem {
   alt?: string;
   filename?: string;
   type: 'image' | 'video';
+  description?: string;
 }
 
 interface SymbolItem {
