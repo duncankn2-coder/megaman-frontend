@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 import { Metadata } from 'next';
 import PrintController from './PrintController';
+import DismantleInstructionPages from './DismantleInstructionPages';
 
 interface Product {
   id: string;
@@ -467,63 +468,12 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
         </div>
       </A4Page>
 
-      {/* PAGE 3+: DISMANTLE INSTRUCTION (MERGED PDF FROM FAMILY) */}
-      <div className="page-break">
-        <A4Page pageNumber={3}>
-          <div className="h-full flex flex-col justify-between font-sans">
-            <div>
-              {/* Header matching Dismantle Instruction style */}
-              <div className="flex justify-between items-start border-b border-gray-300 pb-2 mb-4">
-                <div className="flex flex-col text-left">
-                  <h1 className="text-xl font-extrabold text-[#009fe3] uppercase tracking-wide">
-                    {familyName}
-                  </h1>
-                  <span className="text-xs font-bold text-gray-800 tracking-wider">
-                    DISMANTLE INSTRUCTION FOR MARKET SURVEILLANCE
-                  </span>
-                </div>
-                <img 
-                  src="/MEGAMAN_Logo.png" 
-                  alt="MEGAMAN®" 
-                  className="h-7 object-contain" 
-                  style={{ maxHeight: '28px' }}
-                />
-              </div>
-
-              {diPdfUrl ? (
-                <div className="w-full h-[220mm] border border-gray-200 rounded overflow-hidden">
-                  <iframe 
-                    src={`${diPdfUrl}#toolbar=0&navpanes=0`} 
-                    className="w-full h-full border-none"
-                    title="Dismantle Instruction PDF"
-                  />
-                </div>
-              ) : (
-                <div className="p-12 border-2 border-dashed border-gray-300 rounded text-center my-12 bg-gray-50">
-                  <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <h3 className="text-sm font-bold text-gray-700 uppercase mb-1">
-                    Dismantle Instruction Pending Upload
-                  </h3>
-                  <p className="text-xs text-gray-500 max-w-md mx-auto">
-                    The dismantle instruction file <code className="bg-gray-200 px-1 py-0.5 rounded text-gray-800">{familyName.toLowerCase().replace(/\s+/g, '_')}_di.pdf</code> has not been uploaded for family <span className="font-bold">{familyName}</span> yet.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-between items-center text-[8px] text-gray-500 border-t border-gray-200 pt-2 font-sans">
-              <div className="flex space-x-4">
-                <span>www.megaman.cc</span>
-                <span>info@megaman.cc</span>
-              </div>
-              <span>© Copyright 2026. All rights reserved by MEGAMAN®</span>
-              <span>Data subject to change</span>
-            </div>
-          </div>
-        </A4Page>
-      </div>
+      {/* PAGE 3+: DISMANTLE INSTRUCTION (MERGED FULL-PAGE PDF RENDER FROM FAMILY) */}
+      <DismantleInstructionPages 
+        diPdfUrl={diPdfUrl} 
+        familyName={familyName} 
+        startPageNumber={3} 
+      />
     </div>
   );
 }
