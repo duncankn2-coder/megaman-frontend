@@ -20,7 +20,8 @@ import {
   faChartLine,
   faChevronLeft,
   faChevronRight,
-  faProjectDiagram
+  faProjectDiagram,
+  faExternalLinkAlt
 } from '@fortawesome/free-solid-svg-icons';
 
 interface MediaFile {
@@ -1623,6 +1624,29 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     {mmCodeVal}
                                   </span>
                                 </div>
+
+                                {/* Download Technical Document (Light Source) Button */}
+                                {(() => {
+                                  const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                    ? activeDrawerProduct.id
+                                    : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
+                                  const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                    ? ''
+                                    : `?sku=${activeDrawerProduct.name}`;
+                                  const eprelLink = `/products/${parentId}/eprel-light-source${skuQuery}`;
+
+                                  return (
+                                    <Link
+                                      href={eprelLink}
+                                      target="_blank"
+                                      className="w-full mt-2.5 bg-[#005288] hover:bg-[#003c64] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3 rounded-none transition-all flex items-center justify-center gap-2 shadow-sm font-sans"
+                                    >
+                                      <FontAwesomeIcon icon={faFilePdf} />
+                                      <span>Technical Document (Light Source)</span>
+                                      <FontAwesomeIcon icon={faExternalLinkAlt} className="text-[9px] opacity-80" />
+                                    </Link>
+                                  );
+                                })()}
                               </div>
 
                               <div className="md:col-span-7 space-y-4">
@@ -1877,15 +1901,26 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                         <FontAwesomeIcon icon={faDownload} />
                                       </button>
                                     )}
-                                    {docLightSource && (
-                                      <button 
-                                        onClick={() => handleDownloadFile(docLightSource, 'Light Source document is available on request.')}
-                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                      >
-                                        <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
-                                        <FontAwesomeIcon icon={faDownload} />
-                                      </button>
-                                    )}
+                                    {(() => {
+                                      const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                        ? activeDrawerProduct.id
+                                        : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
+                                      const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                        ? ''
+                                        : `?sku=${activeDrawerProduct.name}`;
+                                      const eprelLink = `/products/${parentId}/eprel-light-source${skuQuery}`;
+
+                                      return (
+                                        <Link 
+                                          href={eprelLink}
+                                          target="_blank"
+                                          className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                        >
+                                          <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
+                                          <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                        </Link>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
                               );
@@ -1899,12 +1934,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 </div>
 
                 {/* Persistent Footer Action Buttons inside Drawer (Light Re-Themed) */}
-                <div className="h-20 border-t border-gray-200 px-8 bg-gray-50 flex items-center justify-between gap-4 relative z-20 shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.05)]">
-                  <span className="text-[10px] text-gray-500 font-mono flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faInfoCircle} />
-                    Compliance data L80/B10 verified
-                  </span>
-                  
+                <div className="h-20 border-t border-gray-200 px-8 bg-gray-50 flex items-center justify-end gap-4 relative z-20 shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.05)]">
                   <div className="flex gap-3">
                     {(() => {
                       const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
@@ -1917,6 +1947,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       const pdfLink = `/products/${parentId}/datasheet${skuQuery}`;
                       const pdfFile = activeDrawerProduct.datasheetPdf || parent?.datasheetPdf;
                       const ldtFile = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
+                      const iesFile = activeDrawerProduct.photometryIes || parent?.photometryIes;
+                      const cadFile = ldtFile || iesFile;
 
                       return (
                         <>
@@ -1938,21 +1970,15 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               DOWNLOAD DATASHEET
                             </Link>
                           )}
-                          <button 
-                            onClick={() => {
-                              if (ldtFile) {
-                                handleDownloadFile(ldtFile, '');
-                              } else if (pdfFile) {
-                                handleDownloadFile(pdfFile, '');
-                              } else {
-                                alert('Technical planning databases are available on request. Please contact Megaman support.');
-                              }
-                            }}
-                            className="bg-[#005288] text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none hover:bg-[#003c64] transition-all cursor-pointer font-sans shadow-sm"
-                          >
-                            <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                            DOWNLOAD CAD FILES
-                          </button>
+                          {cadFile && (
+                            <button 
+                              onClick={() => handleDownloadFile(cadFile, '')}
+                              className="bg-[#005288] text-white text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none hover:bg-[#003c64] transition-all cursor-pointer font-sans shadow-sm"
+                            >
+                              <FontAwesomeIcon icon={faDownload} className="mr-2" />
+                              DOWNLOAD CAD FILES
+                            </button>
+                          )}
                         </>
                       );
                     })()}
