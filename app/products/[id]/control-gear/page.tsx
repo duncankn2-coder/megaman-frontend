@@ -118,17 +118,23 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
     ? skus.find(s => s.name === resolvedSearchParams.sku) || skus[0]
     : skus[0];
 
+  const isInvalid = (val?: string | null): boolean => {
+    if (!val) return true;
+    const lower = val.trim().toLowerCase();
+    return lower === '' || lower === 'n/a' || lower === 'na' || lower === 'null' || lower === 'undefined' || lower === '-' || lower === '—';
+  };
+
   // Helper to extract values from specifications or SKU direct attributes
   const getSpec = (key: string, fallback = 'N/A'): string => {
     // 1. Check SKU specifications
     if (selectedSku?.specifications && selectedSku.specifications[key] !== undefined && selectedSku.specifications[key] !== null) {
       const val = String(selectedSku.specifications[key]).trim();
-      if (val && val.toLowerCase() !== 'undefined' && val !== '-') return val;
+      if (!isInvalid(val)) return val;
     }
     // 2. Check Product specifications
     if (product.specifications && product.specifications[key] !== undefined && product.specifications[key] !== null) {
       const val = String(product.specifications[key]).trim();
-      if (val && val.toLowerCase() !== 'undefined' && val !== '-') return val;
+      if (!isInvalid(val)) return val;
     }
     return fallback;
   };
@@ -136,42 +142,84 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
   const getMultiSpec = (keys: string[], fallback = 'N/A'): string => {
     for (const k of keys) {
       const val = getSpec(k, '');
-      if (val && val !== 'N/A' && val !== '—' && val.toLowerCase() !== 'undefined') return val;
+      if (!isInvalid(val)) return val;
     }
     return fallback;
   };
 
   // -------------------------------------------------------------
-  // CONTROL GEAR SPECIFICATIONS MAPPING
+  // CONTROL GEAR SPECIFICATIONS MAPPING (Cols DU - EE)
   // -------------------------------------------------------------
   const familyName = product.families?.name || getMultiSpec(['series', 'series_name'], 'MEGAMAN® LUMINAIRE');
+  // Column DU: Model Number
   const driverModelNumber = getMultiSpec(['driver_model', 'scg_driver_model_no', 'control_gear_model_no'], product.name || 'N/A');
   const supplierName = getSpec('supplier_name', 'MEGAMAN GmbH');
   const supplierAddress = getSpec('supplier_address', 'Halskestraße 22-26, AircomParc A140880 Ratingen Germany');
 
   // Specs
-  const generalDesc = getMultiSpec(['scg_general_description', 'description'], `Input: AC220~240 Output: ${getSpec('on_mode_power_w', '16.5W')}`);
+  // Column O (Input) & Columns DV, EO, EP (Output)
+  let inputVoltage = getMultiSpec(['scg_input_voltage', 'rated_voltage_v', 'input_voltage'], 'AC220~240V');
+  if (!isInvalid(inputVoltage) && !inputVoltage.toLowerCase().includes('v')) {
+    inputVoltage = `${inputVoltage}V`;
+  }
+
+  const outputPowerSpec = getMultiSpec(['scg_max_output_power', 'max_output_power', 'on_mode_power_w'], '');
+  const outputVoltageSpec = getMultiSpec(['output_votage_fixture_v', 'output_voltage_fixture_v', 'output_voltage'], '');
+  const outputCurrentSpec = getMultiSpec(['output_current_fixture_ma', 'output_current'], '');
+
+  const outputParts: string[] = [];
+  if (!isInvalid(outputPowerSpec)) {
+    outputParts.push(outputPowerSpec.toLowerCase().includes('w') ? outputPowerSpec : `${outputPowerSpec}W`);
+  }
+  if (!isInvalid(outputVoltageSpec)) {
+    outputParts.push(outputVoltageSpec.toLowerCase().includes('v') ? outputVoltageSpec : `${outputVoltageSpec}V`);
+  }
+  if (!isInvalid(outputCurrentSpec)) {
+    outputParts.push(outputCurrentSpec.toLowerCase().includes('ma') || outputCurrentSpec.toLowerCase().includes('a') ? outputCurrentSpec : `${outputCurrentSpec}mA`);
+  }
+  const formattedOutput = outputParts.length > 0 ? outputParts.join(' ') : '16.5W';
+
+  const generalDesc = getMultiSpec(
+    ['scg_general_description'], 
+    `Input: ${inputVoltage} Output: ${formattedOutput}`
+  );
   
-  let maxOutputPower = getMultiSpec(['scg_max_output_power', 'on_mode_power_w'], '16.5W');
-  if (maxOutputPower !== 'N/A' && !maxOutputPower.toLowerCase().includes('w')) maxOutputPower = `${maxOutputPower}W`;
+  // Column DV: Maximum output power
+  let maxOutputPower = getMultiSpec(['scg_max_output_power', 'max_output_power', 'on_mode_power_w'], '16.5W');
+  if (!isInvalid(maxOutputPower) && maxOutputPower !== 'N/A' && !maxOutputPower.toLowerCase().includes('w')) {
+    maxOutputPower = `${maxOutputPower}W`;
+  }
 
   const typeLightSource = getMultiSpec(['lighting_tech', 'lamp_source', 'type_of_light_source'], 'LED');
   
-  let efficiencyFullLoad = getMultiSpec(['scg_efficiency_full_load', 'total_mains_efficacy_lmw'], '92%');
-  if (efficiencyFullLoad !== 'N/A' && !efficiencyFullLoad.includes('%')) efficiencyFullLoad = `${efficiencyFullLoad}%`;
+  // Column DW: Efficiency in full-load
+  let efficiencyFullLoad = getMultiSpec(['scg_efficiency_full_load', 'efficiency_full_load', 'total_mains_efficacy_lmw'], '92%');
+  if (!isInvalid(efficiencyFullLoad) && efficiencyFullLoad !== 'N/A' && !efficiencyFullLoad.includes('%')) {
+    efficiencyFullLoad = `${efficiencyFullLoad}%`;
+  }
 
-  const noLoadPower = getMultiSpec(['scg_no_load_power'], 'not applicable');
+  // Column DX: No-load power (Pno)
+  const noLoadPower = getMultiSpec(['scg_no_load_power', 'no_load_power'], 'not applicable');
+  // Column DY: Standby Power (Psb)
   const standbyPower = getMultiSpec(['scg_standby_power', 'standby_power'], 'N/A');
+  // Column DZ: Networked Standby Power (Pnet)
   const networkedStandbyPower = getMultiSpec(['scg_networked_standby_power', 'networked_standby_power'], 'N/A');
 
-  const heightMm = getMultiSpec(['scg_outer_dimensions_height_mm', 'height_mm'], '25');
-  const widthMm = getMultiSpec(['scg_outer_dimensions_width_mm', 'width_mm'], '47');
-  const depthMm = getMultiSpec(['scg_outer_dimensions_depth_mm', 'depth_mm', 'length_mm'], '95');
+  // Column EA: Height
+  const heightMm = getMultiSpec(['scg_outer_dimensions_height_mm', 'scg_height_mm', 'height_mm'], '25');
+  // Column EB: Width
+  const widthMm = getMultiSpec(['scg_outer_dimensions_width_mm', 'scg_width_mm', 'width_mm'], '47');
+  // Column EC: Depth
+  const depthMm = getMultiSpec(['scg_outer_dimensions_depth_mm', 'scg_depth_mm', 'depth_mm', 'length_mm'], '95');
   
-  let massGrams = getMultiSpec(['scg_mass_g', 'net_weight_g', 'weight'], '75');
-  if (massGrams !== 'N/A' && !massGrams.toLowerCase().includes('g')) massGrams = `${massGrams}`;
+  // Column ED: Mass in grams
+  let massGrams = getMultiSpec(['scg_mass_g', 'mass_g', 'net_weight_g', 'weight'], '75');
+  if (!isInvalid(massGrams) && massGrams !== 'N/A' && !massGrams.toLowerCase().includes('g')) {
+    massGrams = `${massGrams}`;
+  }
 
-  const standardsCompliance = getMultiSpec(['scg_standards_compliance', 'standards'], 'EN 61347-1:2015 & EN61347-2-13:2014');
+  // Column EE: Standards Compliance
+  const standardsCompliance = getMultiSpec(['scg_standards_compliance', 'standards_compliance', 'standards'], 'EN 61347-1:2015 & EN61347-2-13:2014');
 
   // Dismantle Instruction PDF link
   const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
