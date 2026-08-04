@@ -974,7 +974,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       </section>
 
       {/* Dynamic CMS Layout Sections (Rendered above Technical Configurator) */}
-      {(family.layout && family.layout.length > 0 ? family.layout : [{ blockType: 'scrollVideo' }]).map((block, blockIdx) => {
+      {(family.layout && family.layout.length > 0 ? family.layout : []).map((block, blockIdx) => {
         switch (block.blockType) {
           case 'scrollVideo': {
             return <ScrollVideoBlock key={`scroll-video-${blockIdx}`} block={block} />;
