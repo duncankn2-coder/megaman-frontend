@@ -1624,30 +1624,68 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   <span className="text-xs font-bold text-[#005288] block mt-1">
                                     {mmCodeVal}
                                   </span>
+
+                                  {/* Download Technical Document (Light Source) Button */}
+                                  {(() => {
+                                    const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                      ? activeDrawerProduct.id
+                                      : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
+                                    const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                      ? ''
+                                      : `?sku=${activeDrawerProduct.name}`;
+                                    const eprelLink = `/products/${parentId}/eprel-light-source${skuQuery}`;
+
+                                    return (
+                                      <Link
+                                        href={eprelLink}
+                                        target="_blank"
+                                        className="w-full mt-2.5 bg-[#005288] hover:bg-[#003c64] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3 rounded-none transition-all flex items-center justify-center gap-2 shadow-sm font-sans"
+                                      >
+                                        <FontAwesomeIcon icon={faFilePdf} />
+                                        <span>Technical Document (Light Source)</span>
+                                        <FontAwesomeIcon icon={faExternalLinkAlt} className="text-[9px] opacity-80" />
+                                      </Link>
+                                    );
+                                  })()}
+
+                                  {/* Download Technical Document (Control Gear) Button */}
+                                  {(() => {
+                                    const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                                    const specs = (activeDrawerProduct.specifications || parent?.specifications || {}) as Record<string, any>;
+                                    
+                                    const isValidDriverModel = (val: any) => {
+                                      if (val === null || val === undefined) return false;
+                                      const str = String(val).trim().toLowerCase();
+                                      if (!str) return false;
+                                      return !(str === 'undefined' || str === 'null' || str === 'n/a' || str === 'n.a.' || str === 'na' || str === 'none' || str === '-' || str === '—');
+                                    };
+
+                                    const hasDriverModel = isValidDriverModel(specs.driver_model) || isValidDriverModel(specs.scg_driver_model_no);
+                                    const showControlGearDoc = hasDriverModel;
+
+                                    if (!showControlGearDoc) return null;
+
+                                    const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                      ? activeDrawerProduct.id
+                                      : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
+                                    const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                      ? ''
+                                      : `?sku=${activeDrawerProduct.name}`;
+                                    const controlGearLink = `/products/${parentId}/control-gear${skuQuery}`;
+
+                                    return (
+                                      <Link
+                                        href={controlGearLink}
+                                        target="_blank"
+                                        className="w-full mt-2 bg-[#009fe3] hover:bg-[#0086c0] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3 rounded-none transition-all flex items-center justify-center gap-2 shadow-sm font-sans"
+                                      >
+                                        <FontAwesomeIcon icon={faFilePdf} />
+                                        <span>Technical Document (Control Gear)</span>
+                                        <FontAwesomeIcon icon={faExternalLinkAlt} className="text-[9px] opacity-80" />
+                                      </Link>
+                                    );
+                                  })()}
                                 </div>
-
-                                {/* Download Technical Document (Light Source) Button */}
-                                {(() => {
-                                  const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
-                                    ? activeDrawerProduct.id
-                                    : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
-                                  const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
-                                    ? ''
-                                    : `?sku=${activeDrawerProduct.name}`;
-                                  const eprelLink = `/products/${parentId}/eprel-light-source${skuQuery}`;
-
-                                  return (
-                                    <Link
-                                      href={eprelLink}
-                                      target="_blank"
-                                      className="w-full mt-2.5 bg-[#005288] hover:bg-[#003c64] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3 rounded-none transition-all flex items-center justify-center gap-2 shadow-sm font-sans"
-                                    >
-                                      <FontAwesomeIcon icon={faFilePdf} />
-                                      <span>Technical Document (Light Source)</span>
-                                      <FontAwesomeIcon icon={faExternalLinkAlt} className="text-[9px] opacity-80" />
-                                    </Link>
-                                  );
-                                })()}
                               </div>
 
                               <div className="md:col-span-7 space-y-4">
@@ -1874,16 +1912,30 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                               const famObj = family || (parent && typeof parent.families === 'object' ? parent.families : null);
                               const familyDi = famObj?.dismantleInstructionPdf || null;
-                              const docControlGear = activeDrawerProduct.techDocControlGear || parent?.techDocControlGear || familyDi;
+                              
+                              const specs = (activeDrawerProduct.specifications || parent?.specifications || {}) as Record<string, any>;
+                              
+                              const isValidDriverModel = (val: any) => {
+                                if (val === null || val === undefined) return false;
+                                const str = String(val).trim().toLowerCase();
+                                if (!str) return false;
+                                return !(str === 'undefined' || str === 'null' || str === 'n/a' || str === 'n.a.' || str === 'na' || str === 'none' || str === '-' || str === '—');
+                              };
+
+                              const hasDriverModel = isValidDriverModel(specs.driver_model) || isValidDriverModel(specs.scg_driver_model_no);
+                              const showControlGearDoc = hasDriverModel || Boolean(activeDrawerProduct.techDocControlGear || parent?.techDocControlGear);
                               const docContainingProduct = activeDrawerProduct.techDocContainingProduct || parent?.techDocContainingProduct;
                               const docLightSource = activeDrawerProduct.techDocLightSource || parent?.techDocLightSource || familyDi;
                               
                               const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
                                 ? activeDrawerProduct.id
                                 : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
+                              const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                                ? ''
+                                : `?sku=${activeDrawerProduct.name}`;
                               const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
-                              if (!docControlGear && !docContainingProduct && !docLightSource) return null;
+                              if (!showControlGearDoc && !docContainingProduct && !docLightSource) return null;
                               
                               return (
                                 <div className="mt-6 pt-6 border-t border-gray-200">
@@ -1891,16 +1943,25 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     Technical Compliance & Ecodesign
                                   </h4>
                                   <div className="grid grid-cols-1 gap-2 text-xs">
-                                    {docControlGear && (
-                                      <a 
-                                        href={`${payloadUrl}/api/products/${parentId}/technical-document?type=control-gear`}
+                                    {docLightSource && (
+                                      <Link 
+                                        href={`/products/${parentId}/eprel-light-source${skuQuery}`}
                                         target="_blank"
-                                        rel="noopener noreferrer"
+                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                      >
+                                        <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
+                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                      </Link>
+                                    )}
+                                    {showControlGearDoc && (
+                                      <Link 
+                                        href={`/products/${parentId}/control-gear${skuQuery}`}
+                                        target="_blank"
                                         className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
                                       >
                                         <span>TECHNICAL DOCUMENT - CONTROL GEAR</span>
-                                        <FontAwesomeIcon icon={faDownload} />
-                                      </a>
+                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                      </Link>
                                     )}
                                     {docContainingProduct && (
                                       <a 
@@ -1911,17 +1972,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       >
                                         <span>TECHNICAL DOCUMENT - CONTAINING PRODUCT</span>
                                         <FontAwesomeIcon icon={faDownload} />
-                                      </a>
-                                    )}
-                                    {docLightSource && (
-                                      <a 
-                                        href={`${payloadUrl}/api/products/${parentId}/technical-document?type=light-source`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                      >
-                                        <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
-                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
                                       </a>
                                     )}
                                   </div>
