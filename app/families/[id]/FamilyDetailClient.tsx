@@ -17,7 +17,6 @@ import {
   faSlidersH,
   faSearch,
   faCogs,
-  faChartLine,
   faChevronLeft,
   faChevronRight,
   faProjectDiagram,
@@ -42,6 +41,10 @@ interface Product {
   datasheetPdf?: MediaFile | null;
   photometryLdt?: MediaFile | null;
   photometryIes?: MediaFile | null;
+  lightSpectrumGraph?: MediaFile | null;
+  photometricPolarDiagram?: MediaFile | null;
+  beamAngleDiagram?: MediaFile | null;
+  lineDrawing?: MediaFile | null;
   techDocControlGear?: MediaFile | null;
   techDocContainingProduct?: MediaFile | null;
   techDocLightSource?: MediaFile | null;
@@ -1601,7 +1604,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                           // Use the parent model No.'s image — SKUs (MM codes) don't carry their own images
                           const activeImage = parent?.images || activeDrawerProduct.images;
-                          const mmCodeVal = activeDrawerProduct.isFallbackProduct ? getProductSpec(activeDrawerProduct, ['yk_product_code', 'model_identifier', 'customer_model_no_old'], activeDrawerProduct.name) : activeDrawerProduct.name;
                           
                           return (
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -1619,12 +1621,74 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-4xl" />
                                   )}
                                 </div>
-                                <div className="bg-gray-50 border border-gray-200 p-3.5 text-center font-mono shadow-inner">
-                                  <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">MM CODE</span>
-                                  <span className="text-xs font-bold text-[#005288] block mt-1">
-                                    {mmCodeVal}
-                                  </span>
-                                </div>
+                                 {/* Line Drawing / Dimensional Outline Box */}
+                                 {(() => {
+                                   const lineDrawingFile = activeDrawerProduct.lineDrawing || parent?.lineDrawing;
+                                   const heightVal = getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '');
+                                   const diamVal = getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter', 'width_mm'], '');
+
+                                   return (
+                                     <div className="bg-gray-50 border border-gray-200 p-3 flex flex-col items-center justify-center shadow-sm relative group overflow-hidden">
+                                       <div className="w-full flex items-center justify-between border-b border-gray-200/80 pb-1.5 mb-2">
+                                         <span className="text-[9px] font-bold uppercase tracking-widest text-[#005288] font-sans">
+                                           Dimensional Line Drawing
+                                         </span>
+                                         <span className="text-[8px] font-mono text-gray-400 uppercase">
+                                           CAD Outline
+                                         </span>
+                                       </div>
+
+                                       <div className="relative aspect-[4/3] w-full bg-white border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                         {lineDrawingFile ? (
+                                           <img 
+                                             src={getImageUrl(lineDrawingFile)} 
+                                             alt="Line Drawing" 
+                                             className="max-h-full max-w-full object-contain"
+                                           />
+                                         ) : (
+                                           <svg viewBox="0 0 160 140" className="w-full h-full text-gray-600">
+                                             {/* Outer Luminaire Contour */}
+                                             <path d="M 80 18 C 50 18 35 38 35 62 C 35 86 50 102 58 114 L 58 126 L 102 126 L 102 114 C 110 102 125 86 125 62 C 125 38 110 18 80 18 Z" fill="none" stroke="#005288" strokeWidth="1.5" />
+                                             <path d="M 58 126 L 102 126 M 58 129 L 102 129 M 60 132 L 100 132" fill="none" stroke="#005288" strokeWidth="1.2" />
+
+                                             {/* Internal Lens / Reflector outline */}
+                                             <ellipse cx="80" cy="50" rx="32" ry="12" fill="none" stroke="#9ca3af" strokeWidth="0.8" strokeDasharray="2,2" />
+                                             <line x1="80" y1="18" x2="80" y2="126" stroke="#e5e7eb" strokeWidth="0.6" strokeDasharray="3,3" />
+
+                                             {/* Height Dimension line on left */}
+                                             <line x1="18" y1="18" x2="18" y2="132" stroke="#009fe3" strokeWidth="1" />
+                                             <line x1="13" y1="18" x2="23" y2="18" stroke="#009fe3" strokeWidth="1" />
+                                             <line x1="13" y1="132" x2="23" y2="132" stroke="#009fe3" strokeWidth="1" />
+                                             <text x="10" y="78" fill="#009fe3" fontSize="7" fontWeight="bold" textAnchor="middle" transform="rotate(-90 10 78)">
+                                               {heightVal ? `${heightVal}mm` : 'H'}
+                                             </text>
+
+                                             {/* Diameter Dimension line at bottom */}
+                                             <line x1="35" y1="137" x2="125" y2="137" stroke="#009fe3" strokeWidth="1" />
+                                             <line x1="35" y1="133" x2="35" y2="139" stroke="#009fe3" strokeWidth="1" />
+                                             <line x1="125" y1="133" x2="125" y2="139" stroke="#009fe3" strokeWidth="1" />
+                                             <text x="80" y="139" fill="#009fe3" fontSize="6.5" fontWeight="bold" textAnchor="middle">
+                                               {diamVal ? `Ø ${diamVal}mm` : 'D'}
+                                             </text>
+                                           </svg>
+                                         )}
+                                       </div>
+
+                                       <div className="w-full flex items-center justify-between mt-2 text-[8px] font-mono text-gray-400">
+                                         <span>{lineDrawingFile ? (lineDrawingFile.filename || 'Uploaded File') : 'Technical CAD Outline'}</span>
+                                         {lineDrawingFile && (
+                                           <button 
+                                             onClick={() => handleDownloadFile(lineDrawingFile, 'Line Drawing')}
+                                             className="inline-flex items-center gap-1 font-bold text-[#005288] hover:underline cursor-pointer"
+                                           >
+                                             <FontAwesomeIcon icon={faDownload} className="text-[8px]" />
+                                             <span>Download</span>
+                                           </button>
+                                         )}
+                                       </div>
+                                     </div>
+                                   );
+                                 })()}
                               </div>
 
                               <div className="md:col-span-7 space-y-4">
@@ -1787,36 +1851,293 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                     {/* TAB 3: PHOTOMETRICS (Vector light curves & CADs) */}
                     {activeModalTab === 'photometrics' && (
-                      <div className="space-y-6 animate-fade-in">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                          
-                          {/* Left: Custom SVG Lighting Curve representation */}
-                          <div className="md:col-span-5 flex flex-col items-center border border-gray-200 p-4 bg-gray-50 shadow-sm">
-                            <p className="text-[9px] uppercase font-mono text-gray-400 tracking-widest mb-3">Luminous Distribution curve</p>
-                            <svg viewBox="0 0 120 120" className="w-28 h-28 text-[#005288]">
-                              {/* Grid circles */}
-                              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="0.5" />
-                              <circle cx="60" cy="60" r="35" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="0.5" />
-                              <circle cx="60" cy="60" r="20" fill="none" stroke="rgba(0,0,0,0.05)" strokeWidth="0.5" />
-                              {/* Axis lines */}
-                              <line x1="60" y1="5" x2="60" y2="115" stroke="rgba(0,0,0,0.1)" strokeWidth="0.5" />
-                              <line x1="5" y1="60" x2="115" y2="60" stroke="rgba(0,0,0,0.1)" strokeWidth="0.5" />
-                              {/* Light intensity curve representation */}
-                              <path 
-                                d="M60 60 Q45 80 40 90 T25 95 T45 85 Q60 60 75 85 T95 95 T80 90 Z" 
-                                fill="rgba(0, 82, 136, 0.08)" 
-                                stroke="#005288" 
-                                strokeWidth="1"
-                              />
-                              {/* Directional ticks */}
-                              <text x="60" y="12" fill="rgba(0,0,0,0.3)" fontSize="6" textAnchor="middle">180°</text>
-                              <text x="60" y="112" fill="rgba(0,0,0,0.3)" fontSize="6" textAnchor="middle">0°</text>
-                            </svg>
-                            <span className="text-[8px] font-mono text-gray-400 mt-3">Direct/Indirect symmetric beam</span>
-                          </div>
+                      <div className="space-y-8 animate-fade-in">
+                        
+                        {/* Section 1: Photometric & Technical Diagrams Grid */}
+                        {(() => {
+                          const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                          const spectrumFile = activeDrawerProduct.lightSpectrumGraph || parent?.lightSpectrumGraph;
+                          const polarFile = activeDrawerProduct.photometricPolarDiagram || parent?.photometricPolarDiagram;
+                          const beamFile = activeDrawerProduct.beamAngleDiagram || parent?.beamAngleDiagram;
 
-                          {/* Right: Technical Downloads List */}
-                          <div className="md:col-span-7 space-y-4">
+                          return (
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                                <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] font-sans">
+                                  Photometric & Technical Diagrams
+                                </h4>
+                                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
+                                  Optical Specs & Distribution
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                
+                                {/* 1. Light Spectrum Graph */}
+                                <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
+                                  <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
+                                        Light Spectrum Graph
+                                      </span>
+                                      <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
+                                        SPD
+                                      </span>
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 font-mono mb-3">Visible Wavelength Spectrum (380 - 780nm)</p>
+
+                                    <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                      {spectrumFile ? (
+                                        <img 
+                                          src={getImageUrl(spectrumFile)} 
+                                          alt="Light Spectrum Graph" 
+                                          className="max-h-full max-w-full object-contain"
+                                        />
+                                      ) : (
+                                        <svg viewBox="0 0 200 130" className="w-full h-full text-[#005288]">
+                                          <defs>
+                                            <linearGradient id="spectrumRainbow" x1="0%" y1="0%" x2="100%" y2="0%">
+                                              <stop offset="0%" stopColor="#8b00ff" stopOpacity="0.4" />
+                                              <stop offset="20%" stopColor="#0000ff" stopOpacity="0.4" />
+                                              <stop offset="40%" stopColor="#00ff00" stopOpacity="0.4" />
+                                              <stop offset="60%" stopColor="#ffff00" stopOpacity="0.4" />
+                                              <stop offset="80%" stopColor="#ff7f00" stopOpacity="0.4" />
+                                              <stop offset="100%" stopColor="#ff0000" stopOpacity="0.4" />
+                                            </linearGradient>
+                                            <linearGradient id="spectrumFill" x1="0%" y1="0%" x2="0%" y2="100%">
+                                              <stop offset="0%" stopColor="#005288" stopOpacity="0.25" />
+                                              <stop offset="100%" stopColor="#005288" stopOpacity="0.0" />
+                                            </linearGradient>
+                                          </defs>
+
+                                          {/* Grid lines */}
+                                          <line x1="25" y1="20" x2="185" y2="20" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
+                                          <line x1="25" y1="45" x2="185" y2="45" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
+                                          <line x1="25" y1="70" x2="185" y2="70" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
+                                          <line x1="25" y1="95" x2="185" y2="95" stroke="#e5e7eb" strokeWidth="0.5" />
+                                          <line x1="25" y1="10" x2="25" y2="95" stroke="#e5e7eb" strokeWidth="0.5" />
+
+                                          {/* Rainbow band below curve */}
+                                          <rect x="25" y="96" width="160" height="4" fill="url(#spectrumRainbow)" rx="1" />
+
+                                          {/* Spectral Emission Curve */}
+                                          <path 
+                                            d="M 25 95 Q 40 93 48 30 T 65 75 T 100 40 T 145 65 T 185 95 Z" 
+                                            fill="url(#spectrumFill)" 
+                                          />
+                                          <path 
+                                            d="M 25 95 Q 40 93 48 30 T 65 75 T 100 40 T 145 65 T 185 95" 
+                                            fill="none" 
+                                            stroke="#005288" 
+                                            strokeWidth="1.8"
+                                            strokeLinecap="round"
+                                          />
+
+                                          {/* Peak marker */}
+                                          <circle cx="48" cy="30" r="2.5" fill="#005288" />
+                                          <text x="48" y="22" fontSize="6" fill="#005288" fontWeight="bold" textAnchor="middle">450nm</text>
+
+                                          {/* Wavelength Ticks */}
+                                          <text x="25" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">380</text>
+                                          <text x="65" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">500</text>
+                                          <text x="115" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">600</text>
+                                          <text x="165" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">700</text>
+                                          <text x="185" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">780nm</text>
+                                        </svg>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                    <span className="text-[8px] font-mono text-gray-400">
+                                      {spectrumFile ? (spectrumFile.filename || 'Uploaded File') : 'Standard Spectral Power'}
+                                    </span>
+                                    {spectrumFile ? (
+                                      <button 
+                                        onClick={() => handleDownloadFile(spectrumFile, 'Light Spectrum Graph')}
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
+                                      >
+                                        <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
+                                        <span>Download</span>
+                                      </button>
+                                    ) : (
+                                      <span className="text-[9px] font-mono text-gray-400 italic">Preview Curve</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* 2. Photometric Polar Diagram */}
+                                <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
+                                  <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
+                                        Photometric Polar Diagram
+                                      </span>
+                                      <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
+                                        POLAR
+                                      </span>
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 font-mono mb-3">Luminous Intensity (cd/klm)</p>
+
+                                    <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                      {polarFile ? (
+                                        <img 
+                                          src={getImageUrl(polarFile)} 
+                                          alt="Photometric Polar Diagram" 
+                                          className="max-h-full max-w-full object-contain"
+                                        />
+                                      ) : (
+                                        <svg viewBox="0 0 140 130" className="w-full h-full text-[#005288]">
+                                          {/* Polar Grid Circles */}
+                                          <circle cx="70" cy="65" r="50" fill="none" stroke="#e5e7eb" strokeWidth="0.6" />
+                                          <circle cx="70" cy="65" r="35" fill="none" stroke="#e5e7eb" strokeWidth="0.6" strokeDasharray="2,2" />
+                                          <circle cx="70" cy="65" r="20" fill="none" stroke="#e5e7eb" strokeWidth="0.6" strokeDasharray="2,2" />
+                                          <circle cx="70" cy="65" r="2" fill="#005288" />
+
+                                          {/* Radial Axis Lines */}
+                                          <line x1="70" y1="10" x2="70" y2="120" stroke="#d1d5db" strokeWidth="0.6" />
+                                          <line x1="15" y1="65" x2="125" y2="65" stroke="#d1d5db" strokeWidth="0.6" />
+                                          <line x1="30" y1="25" x2="110" y2="105" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
+                                          <line x1="110" y1="25" x2="30" y2="105" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
+
+                                          {/* C0-C180 Luminous Intensity Curve */}
+                                          <path 
+                                            d="M 70 65 Q 52 85 45 98 T 32 105 T 52 92 Q 70 65 88 92 T 108 105 T 95 98 Z" 
+                                            fill="rgba(0, 82, 136, 0.08)" 
+                                            stroke="#005288" 
+                                            strokeWidth="1.6"
+                                          />
+
+                                          {/* C90-C270 Luminous Intensity Curve (Dashed) */}
+                                          <path 
+                                            d="M 70 65 Q 56 82 50 94 T 38 100 T 56 88 Q 70 65 84 88 T 102 100 T 90 94 Z" 
+                                            fill="none" 
+                                            stroke="#009fe3" 
+                                            strokeWidth="1.2"
+                                            strokeDasharray="3,2"
+                                          />
+
+                                          {/* Angle Ticks Labels */}
+                                          <text x="70" y="8" fill="#9ca3af" fontSize="5" textAnchor="middle">180°</text>
+                                          <text x="70" y="126" fill="#9ca3af" fontSize="5" textAnchor="middle">0°</text>
+                                          <text x="8" y="66" fill="#9ca3af" fontSize="5" textAnchor="middle">90°</text>
+                                          <text x="132" y="66" fill="#9ca3af" fontSize="5" textAnchor="middle">90°</text>
+
+                                          {/* Candela Legend */}
+                                          <text x="72" y="28" fill="#9ca3af" fontSize="4.5">300</text>
+                                          <text x="72" y="43" fill="#9ca3af" fontSize="4.5">150</text>
+                                        </svg>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                    <span className="text-[8px] font-mono text-gray-400">
+                                      {polarFile ? (polarFile.filename || 'Uploaded File') : 'Direct/Indirect Polar Curve'}
+                                    </span>
+                                    {polarFile ? (
+                                      <button 
+                                        onClick={() => handleDownloadFile(polarFile, 'Photometric Polar Diagram')}
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
+                                      >
+                                        <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
+                                        <span>Download</span>
+                                      </button>
+                                    ) : (
+                                      <span className="text-[9px] font-mono text-gray-400 italic">Preview Curve</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* 3. Beam Angle Diagram */}
+                                <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
+                                  <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
+                                        Beam Angle Diagram
+                                      </span>
+                                      <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
+                                        CONE
+                                      </span>
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 font-mono mb-3">Illuminance Cone & Distance</p>
+
+                                    <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                      {beamFile ? (
+                                        <img 
+                                          src={getImageUrl(beamFile)} 
+                                          alt="Beam Angle Diagram" 
+                                          className="max-h-full max-w-full object-contain"
+                                        />
+                                      ) : (
+                                        <svg viewBox="0 0 160 130" className="w-full h-full text-[#005288]">
+                                          <defs>
+                                            <linearGradient id="beamConeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                              <stop offset="0%" stopColor="#005288" stopOpacity="0.3" />
+                                              <stop offset="100%" stopColor="#005288" stopOpacity="0.05" />
+                                            </linearGradient>
+                                          </defs>
+
+                                          {/* Luminaire Source Icon */}
+                                          <rect x="70" y="8" width="20" height="6" fill="#005288" rx="1" />
+                                          <line x1="80" y1="14" x2="80" y2="18" stroke="#005288" strokeWidth="1" />
+
+                                          {/* Beam Cone Spread */}
+                                          <polygon points="80,18 20,110 140,110" fill="url(#beamConeGrad)" />
+                                          <line x1="80" y1="18" x2="20" y2="110" stroke="#005288" strokeWidth="1.2" />
+                                          <line x1="80" y1="18" x2="140" y2="110" stroke="#005288" strokeWidth="1.2" />
+                                          <line x1="80" y1="18" x2="80" y2="110" stroke="#005288" strokeWidth="0.8" strokeDasharray="2,2" />
+
+                                          {/* Distance levels (1m, 2m, 3m) */}
+                                          <line x1="45" y1="50" x2="115" y2="50" stroke="#d1d5db" strokeWidth="0.6" strokeDasharray="2,2" />
+                                          <line x1="32" y1="80" x2="128" y2="80" stroke="#d1d5db" strokeWidth="0.6" strokeDasharray="2,2" />
+                                          <line x1="20" y1="110" x2="140" y2="110" stroke="#d1d5db" strokeWidth="0.6" />
+
+                                          {/* Distance & Lux Labels */}
+                                          <text x="14" y="52" fill="#6b7280" fontSize="5" textAnchor="end">1.0m</text>
+                                          <text x="14" y="82" fill="#6b7280" fontSize="5" textAnchor="end">2.0m</text>
+                                          <text x="14" y="112" fill="#6b7280" fontSize="5" textAnchor="end">3.0m</text>
+
+                                          <text x="120" y="52" fill="#005288" fontSize="5" fontWeight="bold">E₀: 1250 lx</text>
+                                          <text x="132" y="82" fill="#005288" fontSize="5" fontWeight="bold">E₀: 312 lx</text>
+                                          <text x="143" y="112" fill="#005288" fontSize="5" fontWeight="bold">E₀: 138 lx</text>
+
+                                          {/* Beam Angle Arc */}
+                                          <path d="M 72,32 A 15,15 0 0 1 88,32" fill="none" stroke="#009fe3" strokeWidth="1" />
+                                          <text x="80" y="29" fill="#009fe3" fontSize="5.5" fontWeight="bold" textAnchor="middle">36°</text>
+                                        </svg>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                    <span className="text-[8px] font-mono text-gray-400">
+                                      {beamFile ? (beamFile.filename || 'Uploaded File') : 'Illuminance Cone Angle'}
+                                    </span>
+                                    {beamFile ? (
+                                      <button 
+                                        onClick={() => handleDownloadFile(beamFile, 'Beam Angle Diagram')}
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
+                                      >
+                                        <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
+                                        <span>Download</span>
+                                      </button>
+                                    ) : (
+                                      <span className="text-[9px] font-mono text-gray-400 italic">Preview Cone</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Section 2: CAD & Architectural Databases + Technical Documents */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-6">
+                          
+                          {/* CAD & Architectural Databases */}
+                          <div className="space-y-4">
                             <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
                               CAD & Architectural Databases
                             </h4>
@@ -1845,8 +2166,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                 </div>
                               );
                             })()}
+                          </div>
 
-                            {/* Compliance documents section */}
+                          {/* Technical Documents */}
+                          <div className="space-y-4">
                             {(() => {
                               const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                               const famObj = family || (parent && typeof parent.families === 'object' ? parent.families : null);
@@ -1874,14 +2197,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
                                 ? ''
                                 : `?sku=${activeDrawerProduct.name}`;
-                              const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
                               if (!showControlGearDoc && !showContainingProductDoc && !showLightSourceDoc) return null;
                               
                               return (
-                                <div className="mt-6 pt-6 border-t border-gray-200">
-                                  <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans mb-3">
-                                    Technical Document
+                                <div>
+                                  <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans mb-4">
+                                    Technical Documents
                                   </h4>
                                   <div className="grid grid-cols-1 gap-2 text-xs">
                                     {showLightSourceDoc && (
@@ -1919,7 +2241,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               );
                             })()}
                           </div>
+
                         </div>
+
                       </div>
                     )}
 
@@ -1939,9 +2263,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         : `?sku=${activeDrawerProduct.name}`;
                       const pdfLink = `/products/${parentId}/datasheet${skuQuery}`;
                       const pdfFile = activeDrawerProduct.datasheetPdf || parent?.datasheetPdf;
-                      const ldtFile = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
-                      const iesFile = activeDrawerProduct.photometryIes || parent?.photometryIes;
-                      const cadFile = ldtFile || iesFile;
 
                       return (
                         <>
