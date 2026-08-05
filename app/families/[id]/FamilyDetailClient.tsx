@@ -1586,8 +1586,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           : 'border-transparent text-gray-400 hover:text-gray-600'
                       }`}
                     >
-                      <FontAwesomeIcon icon={faChartLine} />
-                      Photometrics
+                      <FontAwesomeIcon icon={faDownload} />
+                      Download
                     </button>
                   </div>
 
@@ -1885,24 +1885,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   </h4>
                                   <div className="grid grid-cols-1 gap-2 text-xs">
                                     {showLightSourceDoc && (
-                                      techDocLightSourceFile ? (
-                                        <button 
-                                          onClick={() => handleDownloadFile(techDocLightSourceFile, '')}
-                                          className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                        >
-                                          <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
-                                          <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                        </button>
-                                      ) : (
-                                        <Link 
-                                          href={`/products/${parentId}/eprel-light-source${skuQuery}${skuQuery ? '&' : '?'}autoPrint=true`}
-                                          target="_blank"
-                                          className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                        >
-                                          <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
-                                          <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                        </Link>
-                                      )
+                                      <Link 
+                                        href={`/products/${parentId}/eprel-light-source${skuQuery}`}
+                                        target="_blank"
+                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                      >
+                                        <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
+                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                      </Link>
                                     )}
                                     {showControlGearDoc && (
                                       <Link 
