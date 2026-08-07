@@ -84,7 +84,14 @@ export default function DismantleInstructionPages({
           }
         }
 
-        const loadingTask = pdfjsLib.getDocument({ url: targetUrl });
+        // Fetch ArrayBuffer directly to avoid CORS range request or worker errors
+        const pdfRes = await fetch(targetUrl);
+        if (!pdfRes.ok) {
+          throw new Error(`Failed to download DI PDF (${pdfRes.status})`);
+        }
+        const pdfArrayBuffer = await pdfRes.arrayBuffer();
+
+        const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfArrayBuffer) });
         const pdf = await loadingTask.promise;
 
         if (!isMounted) return;
@@ -254,10 +261,33 @@ export default function DismantleInstructionPages({
                 <img src="/MEGAMAN_Logo.png" alt="MEGAMAN®" className="h-7 object-contain" style={{ maxHeight: '28px' }} />
               </div>
 
-              {/* Fallback to direct iframe if rendering failed */}
-              <div className="w-full h-[220mm] border border-gray-200 rounded overflow-hidden">
-                <iframe src={`${diPdfUrl}#toolbar=0&navpanes=0`} className="w-full h-full border-none" title="Dismantle Instruction PDF" />
+              <div className="p-12 border-2 border-dashed border-amber-300 rounded text-center my-12 bg-amber-50">
+                <h3 className="text-sm font-bold text-amber-800 uppercase mb-1">
+                  Unable to Render PDF Preview directly
+                </h3>
+                <p className="text-xs text-amber-700 max-w-md mx-auto mb-4">
+                  {error}
+                </p>
+                {diPdfUrl && (
+                  <a
+                    href={diPdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-block bg-[#009fe3] text-white text-xs font-bold px-4 py-2 rounded shadow hover:bg-[#0086c0] transition"
+                  >
+                    Open Original DI PDF File
+                  </a>
+                )}
               </div>
+            </div>
+
+            <div className="flex justify-between items-center text-[8px] text-gray-500 border-t border-gray-200 pt-2 font-sans">
+              <div className="flex space-x-4">
+                <span>www.megaman.cc</span>
+                <span>info@megaman.cc</span>
+              </div>
+              <span>© Copyright 2026. All rights reserved by MEGAMAN®</span>
+              <span>Data subject to change</span>
             </div>
           </div>
         </div>
