@@ -193,7 +193,11 @@ export default async function ContainingProductDocumentPage({ params, searchPara
 
   return (
     <div className="min-h-screen bg-slate-100 py-6 print:bg-white print:py-0">
-      <PrintController cancelUrl={`/products/${product.id}`} documentTitle={`Technical Document (Containing Product) - ${containingProductModel}`} />
+      <PrintController 
+        cancelUrl={`/products/${product.id}`} 
+        documentTitle={`Technical Document (Containing Product) - ${containingProductModel}`}
+        pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=containing-product`}
+      />
 
       {/* PAGE 1: CONTAINING PRODUCT TECHNICAL DOCUMENT TABLE */}
       <A4Page>
@@ -336,13 +340,6 @@ export default async function ContainingProductDocumentPage({ params, searchPara
           </div>
         </div>
       </A4Page>
-
-      {/* PAGE 2+: DISMANTLE INSTRUCTION (MERGED FULL-PAGE PDF RENDER FROM FAMILY) */}
-      <DismantleInstructionPages 
-        diPdfUrl={diPdfUrl} 
-        familyName={familyName} 
-        startPageNumber={2} 
-      />
     </div>
   );
 }

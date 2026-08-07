@@ -264,7 +264,11 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
       `}</style>
 
       {/* Top action toolbar */}
-      <PrintController cancelUrl={`/products/${product.id}`} documentTitle={`EPREL Technical Document - ${modelIdentifier}`} />
+      <PrintController 
+        cancelUrl={`/products/${product.id}`} 
+        documentTitle={`EPREL Technical Document - ${modelIdentifier}`}
+        pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=light-source`}
+      />
 
       {/* PAGE 1: EPREL HEADER & TECHNICAL DOCUMENT TABLE */}
       <A4Page pageNumber={1} totalPages={2}>
@@ -471,13 +475,6 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
           </div>
         </div>
       </A4Page>
-
-      {/* PAGE 3+: DISMANTLE INSTRUCTION (MERGED FULL-PAGE PDF RENDER FROM FAMILY) */}
-      <DismantleInstructionPages 
-        diPdfUrl={diPdfUrl} 
-        familyName={familyName} 
-        startPageNumber={3} 
-      />
     </div>
   );
 }

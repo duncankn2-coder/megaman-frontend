@@ -2207,34 +2207,70 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   </h4>
                                   <div className="grid grid-cols-1 gap-2 text-xs">
                                     {showLightSourceDoc && (
-                                      <Link 
-                                        href={`/products/${parentId}/eprel-light-source${skuQuery}`}
-                                        target="_blank"
-                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                      >
-                                        <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
-                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                      </Link>
+                                      <div className="flex gap-2">
+                                        <Link 
+                                          href={`/products/${parentId}/eprel-light-source${skuQuery}`}
+                                          target="_blank"
+                                          className="flex-1 flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                        >
+                                          <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
+                                          <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                        </Link>
+                                        <a
+                                          href={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/api/products/${parentId}/technical-document?type=light-source`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="flex items-center gap-1.5 px-3 py-2 bg-[#005288] hover:bg-[#003c64] text-white text-[10px] font-bold uppercase rounded shadow transition"
+                                          title="Download Merged PDF Technical Document"
+                                        >
+                                          <FontAwesomeIcon icon={faDownload} />
+                                          <span>PDF</span>
+                                        </a>
+                                      </div>
                                     )}
                                     {showControlGearDoc && (
-                                      <Link 
-                                        href={`/products/${parentId}/control-gear${skuQuery}`}
-                                        target="_blank"
-                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                      >
-                                        <span>TECHNICAL DOCUMENT - CONTROL GEAR</span>
-                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                      </Link>
+                                      <div className="flex gap-2">
+                                        <Link 
+                                          href={`/products/${parentId}/control-gear${skuQuery}`}
+                                          target="_blank"
+                                          className="flex-1 flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                        >
+                                          <span>TECHNICAL DOCUMENT - CONTROL GEAR</span>
+                                          <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                        </Link>
+                                        <a
+                                          href={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/api/products/${parentId}/technical-document?type=control-gear`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="flex items-center gap-1.5 px-3 py-2 bg-[#005288] hover:bg-[#003c64] text-white text-[10px] font-bold uppercase rounded shadow transition"
+                                          title="Download Merged PDF Control Gear Document"
+                                        >
+                                          <FontAwesomeIcon icon={faDownload} />
+                                          <span>PDF</span>
+                                        </a>
+                                      </div>
                                     )}
                                     {showContainingProductDoc && (
-                                      <Link 
-                                        href={`/products/${parentId}/containing-product${skuQuery}`}
-                                        target="_blank"
-                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                      >
-                                        <span>TECHNICAL DOCUMENT - CONTAINING PRODUCT</span>
-                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                      </Link>
+                                      <div className="flex gap-2">
+                                        <Link 
+                                          href={`/products/${parentId}/containing-product${skuQuery}`}
+                                          target="_blank"
+                                          className="flex-1 flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                        >
+                                          <span>TECHNICAL DOCUMENT - CONTAINING PRODUCT</span>
+                                          <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                        </Link>
+                                        <a
+                                          href={`${process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000'}/api/products/${parentId}/technical-document?type=containing-product`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="flex items-center gap-1.5 px-3 py-2 bg-[#005288] hover:bg-[#003c64] text-white text-[10px] font-bold uppercase rounded shadow transition"
+                                          title="Download Merged PDF Containing Product Document"
+                                        >
+                                          <FontAwesomeIcon icon={faDownload} />
+                                          <span>PDF</span>
+                                        </a>
+                                      </div>
                                     )}
                                   </div>
                                 </div>

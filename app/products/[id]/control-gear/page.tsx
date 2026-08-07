@@ -239,7 +239,11 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
 
   return (
     <div className="min-h-screen bg-slate-100 py-6 print:bg-white print:py-0">
-      <PrintController cancelUrl={`/products/${product.id}`} documentTitle={`Technical Document (Control Gear) - ${driverModelNumber}`} />
+      <PrintController 
+        cancelUrl={`/products/${product.id}`} 
+        documentTitle={`Technical Document (Control Gear) - ${driverModelNumber}`}
+        pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=control-gear`}
+      />
 
       {/* PAGE 1: CONTROL GEAR TECHNICAL DOCUMENT TABLE */}
       <A4Page>
@@ -401,13 +405,6 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
           </div>
         </div>
       </A4Page>
-
-      {/* PAGE 2+: DISMANTLE INSTRUCTION (MERGED FULL-PAGE PDF RENDER FROM FAMILY) */}
-      <DismantleInstructionPages 
-        diPdfUrl={diPdfUrl} 
-        familyName={familyName} 
-        startPageNumber={2} 
-      />
     </div>
   );
 }

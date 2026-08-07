@@ -542,7 +542,10 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
       `}</style>
  
       {/* Interactive print control bar (hidden in prints) */}
-      <PrintController cancelUrl="/products" />
+      <PrintController 
+        cancelUrl="/products" 
+        pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=datasheet`}
+      />
 
       {/* PAGE 1: FEATURES & MARKETING OVERVIEW */}
       <A4Page pageNumber={1} totalPages={3}>
@@ -828,13 +831,6 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
           </div>
         )}
       </A4Page>
-
-      {/* PAGE 4+: DISMANTLE INSTRUCTION (MERGED FULL-PAGE PDF RENDER FROM FAMILY) */}
-      <DismantleInstructionPages 
-        diPdfUrl={diPdfUrl} 
-        familyName={familyName} 
-        startPageNumber={4} 
-      />
     </div>
   );
 }
