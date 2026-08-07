@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import PrintController from './PrintController';
+import DismantleInstructionPages from '../eprel-light-source/DismantleInstructionPages';
 import { renderWithSup } from '../../../utils/text';
 
 interface Product {
@@ -20,6 +21,10 @@ interface Product {
     features?: { id?: string; feature: string }[];
     applications?: { id?: string; application: string }[];
     media?: { url: string; alt?: string; filename?: string }[];
+    dismantleInstructionPdf?: {
+      url: string;
+      filename: string;
+    } | string | null;
   } | null;
 }
 
@@ -209,6 +214,22 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   const selectedSku = resolvedSearchParams.sku 
     ? skus.find(s => s.name === resolvedSearchParams.sku) || skus[0]
     : skus[0];
+
+  // Dismantle Instruction PDF link
+  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+  let diPdfUrl: string | null = null;
+  if (product.families?.dismantleInstructionPdf) {
+    const diObj = product.families.dismantleInstructionPdf;
+    if (typeof diObj === 'string') {
+      diPdfUrl = diObj.startsWith('http') ? diObj : `${payloadUrl}/api/media/${diObj}`;
+    } else if (typeof diObj === 'object' && diObj !== null) {
+      if (diObj.url) {
+        diPdfUrl = diObj.url.startsWith('http') ? diObj.url : `${payloadUrl}${diObj.url.startsWith('/') ? '' : '/'}${diObj.url}`;
+      } else if ((diObj as any).filename) {
+        diPdfUrl = `${payloadUrl}/api/media/file/${(diObj as any).filename}`;
+      }
+    }
+  }
 
   // Resolve URLs and fields safely
   const getImageUrl = (image: any): string => {
@@ -807,6 +828,13 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
           </div>
         )}
       </A4Page>
+
+      {/* PAGE 4+: DISMANTLE INSTRUCTION (MERGED FULL-PAGE PDF RENDER FROM FAMILY) */}
+      <DismantleInstructionPages 
+        diPdfUrl={diPdfUrl} 
+        familyName={familyName} 
+        startPageNumber={4} 
+      />
     </div>
   );
 }

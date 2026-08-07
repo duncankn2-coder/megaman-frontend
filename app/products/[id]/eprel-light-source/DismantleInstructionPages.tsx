@@ -66,7 +66,25 @@ export default function DismantleInstructionPages({
           throw new Error('PDF.js library could not be loaded');
         }
 
-        const loadingTask = pdfjsLib.getDocument({ url: urlStr });
+        let targetUrl = urlStr;
+        const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+        if (!targetUrl.endsWith('.pdf') && !targetUrl.includes('/api/media/file/')) {
+          try {
+            const res = await fetch(targetUrl);
+            if (res.ok) {
+              const mediaData = await res.json();
+              if (mediaData?.url) {
+                targetUrl = mediaData.url.startsWith('http')
+                  ? mediaData.url
+                  : `${payloadUrl}${mediaData.url.startsWith('/') ? '' : '/'}${mediaData.url}`;
+              }
+            }
+          } catch (e) {
+            // fallback to original targetUrl
+          }
+        }
+
+        const loadingTask = pdfjsLib.getDocument({ url: targetUrl });
         const pdf = await loadingTask.promise;
 
         if (!isMounted) return;

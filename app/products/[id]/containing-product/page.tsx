@@ -181,9 +181,13 @@ export default async function ContainingProductDocumentPage({ params, searchPara
   if (product.families?.dismantleInstructionPdf) {
     const diObj = product.families.dismantleInstructionPdf;
     if (typeof diObj === 'string') {
-      diPdfUrl = diObj.startsWith('http') ? diObj : `${payloadUrl}/media/${diObj}`;
-    } else if (diObj.url) {
-      diPdfUrl = diObj.url.startsWith('http') ? diObj.url : `${payloadUrl}${diObj.url.startsWith('/') ? diObj.url : '/' + diObj.url}`;
+      diPdfUrl = diObj.startsWith('http') ? diObj : `${payloadUrl}/api/media/${diObj}`;
+    } else if (typeof diObj === 'object' && diObj !== null) {
+      if (diObj.url) {
+        diPdfUrl = diObj.url.startsWith('http') ? diObj.url : `${payloadUrl}${diObj.url.startsWith('/') ? '' : '/'}${diObj.url}`;
+      } else if ((diObj as any).filename) {
+        diPdfUrl = `${payloadUrl}/api/media/file/${(diObj as any).filename}`;
+      }
     }
   }
 
