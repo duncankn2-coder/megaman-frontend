@@ -108,7 +108,6 @@ const resolveCategories = (family: Family): string[] => {
         cats.add('LED Lamps');
       }
       if (
-        catLower.includes('bulkhead') ||
         catLower.includes('downlight') ||
         catLower.includes('batten') ||
         catLower.includes('panel') ||
@@ -124,7 +123,8 @@ const resolveCategories = (family: Family): string[] => {
       if (
         catLower.includes('floodlight') ||
         catLower.includes('garden') ||
-        catLower.includes('outdoor')
+        catLower.includes('outdoor') ||
+        catLower.includes('bulkhead')
       ) {
         cats.add('Outdoor Luminaires');
       }
@@ -175,7 +175,6 @@ const resolveCategories = (family: Family): string[] => {
     name.includes('cabinet') || 
     name.includes('ceiling') || 
     name.includes('indoor') || 
-    name.includes('bulkhead') ||
     name.includes('high bay') ||
     name.includes('wall lamp') ||
     name.includes('damp proof')
@@ -185,7 +184,8 @@ const resolveCategories = (family: Family): string[] => {
   if (
     name.includes('floodlight') || 
     name.includes('garden') || 
-    name.includes('outdoor')
+    name.includes('outdoor') ||
+    name.includes('bulkhead')
   ) {
     cats.add('Outdoor Luminaires');
   }
