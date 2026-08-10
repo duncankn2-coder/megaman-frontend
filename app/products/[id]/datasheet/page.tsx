@@ -58,7 +58,7 @@ async function getProductSKUs(productId: string): Promise<SKU[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/skus?where[product][equals]=${productId}&limit=100`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch SKUs: ${response.status}`);
@@ -76,7 +76,7 @@ async function getProduct(id: string): Promise<Product | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/products/${id}?depth=2`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch product: ${response.status}`);

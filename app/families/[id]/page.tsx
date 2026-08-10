@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import FamilyDetailClient from './FamilyDetailClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface Product {
   id: string;
@@ -46,7 +46,7 @@ async function getFamily(id: string): Promise<Family | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/families/${id}?depth=2`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch family: ${response.status}`);

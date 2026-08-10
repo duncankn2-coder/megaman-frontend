@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import HomeClient from './HomeClient';
 import { getSiteContext } from './utils/siteContext';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'High-Performance LED Lighting Solutions | MEGAMAN® Official',
@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 async function getHomePageData() {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/globals/home-page?depth=4`, {
-      cache: 'no-store',
+    const response = await fetch(`${payloadUrl}/api/globals/home-page?depth=2`, {
+      next: { revalidate: 60 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch home page: ${response.status}`);
@@ -31,7 +31,7 @@ async function getProductsCount(siteContext: string): Promise<number> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/products?where[sites][in]=${siteContext}`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (response.ok) {
       const data = await response.json();
@@ -48,7 +48,7 @@ async function getLatestNews(): Promise<any[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/news?sort=-publishDate&limit=3`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (response.ok) {
       const data = await response.json();

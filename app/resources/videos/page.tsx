@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import VideosPageClient, { VideoItem } from './VideosPageClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Tutorials & Videos | MEGAMAN® High-Performance LED Solutions',
@@ -64,7 +64,7 @@ async function getVideos(): Promise<VideoItem[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/videos?limit=100`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch videos: ${response.status}`);

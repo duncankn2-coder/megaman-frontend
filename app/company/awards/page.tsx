@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import AwardsClientPage, { AwardItem } from './AwardsClientPage';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Honors & Awards | MEGAMAN®',
@@ -13,7 +13,7 @@ async function getAwards(): Promise<AwardItem[]> {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     // Fetch up to 150 awards. Set depth=1 to populate the upload media relationship
     const response = await fetch(`${payloadUrl}/api/awards?limit=150&depth=1`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (response.ok) {
       const data = await response.json();

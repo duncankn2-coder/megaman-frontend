@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import DownloadsPageClient, { CatalogItem } from './DownloadsPageClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Downloads & Catalogs | MEGAMAN® High-Performance LED Solutions',
@@ -48,7 +48,7 @@ async function getCatalogs(): Promise<CatalogItem[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/catalogs?limit=100`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch catalogs: ${response.status}`);
