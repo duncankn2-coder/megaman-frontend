@@ -475,6 +475,9 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
           </div>
         </div>
       </A4Page>
+
+      {/* Dismantle Instruction Pages */}
+      <DismantleInstructionPages diPdfUrl={diPdfUrl} familyName={familyName} startPageNumber={3} />
     </div>
   );
 }

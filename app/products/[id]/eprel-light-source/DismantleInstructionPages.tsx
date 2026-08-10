@@ -73,10 +73,11 @@ export default function DismantleInstructionPages({
             const res = await fetch(targetUrl);
             if (res.ok) {
               const mediaData = await res.json();
-              if (mediaData?.url) {
-                targetUrl = mediaData.url.startsWith('http')
-                  ? mediaData.url
-                  : `${payloadUrl}${mediaData.url.startsWith('/') ? '' : '/'}${mediaData.url}`;
+              const resolvedMediaUrl = mediaData?.url || (mediaData?.filename ? `/api/media/file/${mediaData.filename}` : null);
+              if (resolvedMediaUrl) {
+                targetUrl = resolvedMediaUrl.startsWith('http')
+                  ? resolvedMediaUrl
+                  : `${payloadUrl}${resolvedMediaUrl.startsWith('/') ? '' : '/'}${resolvedMediaUrl}`;
               }
             }
           } catch (e) {

@@ -831,6 +831,9 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
           </div>
         )}
       </A4Page>
+
+      {/* Dismantle Instruction Pages */}
+      <DismantleInstructionPages diPdfUrl={diPdfUrl} familyName={familyName} startPageNumber={4} />
     </div>
   );
 }

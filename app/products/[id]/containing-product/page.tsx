@@ -340,6 +340,9 @@ export default async function ContainingProductDocumentPage({ params, searchPara
           </div>
         </div>
       </A4Page>
+
+      {/* Dismantle Instruction Pages */}
+      <DismantleInstructionPages diPdfUrl={diPdfUrl} familyName={familyName} startPageNumber={2} />
     </div>
   );
 }
