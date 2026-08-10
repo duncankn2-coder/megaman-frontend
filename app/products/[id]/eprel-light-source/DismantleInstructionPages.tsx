@@ -42,7 +42,7 @@ export default function DismantleInstructionPages({
             // Try importing installed pdfjs-dist
             pdfjsLib = await import('pdfjs-dist');
             if (pdfjsLib.GlobalWorkerOptions) {
-              pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+              pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
             }
           } catch {
             // Fallback to CDN
@@ -59,7 +59,7 @@ export default function DismantleInstructionPages({
             }
           }
         } else if (pdfjsLib.GlobalWorkerOptions) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
         }
 
         if (!pdfjsLib) {
