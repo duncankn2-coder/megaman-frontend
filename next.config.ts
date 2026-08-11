@@ -68,13 +68,24 @@ const nextConfig: NextConfig = {
         hostname: 'megaman-backend.vercel.app',
         pathname: '/**',
       },
-      // Vercel Blob Storage CDN (used in production for Payload media)
       {
         protocol: 'https',
         hostname: '*.public.blob.vercel-storage.com',
         pathname: '/**',
       },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/media/file/:path*',
+        destination: `${payloadUrl}/api/media/file/:path*`,
+      },
+      {
+        source: '/api/media/:path*',
+        destination: `${payloadUrl}/api/media/:path*`,
+      },
+    ];
   },
 };
 

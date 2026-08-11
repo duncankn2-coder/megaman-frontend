@@ -89,8 +89,22 @@ export default function DismantleInstructionPages({
           }
         }
 
-        // Fetch ArrayBuffer directly to avoid CORS range request or worker errors
-        const pdfRes = await fetch(targetUrl);
+        // Fetch ArrayBuffer directly, with fallback to local proxy route if cross-origin fetch fails
+        let pdfRes: Response | null = null;
+        try {
+          pdfRes = await fetch(targetUrl);
+        } catch (fetchErr) {
+          if (targetUrl.includes('/api/media/file/')) {
+            const filename = targetUrl.split('/api/media/file/')[1];
+            if (filename) {
+              pdfRes = await fetch(`/api/media/file/${filename}`);
+            }
+          }
+          if (!pdfRes || !pdfRes.ok) {
+            throw fetchErr;
+          }
+        }
+
         if (!pdfRes.ok) {
           throw new Error(`Failed to download DI PDF (${pdfRes.status})`);
         }
