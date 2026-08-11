@@ -34,32 +34,32 @@ export default function DismantleInstructionPages({
         setLoading(true);
         setError(null);
 
-        // Load PDF.js dynamically via CDN if not present on window or module
+        // Load PDF.js dynamically
         let pdfjsLib = (window as any).pdfjsLib;
 
         if (!pdfjsLib) {
           try {
             // Try importing installed pdfjs-dist
             pdfjsLib = await import('pdfjs-dist');
-            if (pdfjsLib.GlobalWorkerOptions) {
-              pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-            }
           } catch {
             // Fallback to CDN
             await new Promise<void>((resolve, reject) => {
               const script = document.createElement('script');
-              script.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+              script.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.min.mjs';
+              script.type = 'module';
               script.onload = () => resolve();
               script.onerror = () => reject(new Error('Failed to load PDF.js library'));
               document.head.appendChild(script);
             });
             pdfjsLib = (window as any).pdfjsLib;
-            if (pdfjsLib) {
-              pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-            }
           }
-        } else if (pdfjsLib.GlobalWorkerOptions) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+        }
+
+        if (pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
+          const workerUrl = typeof window !== 'undefined'
+            ? `${window.location.origin}/pdf.worker.min.mjs`
+            : 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs';
+          pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
         }
 
         if (!pdfjsLib) {
@@ -68,6 +68,10 @@ export default function DismantleInstructionPages({
 
         let targetUrl = urlStr;
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+        if (targetUrl.startsWith('/')) {
+          targetUrl = `${payloadUrl}${targetUrl}`;
+        }
+
         if (!targetUrl.endsWith('.pdf') && !targetUrl.includes('/api/media/file/')) {
           try {
             const res = await fetch(targetUrl);
