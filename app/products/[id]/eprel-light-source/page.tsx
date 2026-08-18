@@ -71,8 +71,11 @@ async function getProductSKUs(productId: string): Promise<SKU[]> {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const product = await getProduct(resolvedParams.id);
+  const specs = product?.specifications || {};
+  const customerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
+  const modelIdentifier = specs.model_identifier || specs.light_source_model_no || product?.name || 'MODEL_IDENTIFIER';
   return {
-    title: product ? `Technical Document (Light Source) - ${product.name} | MEGAMAN®` : 'Technical Document | MEGAMAN®',
+    title: product ? `${customerModelNoNew}_${modelIdentifier}_LS_TD` : 'Technical Document | MEGAMAN®',
   };
 }
 
@@ -144,12 +147,15 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
   // -------------------------------------------------------------
   // EPREL GENERAL DATA SPECIFICATIONS MAPPING
   // -------------------------------------------------------------
-  // Model Identifier comes directly from Column BZ (model_identifier)
+  // Model Identifier & Customer Model No
+  const customerModelNoNew = getMultiSpec(['customer_model_no_new', 'customer_model_no'], product.name || 'PRODUCT');
   const modelIdentifier = getMultiSpec(['model_identifier', 'new_erp_model_no', 'new_erp_supplier_model'], product.name || selectedSku?.modelNumber || 'N/A');
   const familyName = product.families?.name || getMultiSpec(['series', 'shape', 'series_name'], 'MEGAMAN® LIGHT SOURCE');
   const supplierName = getSpec('supplier_name', 'MEGAMAN GmbH');
   const supplierAddress = getSpec('supplier_address', 'Halskestraße 22-26, AircomParc A140880 Ratingen Germany');
   const equivalentModels = getMultiSpec(['equivalent_models', 'supplementary_code'], 'N/A');
+
+  const docTitle = `${customerModelNoNew}_${modelIdentifier}_LS_TD`;
 
   // Technical Document 23 Table Items
   const usefulFlux = getMultiSpec(['useful_luminous_flux', 'useful_luminous_flux_lm', 'total_luminous_flux_lm', 'total_luminous_flux'], 'N/A');
@@ -266,7 +272,7 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
       {/* Top action toolbar */}
       <PrintController 
         cancelUrl={`/products/${product.id}`} 
-        documentTitle={`EPREL Technical Document - ${modelIdentifier}`}
+        documentTitle={docTitle}
         pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=light-source`}
       />
 

@@ -71,8 +71,11 @@ async function getProductSKUs(productId: string): Promise<SKU[]> {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const product = await getProduct(resolvedParams.id);
+  const specs = product?.specifications || {};
+  const customerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
+  const driverModel = specs.driver_model || specs.control_gear_model_no || 'DRIVER';
   return {
-    title: product ? `Technical Document (Control Gear) - ${product.name} | MEGAMAN®` : 'Technical Document (Control Gear) | MEGAMAN®',
+    title: product ? `${customerModelNoNew}_${driverModel}_CG_TD` : 'Technical Document (Control Gear) | MEGAMAN®',
   };
 }
 
@@ -237,11 +240,14 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
     }
   }
 
+  const customerModelNoNew = getMultiSpec(['customer_model_no_new', 'customer_model_no'], product.name || 'PRODUCT');
+  const docTitle = `${customerModelNoNew}_${driverModelNumber}_CG_TD`;
+
   return (
     <div className="min-h-screen bg-slate-100 py-6 print:bg-white print:py-0">
       <PrintController 
         cancelUrl={`/products/${product.id}`} 
-        documentTitle={`Technical Document (Control Gear) - ${driverModelNumber}`}
+        documentTitle={docTitle}
         pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=control-gear`}
       />
 

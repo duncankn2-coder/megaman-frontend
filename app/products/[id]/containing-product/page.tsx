@@ -71,8 +71,10 @@ async function getProductSKUs(productId: string): Promise<SKU[]> {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const product = await getProduct(resolvedParams.id);
+  const specs = product?.specifications || {};
+  const customerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
   return {
-    title: product ? `Technical Document (Containing Product) - ${product.name} | MEGAMAN®` : 'Technical Document (Containing Product) | MEGAMAN®',
+    title: product ? `${customerModelNoNew}_CP_TD` : 'Technical Document (Containing Product) | MEGAMAN®',
   };
 }
 
@@ -191,11 +193,13 @@ export default async function ContainingProductDocumentPage({ params, searchPara
     }
   }
 
+  const docTitle = `${customerModelNoNew}_CP_TD`;
+
   return (
     <div className="min-h-screen bg-slate-100 py-6 print:bg-white print:py-0">
       <PrintController 
         cancelUrl={`/products/${product.id}`} 
-        documentTitle={`Technical Document (Containing Product) - ${containingProductModel}`}
+        documentTitle={docTitle}
         pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=containing-product`}
       />
 
