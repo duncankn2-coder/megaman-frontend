@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 import { Metadata } from 'next';
 import PrintController from './PrintController';
-import DismantleInstructionPages from './DismantleInstructionPages';
 
 interface Product {
   id: string;
@@ -72,15 +71,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const resolvedParams = await params;
   const product = await getProduct(resolvedParams.id);
   const specs = product?.specifications || {};
-  const customerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
-  const modelIdentifier = specs.model_identifier || specs.light_source_model_no || product?.name || 'MODEL_IDENTIFIER';
+  const rawCustomerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
+  const rawModelIdentifier = specs.model_identifier || specs.light_source_model_no || product?.name || 'MODEL_IDENTIFIER';
+  
+  const customerModelNoNew = String(rawCustomerModelNoNew).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const modelIdentifier = String(rawModelIdentifier).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
+
   return {
     title: product ? `${customerModelNoNew}_${modelIdentifier}_LS_TD` : 'Technical Document | MEGAMAN®',
   };
 }
 
 // Global A4 Page Container
-const A4Page = ({ children, pageNumber, totalPages }: { children: React.ReactNode; pageNumber: number; totalPages?: number }) => {
+const A4Page = ({ children }: { children: React.ReactNode }) => {
   return (
     <div 
       className="relative border border-gray-300 shadow-lg mx-auto bg-white mb-8 overflow-hidden print:shadow-none print:border-none print:m-0 print:mb-0 font-sans" 
@@ -148,8 +151,12 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
   // EPREL GENERAL DATA SPECIFICATIONS MAPPING
   // -------------------------------------------------------------
   // Model Identifier & Customer Model No
-  const customerModelNoNew = getMultiSpec(['customer_model_no_new', 'customer_model_no'], product.name || 'PRODUCT');
-  const modelIdentifier = getMultiSpec(['model_identifier', 'new_erp_model_no', 'new_erp_supplier_model'], product.name || selectedSku?.modelNumber || 'N/A');
+  const rawCustomerModelNoNew = getMultiSpec(['customer_model_no_new', 'customer_model_no'], product.name || 'PRODUCT');
+  const rawModelIdentifier = getMultiSpec(['model_identifier', 'new_erp_model_no', 'new_erp_supplier_model'], product.name || selectedSku?.modelNumber || 'N/A');
+  
+  const customerModelNoNew = String(rawCustomerModelNoNew).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const modelIdentifier = String(rawModelIdentifier).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
+
   const familyName = product.families?.name || getMultiSpec(['series', 'shape', 'series_name'], 'MEGAMAN® LIGHT SOURCE');
   const supplierName = getSpec('supplier_name', 'MEGAMAN GmbH');
   const supplierAddress = getSpec('supplier_address', 'Halskestraße 22-26, AircomParc A140880 Ratingen Germany');
@@ -197,24 +204,6 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
   const heightMm = getMultiSpec(['height_h', 'height_mm'], '30');
   const widthMm = getMultiSpec(['width_w', 'width_mm'], '158');
   const depthMm = getMultiSpec(['depth_d', 'depth_mm', 'diameter_mm'], '158');
-  const standardsCompliance = getMultiSpec(['standards_compliance', 'standards', 'approvals'], 'CE, RoHS');
-
-  // Dismantle Instruction PDF link
-  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-  let diPdfUrl: string | null = null;
-  if (product.families?.dismantleInstructionPdf) {
-    const diObj = product.families.dismantleInstructionPdf;
-    if (typeof diObj === 'string') {
-      diPdfUrl = diObj.startsWith('http') ? diObj : `${payloadUrl}/api/media/${diObj}`;
-    } else if (typeof diObj === 'object' && diObj !== null) {
-      if (diObj.url) {
-        diPdfUrl = diObj.url.startsWith('http') ? diObj.url : `${payloadUrl}${diObj.url.startsWith('/') ? '' : '/'}${diObj.url}`;
-      } else if ((diObj as any).filename) {
-        diPdfUrl = `${payloadUrl}/api/media/file/${(diObj as any).filename}`;
-      }
-    }
-  }
-
   // 23 Tech Table Rows
   const techRows = [
     { label: 'Useful luminous flux', val: usefulFlux },
@@ -273,7 +262,6 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
       <PrintController 
         cancelUrl={`/products/${product.id}`} 
         documentTitle={docTitle}
-        pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=light-source`}
       />
 
       {/* PAGE 1: EPREL HEADER & TECHNICAL DOCUMENT TABLE */}
@@ -481,9 +469,6 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
           </div>
         </div>
       </A4Page>
-
-      {/* Dismantle Instruction Pages */}
-      <DismantleInstructionPages diPdfUrl={diPdfUrl} familyName={familyName} startPageNumber={3} />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 import { Metadata } from 'next';
 import PrintController from '../eprel-light-source/PrintController';
-import DismantleInstructionPages from '../eprel-light-source/DismantleInstructionPages';
 
 interface Product {
   id: string;
@@ -72,8 +71,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const resolvedParams = await params;
   const product = await getProduct(resolvedParams.id);
   const specs = product?.specifications || {};
-  const customerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
-  const driverModel = specs.driver_model || specs.control_gear_model_no || 'DRIVER';
+  const rawCustomerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
+  const rawDriverModel = specs.driver_model || specs.control_gear_model_no || 'DRIVER';
+  const customerModelNoNew = String(rawCustomerModelNoNew).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const driverModel = String(rawDriverModel).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
   return {
     title: product ? `${customerModelNoNew}_${driverModel}_CG_TD` : 'Technical Document (Control Gear) | MEGAMAN®',
   };
@@ -224,31 +225,16 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
   // Column EE: Standards Compliance
   const standardsCompliance = getMultiSpec(['scg_standards_compliance', 'standards_compliance', 'standards'], 'EN 61347-1:2015 & EN61347-2-13:2014');
 
-  // Dismantle Instruction PDF link
-  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-  let diPdfUrl: string | null = null;
-  if (product.families?.dismantleInstructionPdf) {
-    const diObj = product.families.dismantleInstructionPdf;
-    if (typeof diObj === 'string') {
-      diPdfUrl = diObj.startsWith('http') ? diObj : `${payloadUrl}/api/media/${diObj}`;
-    } else if (typeof diObj === 'object' && diObj !== null) {
-      if (diObj.url) {
-        diPdfUrl = diObj.url.startsWith('http') ? diObj.url : `${payloadUrl}${diObj.url.startsWith('/') ? '' : '/'}${diObj.url}`;
-      } else if ((diObj as any).filename) {
-        diPdfUrl = `${payloadUrl}/api/media/file/${(diObj as any).filename}`;
-      }
-    }
-  }
-
-  const customerModelNoNew = getMultiSpec(['customer_model_no_new', 'customer_model_no'], product.name || 'PRODUCT');
-  const docTitle = `${customerModelNoNew}_${driverModelNumber}_CG_TD`;
+  const rawCustomerModelNoNew = getMultiSpec(['customer_model_no_new', 'customer_model_no'], product.name || 'PRODUCT');
+  const customerModelNoNew = String(rawCustomerModelNoNew).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const safeDriverModelNumber = String(driverModelNumber).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const docTitle = `${customerModelNoNew}_${safeDriverModelNumber}_CG_TD`;
 
   return (
     <div className="min-h-screen bg-slate-100 py-6 print:bg-white print:py-0">
       <PrintController 
         cancelUrl={`/products/${product.id}`} 
         documentTitle={docTitle}
-        pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=control-gear`}
       />
 
       {/* PAGE 1: CONTROL GEAR TECHNICAL DOCUMENT TABLE */}
@@ -411,9 +397,6 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
           </div>
         </div>
       </A4Page>
-
-      {/* Dismantle Instruction Pages */}
-      <DismantleInstructionPages diPdfUrl={diPdfUrl} familyName={familyName} startPageNumber={2} />
     </div>
   );
 }

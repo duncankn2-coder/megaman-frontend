@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 import { Metadata } from 'next';
 import PrintController from '../eprel-light-source/PrintController';
-import DismantleInstructionPages from '../eprel-light-source/DismantleInstructionPages';
 
 interface Product {
   id: string;
@@ -72,7 +71,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const resolvedParams = await params;
   const product = await getProduct(resolvedParams.id);
   const specs = product?.specifications || {};
-  const customerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
+  const rawCustomerModelNoNew = specs.customer_model_no_new || specs.customer_model_no || product?.name || 'PRODUCT';
+  const customerModelNoNew = String(rawCustomerModelNoNew).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
   return {
     title: product ? `${customerModelNoNew}_CP_TD` : 'Technical Document (Containing Product) | MEGAMAN®',
   };
@@ -177,22 +177,8 @@ export default async function ContainingProductDocumentPage({ params, searchPara
 
   const standardsCompliance = getMultiSpec(['standards', 'standards_compliance', 'scg_standards_compliance'], 'IEC/EN60598-1,IEC/EN60598-2-1');
 
-  // Dismantle Instruction PDF link
-  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-  let diPdfUrl: string | null = null;
-  if (product.families?.dismantleInstructionPdf) {
-    const diObj = product.families.dismantleInstructionPdf;
-    if (typeof diObj === 'string') {
-      diPdfUrl = diObj.startsWith('http') ? diObj : `${payloadUrl}/api/media/${diObj}`;
-    } else if (typeof diObj === 'object' && diObj !== null) {
-      if (diObj.url) {
-        diPdfUrl = diObj.url.startsWith('http') ? diObj.url : `${payloadUrl}${diObj.url.startsWith('/') ? '' : '/'}${diObj.url}`;
-      } else if ((diObj as any).filename) {
-        diPdfUrl = `${payloadUrl}/api/media/file/${(diObj as any).filename}`;
-      }
-    }
-  }
-
+  const rawCustomerModelNoNew = getMultiSpec(['customer_model_no_new', 'customer_model_no'], product.name || 'PRODUCT');
+  const customerModelNoNew = String(rawCustomerModelNoNew).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
   const docTitle = `${customerModelNoNew}_CP_TD`;
 
   return (
@@ -200,7 +186,6 @@ export default async function ContainingProductDocumentPage({ params, searchPara
       <PrintController 
         cancelUrl={`/products/${product.id}`} 
         documentTitle={docTitle}
-        pdfApiUrl={`${payloadUrl}/api/products/${product.id}/technical-document?type=containing-product`}
       />
 
       {/* PAGE 1: CONTAINING PRODUCT TECHNICAL DOCUMENT TABLE */}
@@ -344,9 +329,6 @@ export default async function ContainingProductDocumentPage({ params, searchPara
           </div>
         </div>
       </A4Page>
-
-      {/* Dismantle Instruction Pages */}
-      <DismantleInstructionPages diPdfUrl={diPdfUrl} familyName={familyName} startPageNumber={2} />
     </div>
   );
 }
