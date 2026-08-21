@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 // Global A4 Page Container
-const A4Page = ({ children }: { children: React.ReactNode }) => {
+const A4Page = ({ children }: { children: React.ReactNode; pageNumber?: number; totalPages?: number }) => {
   return (
     <div 
       className="relative border border-gray-300 shadow-lg mx-auto bg-white mb-8 overflow-hidden print:shadow-none print:border-none print:m-0 print:mb-0 font-sans" 
@@ -204,6 +204,7 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
   const heightMm = getMultiSpec(['height_h', 'height_mm'], '30');
   const widthMm = getMultiSpec(['width_w', 'width_mm'], '158');
   const depthMm = getMultiSpec(['depth_d', 'depth_mm', 'diameter_mm'], '158');
+  const standardsCompliance = getMultiSpec(['standards_compliance', 'standards', 'approvals'], 'CE, RoHS');
   // 23 Tech Table Rows
   const techRows = [
     { label: 'Useful luminous flux', val: usefulFlux },
