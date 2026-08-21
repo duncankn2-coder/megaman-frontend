@@ -97,16 +97,19 @@ export default function DismantleInstructionPages({
           if (targetUrl.includes('/api/media/file/')) {
             const filename = targetUrl.split('/api/media/file/')[1];
             if (filename) {
-              pdfRes = await fetch(`/api/media/file/${filename}`);
+              try {
+                pdfRes = await fetch(`/api/media/file/${filename}`);
+              } catch {
+                // ignore
+              }
             }
-          }
-          if (!pdfRes || !pdfRes.ok) {
-            throw fetchErr;
           }
         }
 
-        if (!pdfRes.ok) {
-          throw new Error(`Failed to download DI PDF (${pdfRes.status})`);
+        if (!pdfRes || !pdfRes.ok) {
+          const status = pdfRes ? pdfRes.status : 'Network Error';
+          const filenameMatch = targetUrl.split('/').pop() || 'DI PDF';
+          throw new Error(`The dismantle instruction file "${filenameMatch}" could not be found on the server (HTTP ${status}). Please ensure the PDF is uploaded in Payload CMS Media library.`);
         }
         const pdfArrayBuffer = await pdfRes.arrayBuffer();
 
@@ -119,7 +122,7 @@ export default function DismantleInstructionPages({
         setNumPages(pdf.numPages);
         setLoading(false);
       } catch (err: any) {
-        console.error('Error loading Dismantle Instruction PDF:', err);
+        console.warn('Dismantle Instruction PDF unavailable:', err?.message || err);
         if (isMounted) {
           setError(err.message || 'Failed to load PDF document');
           setLoading(false);
