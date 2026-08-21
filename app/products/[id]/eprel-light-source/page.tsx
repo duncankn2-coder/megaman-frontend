@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 import { Metadata } from 'next';
 import PrintController from './PrintController';
+import DismantleInstructionPages from './DismantleInstructionPages';
 
 interface Product {
   id: string;
@@ -205,6 +206,22 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
   const widthMm = getMultiSpec(['width_w', 'width_mm'], '158');
   const depthMm = getMultiSpec(['depth_d', 'depth_mm', 'diameter_mm'], '158');
   const standardsCompliance = getMultiSpec(['standards_compliance', 'standards', 'approvals'], 'CE, RoHS');
+
+  // Dismantle Instruction PDF link
+  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+  let diPdfUrl: string | null = null;
+  if (product.families?.dismantleInstructionPdf) {
+    const diObj = product.families.dismantleInstructionPdf;
+    if (typeof diObj === 'string') {
+      diPdfUrl = diObj.startsWith('http') ? diObj : `${payloadUrl}/api/media/${diObj}`;
+    } else if (typeof diObj === 'object' && diObj !== null) {
+      if (diObj.url) {
+        diPdfUrl = diObj.url.startsWith('http') ? diObj.url : `${payloadUrl}${diObj.url.startsWith('/') ? '' : '/'}${diObj.url}`;
+      } else if ((diObj as any).filename) {
+        diPdfUrl = `${payloadUrl}/api/media/file/${(diObj as any).filename}`;
+      }
+    }
+  }
   // 23 Tech Table Rows
   const techRows = [
     { label: 'Useful luminous flux', val: usefulFlux },
@@ -470,6 +487,13 @@ export default async function EprelLightSourceDocumentPage({ params, searchParam
           </div>
         </div>
       </A4Page>
+
+      {/* Dismantle Instruction Pages */}
+      <DismantleInstructionPages 
+        diPdfUrl={diPdfUrl} 
+        familyName={familyName} 
+        startPageNumber={3} 
+      />
     </div>
   );
 }

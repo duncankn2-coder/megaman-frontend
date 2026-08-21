@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 import { Metadata } from 'next';
 import PrintController from '../eprel-light-source/PrintController';
+import DismantleInstructionPages from '../eprel-light-source/DismantleInstructionPages';
 
 interface Product {
   id: string;
@@ -230,6 +231,22 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
   const safeDriverModelNumber = String(driverModelNumber).replace(/\//g, '-').replace(/[^a-zA-Z0-9_\-]/g, '_');
   const docTitle = `${customerModelNoNew}_${safeDriverModelNumber}_CG_TD`;
 
+  // Dismantle Instruction PDF link
+  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+  let diPdfUrl: string | null = null;
+  if (product.families?.dismantleInstructionPdf) {
+    const diObj = product.families.dismantleInstructionPdf;
+    if (typeof diObj === 'string') {
+      diPdfUrl = diObj.startsWith('http') ? diObj : `${payloadUrl}/api/media/${diObj}`;
+    } else if (typeof diObj === 'object' && diObj !== null) {
+      if (diObj.url) {
+        diPdfUrl = diObj.url.startsWith('http') ? diObj.url : `${payloadUrl}${diObj.url.startsWith('/') ? '' : '/'}${diObj.url}`;
+      } else if ((diObj as any).filename) {
+        diPdfUrl = `${payloadUrl}/api/media/file/${(diObj as any).filename}`;
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 py-6 print:bg-white print:py-0">
       <PrintController 
@@ -397,6 +414,13 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
           </div>
         </div>
       </A4Page>
+
+      {/* PAGE 2+: DISMANTLE INSTRUCTION (MERGED FULL-PAGE PDF RENDER FROM FAMILY) */}
+      <DismantleInstructionPages 
+        diPdfUrl={diPdfUrl} 
+        familyName={familyName} 
+        startPageNumber={2} 
+      />
     </div>
   );
 }
