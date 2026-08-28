@@ -88,26 +88,18 @@ const getImageUrl = (image: { url?: string; filename?: string; alt?: string } | 
 
 // Map families to primary categories for precise catalog filtering (XAL Style)
 const resolveCategories = (family: Family): string[] => {
-  const cats = new Set<string>();
+  // 1. Check CMS categories first
+  let primaryCategory: string | null = null;
   
-  // 1. From family categories inside CMS
-  family.categories?.forEach(c => {
-    if (c.name) {
-      cats.add(c.name);
-      
-      // Dynamically map specific CMS category names to their parent catalog filter categories
+  if (family.categories && family.categories.length > 0) {
+    for (const c of family.categories) {
+      if (!c?.name) continue;
       const catLower = c.name.toLowerCase();
+
+      // Check for Indoor Luminaires
       if (
-        catLower.includes('classic') ||
-        catLower.includes('filament') ||
-        catLower.includes('reflector') ||
-        catLower.includes('tube') ||
-        catLower.includes('lamp') ||
-        catLower.includes('bulb')
-      ) {
-        cats.add('LED Lamps');
-      }
-      if (
+        catLower === 'indoor luminaires' ||
+        catLower === 'indoor lighting' ||
         catLower.includes('downlight') ||
         catLower.includes('batten') ||
         catLower.includes('panel') ||
@@ -116,108 +108,176 @@ const resolveCategories = (family: Family): string[] => {
         catLower.includes('ceiling') ||
         catLower.includes('indoor') ||
         catLower.includes('high bay') ||
-        catLower.includes('wall')
+        catLower.includes('low bay') ||
+        catLower.includes('wall luminaire') ||
+        catLower.includes('wall lamp') ||
+        catLower.includes('spotlight') ||
+        catLower.includes('pendant') ||
+        catLower.includes('linear')
       ) {
-        cats.add('Indoor Luminaires');
+        primaryCategory = 'Indoor Luminaires';
+        break;
       }
+      
+      // Check for Outdoor Luminaires
       if (
+        catLower === 'outdoor luminaires' ||
+        catLower === 'outdoor lighting' ||
         catLower.includes('floodlight') ||
         catLower.includes('garden') ||
         catLower.includes('outdoor') ||
-        catLower.includes('bulkhead')
+        catLower.includes('bulkhead') ||
+        catLower.includes('bollard') ||
+        catLower.includes('street')
       ) {
-        cats.add('Outdoor Luminaires');
+        primaryCategory = 'Outdoor Luminaires';
+        break;
       }
+      
+      // Check for Emergency Lighting
       if (
+        catLower === 'emergency lighting' ||
         catLower.includes('exit') ||
         catLower.includes('emergency') ||
         catLower.includes('twinspot') ||
         catLower.includes('sign')
       ) {
-        cats.add('Emergency Lighting');
+        primaryCategory = 'Emergency Lighting';
+        break;
       }
+      
+      // Check for Light Management
       if (
+        catLower === 'light management' ||
         catLower.includes('iot') ||
         catLower.includes('ngenium') ||
         catLower.includes('management') ||
         catLower.includes('infinite') ||
-        catLower.includes('matter')
+        catLower.includes('matter') ||
+        catLower.includes('smart')
       ) {
-        cats.add('Light Management');
+        primaryCategory = 'Light Management';
+        break;
       }
-      if (catLower.includes('driver')) {
-        cats.add('Drivers');
+      
+      // Check for Drivers
+      if (
+        catLower === 'drivers' ||
+        catLower.includes('driver') ||
+        catLower.includes('control gear') ||
+        catLower.includes('ballast')
+      ) {
+        primaryCategory = 'Drivers';
+        break;
+      }
+      
+      // Check for LED Lamps (Retrofit bulbs/tubes)
+      if (
+        catLower === 'led lamps' ||
+        catLower === 'lamps' ||
+        catLower.includes('filament') ||
+        catLower.includes('reflector') ||
+        catLower.includes('tube') ||
+        catLower.includes('bulb') ||
+        catLower.includes('gu10') ||
+        catLower.includes('mr16')
+      ) {
+        primaryCategory = 'LED Lamps';
+        break;
       }
     }
-  });
-  
-  // 2. Fallback matching rules based on family name
-  const name = family.name.toLowerCase();
-  if (
-    name.includes('bulb') || 
-    name.includes('lamp') || 
-    name.includes('tubes') || 
-    name.includes('efficiency') || 
-    name.includes('filament') ||
-    name.includes('classic') ||
-    name.includes('reflector') ||
-    name.includes('decorative') ||
-    name.includes('dim-to-warm') ||
-    name.includes('360')
-  ) {
-    cats.add('LED Lamps');
-  }
-  if (
-    name.includes('downlight') || 
-    name.includes('batten') || 
-    name.includes('panel') || 
-    name.includes('track') || 
-    name.includes('cabinet') || 
-    name.includes('ceiling') || 
-    name.includes('indoor') || 
-    name.includes('high bay') ||
-    name.includes('wall lamp') ||
-    name.includes('damp proof')
-  ) {
-    cats.add('Indoor Luminaires');
-  }
-  if (
-    name.includes('floodlight') || 
-    name.includes('garden') || 
-    name.includes('outdoor') ||
-    name.includes('bulkhead')
-  ) {
-    cats.add('Outdoor Luminaires');
-  }
-  if (
-    name.includes('exit') || 
-    name.includes('emergency') || 
-    name.includes('twinspot') || 
-    name.includes('bulkhead') ||
-    name.includes('sign') ||
-    name.includes('recessed downlight')
-  ) {
-    cats.add('Emergency Lighting');
-  }
-  if (
-    name.includes('iot') || 
-    name.includes('ngenium') || 
-    name.includes('management') || 
-    name.includes('infinite') ||
-    name.includes('matter')
-  ) {
-    cats.add('Light Management');
-  }
-  if (name.includes('driver')) {
-    cats.add('Drivers');
   }
 
-  // Fallback to "Others" if no categories mapped
-  if (cats.size === 0) {
-    cats.add('Others');
+  // 2. Fallback matching rules based on family name if not resolved yet
+  if (!primaryCategory) {
+    const name = (family.name || '').toLowerCase();
+
+    if (
+      name.includes('downlight') || 
+      name.includes('batten') || 
+      name.includes('panel') || 
+      name.includes('track') || 
+      name.includes('cabinet') || 
+      name.includes('ceiling') || 
+      name.includes('indoor') || 
+      name.includes('high bay') ||
+      name.includes('low bay') ||
+      name.includes('wall lamp') ||
+      name.includes('wall luminaire') ||
+      name.includes('damp proof') ||
+      name.includes('linear') ||
+      name.includes('pendant') ||
+      name.includes('spotlight') ||
+      name.includes('lyra') ||
+      name.includes('siena') ||
+      name.includes('toledo') ||
+      name.includes('triona') ||
+      name.includes('renzo') ||
+      name.includes('berto') ||
+      name.includes('fonda') ||
+      name.includes('dino') ||
+      name.includes('dani') ||
+      name.includes('marcus') ||
+      name.includes('morris') ||
+      name.includes('carl') ||
+      name.includes('conor') ||
+      name.includes('estela') ||
+      name.includes('enzo') ||
+      name.includes('kepler') ||
+      name.includes('lucas') ||
+      name.includes('mila') ||
+      name.includes('toby') ||
+      name.includes('claudia') ||
+      name.includes('berna') ||
+      name.includes('gemma') ||
+      name.includes('luca')
+    ) {
+      primaryCategory = 'Indoor Luminaires';
+    } else if (
+      name.includes('floodlight') || 
+      name.includes('garden') || 
+      name.includes('outdoor') || 
+      name.includes('bulkhead') ||
+      name.includes('bollard') ||
+      name.includes('street')
+    ) {
+      primaryCategory = 'Outdoor Luminaires';
+    } else if (
+      name.includes('exit') || 
+      name.includes('emergency') || 
+      name.includes('twinspot') || 
+      name.includes('sign')
+    ) {
+      primaryCategory = 'Emergency Lighting';
+    } else if (
+      name.includes('iot') || 
+      name.includes('ngenium') || 
+      name.includes('management') || 
+      name.includes('infinite') || 
+      name.includes('matter') ||
+      name.includes('smart')
+    ) {
+      primaryCategory = 'Light Management';
+    } else if (name.includes('driver') || name.includes('control gear')) {
+      primaryCategory = 'Drivers';
+    } else if (
+      name.includes('bulb') || 
+      name.includes('tubes') || 
+      name.includes('filament') ||
+      name.includes('reflector') ||
+      name.includes('gu10') ||
+      name.includes('mr16') ||
+      name.includes('e27') ||
+      name.includes('e14') ||
+      name.includes('candle') ||
+      name.includes('globe') ||
+      name.includes('lamp')
+    ) {
+      primaryCategory = 'LED Lamps';
+    }
   }
 
-  return Array.from(cats);
+  return [primaryCategory || 'Others'];
 };
 
 const CATEGORIES = [
