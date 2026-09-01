@@ -32,6 +32,11 @@ interface Family {
   description?: string;
   media: MediaItem[];
   products: Product[];
+  categories?: {
+    id: string;
+    name: string;
+    image?: { url: string; alt?: string; filename?: string } | string | null;
+  }[];
 }
 
 async function getFamilies(): Promise<Family[]> {

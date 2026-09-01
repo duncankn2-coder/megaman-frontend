@@ -534,7 +534,9 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                     {/* Cards Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
                       {familiesInCategory.map((family) => {
-                        const categoryTag = family.resolvedCategories[0] || 'Others';
+                        const categoryTag = (family.categories && family.categories.length > 0 && family.categories[0]?.name)
+                          ? family.categories[0].name
+                          : family.resolvedCategories[0] || 'Luminaires';
                         const imageItem = family.media?.find(m => m.type === 'image');
                         
                         return (
