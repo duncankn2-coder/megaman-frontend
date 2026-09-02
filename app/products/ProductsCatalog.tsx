@@ -26,6 +26,7 @@ interface Family {
   id: string;
   name: string;
   description?: string;
+  priority?: number;
   media: MediaItem[];
   products: Product[];
   categories?: {
@@ -478,11 +479,20 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
 
   // Dynamic filtering and search calculations
   const filteredFamilies = useMemo(() => {
-    return enrichedFamilies.filter(family => {
-      const matchesCategory = selectedCategory === 'All' || family.resolvedCategories.includes(selectedCategory);
-      const matchesSearch = matchesFamilySearch(family, searchQuery);
-      return matchesCategory && matchesSearch;
-    });
+    return enrichedFamilies
+      .filter(family => {
+        const matchesCategory = selectedCategory === 'All' || family.resolvedCategories.includes(selectedCategory);
+        const matchesSearch = matchesFamilySearch(family, searchQuery);
+        return matchesCategory && matchesSearch;
+      })
+      .sort((a, b) => {
+        const pA = typeof a.priority === 'number' ? a.priority : 0;
+        const pB = typeof b.priority === 'number' ? b.priority : 0;
+        if (pB !== pA) {
+          return pB - pA;
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
   }, [enrichedFamilies, selectedCategory, searchQuery]);
 
   // Find category object with image dynamically from families

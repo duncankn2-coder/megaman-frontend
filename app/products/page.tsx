@@ -30,6 +30,7 @@ interface Family {
   id: string;
   name: string;
   description?: string;
+  priority?: number;
   media: MediaItem[];
   products: Product[];
   categories?: {
@@ -42,7 +43,7 @@ interface Family {
 async function getFamilies(): Promise<Family[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/families?depth=2&limit=1000&pagination=false`, {
+    const response = await fetch(`${payloadUrl}/api/families?depth=2&limit=1000&pagination=false&sort=-priority`, {
       next: { revalidate: 60 },
     });
     if (!response.ok) {
@@ -62,7 +63,7 @@ export default async function ProductsPage() {
     getSiteContext(),
   ]);
 
-  // Filter products in each family to match the current site context
+  // Filter products in each family to match the current site context and sort by priority
   const filteredFamilies = families
     .map(family => {
       const rawProducts = family.products || [];
@@ -85,6 +86,14 @@ export default async function ProductsPage() {
         return false;
       }
       return true;
+    })
+    .sort((a, b) => {
+      const pA = typeof a.priority === 'number' ? a.priority : 0;
+      const pB = typeof b.priority === 'number' ? b.priority : 0;
+      if (pB !== pA) {
+        return pB - pA;
+      }
+      return (a.name || '').localeCompare(b.name || '');
     });
 
   return (
