@@ -486,67 +486,6 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                       );
                     })}
                   </div>
-
-                  {/* Interactive Slide Bar for Products if > 4 */}
-                  {products.length > 4 && (
-                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-150">
-                      <div className="w-full sm:max-w-xl flex items-center gap-4">
-                        <button
-                          onClick={() => scrollHighlight('left')}
-                          className="w-8 h-8 rounded-full border border-gray-200 hover:border-[#005288] bg-white text-gray-600 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer shadow-xs"
-                          aria-label="Slide Left"
-                        >
-                          <FontAwesomeIcon icon={faChevronLeft} className="text-[10px]" />
-                        </button>
-
-                        <div className="relative flex-grow h-7 flex items-center cursor-pointer group">
-                          <div className="w-full h-2 bg-gray-200/80 group-hover:bg-gray-300/80 transition-colors rounded-full overflow-hidden relative">
-                            <div
-                              className="h-full bg-[#005288] group-hover:bg-[#003c64] rounded-full transition-all duration-75 ease-out shadow-xs"
-                              style={{
-                                width: `${Math.max(15, Math.min(60, (4 / Math.max(5, products.length)) * 100))}%`,
-                                marginLeft: `${(highlightScrollProgress / 100) * (100 - Math.max(15, Math.min(60, (4 / Math.max(5, products.length)) * 100)))}%`,
-                              }}
-                            />
-                          </div>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            step={0.1}
-                            value={highlightScrollProgress}
-                            onChange={(e) => {
-                              const val = parseFloat(e.target.value);
-                              setHighlightScrollProgress(val);
-                              if (highlightScrollRef.current) {
-                                const { scrollWidth, clientWidth } = highlightScrollRef.current;
-                                const maxScroll = scrollWidth - clientWidth;
-                                highlightScrollRef.current.scrollTo({
-                                  left: (val / 100) * maxScroll,
-                                  behavior: 'auto',
-                                });
-                              }
-                            }}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-10"
-                            aria-label="Slide products left and right"
-                          />
-                        </div>
-
-                        <button
-                          onClick={() => scrollHighlight('right')}
-                          className="w-8 h-8 rounded-full border border-gray-200 hover:border-[#005288] bg-white text-gray-600 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer shadow-xs"
-                          aria-label="Slide Right"
-                        >
-                          <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-3 text-[11px] font-mono text-gray-500 uppercase tracking-wider">
-                        <span className="inline-block w-2 h-2 rounded-full bg-[#005288]/70 animate-pulse"></span>
-                        <span>Slide Bar ({products.length} Selections)</span>
-                      </div>
-                    </div>
-                  )}
                 </section>
               );
             }
