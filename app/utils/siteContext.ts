@@ -1,7 +1,10 @@
 import { headers } from 'next/headers';
 
-export async function getSiteContext(): Promise<'hk' | 'international'> {
+export type SiteContext = 'international' | 'hk' | 'uk';
+
+export async function getSiteContext(): Promise<SiteContext> {
   const headersList = await headers();
   const context = headersList.get('x-site-context');
-  return (context as 'hk' | 'international') || 'international';
+  return (context as SiteContext) || 'international';
 }
+

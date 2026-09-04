@@ -8,7 +8,8 @@ import {
   faChevronDown,
   faBars,
   faXmark,
-  faArrowRight
+  faArrowRight,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
@@ -137,13 +138,58 @@ const navItems: NavItem[] = [
   },
 ];
 
-export default function Header() {
+export interface LocationOption {
+  id: 'international' | 'hk' | 'uk';
+  name: string;
+  shortCode: string;
+  domain: string;
+  flag: string;
+  description: string;
+}
+
+export const LOCATIONS: LocationOption[] = [
+  {
+    id: 'international',
+    name: 'International',
+    shortCode: 'GLOBAL',
+    domain: 'megaman.cc',
+    flag: '🌐',
+    description: 'International Site (megaman.cc)',
+  },
+  {
+    id: 'hk',
+    name: 'Hong Kong',
+    shortCode: 'HK',
+    domain: 'hk.megaman.cc',
+    flag: '🇭🇰',
+    description: 'Hong Kong Site (hk.megaman.cc)',
+  },
+  {
+    id: 'uk',
+    name: 'United Kingdom',
+    shortCode: 'UK',
+    domain: 'megamanuk.com',
+    flag: '🇬🇧',
+    description: 'United Kingdom Site (megamanuk.com)',
+  },
+];
+
+interface HeaderProps {
+  initialSiteContext?: 'international' | 'hk' | 'uk';
+}
+
+export default function Header({ initialSiteContext = 'international' }: HeaderProps) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedMobileMenu, setExpandedMobileMenu] = useState<string | null>(null);
   const [expandedMobileSubMenu, setExpandedMobileSubMenu] = useState<string | null>(null);
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<'international' | 'hk' | 'uk'>(initialSiteContext);
   const menuContainerRef = useRef<HTMLDivElement>(null);
+  const locationRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const currentLocationConfig = LOCATIONS.find((l) => l.id === currentLocation) || LOCATIONS[0];
 
   // Smooth hover handlers for desktop
   const handleMouseEnter = (menuName: string) => {
@@ -157,8 +203,27 @@ export default function Header() {
     }, 150); // slight delay to prevent sudden closes
   };
 
-  // Close menus on resize
+  // Close menus on resize and detect location
   useEffect(() => {
+    // Detect site context
+    const host = window.location.hostname;
+    if (host.includes('megamanuk.com') || host.includes('uk.')) {
+      setCurrentLocation('uk');
+    } else if (host.includes('hk.megaman.cc') || host.startsWith('hk.')) {
+      setCurrentLocation('hk');
+    } else {
+      const match = document.cookie.match(/x-site-context=([^;]+)/);
+      if (match && (match[1] === 'hk' || match[1] === 'uk' || match[1] === 'international')) {
+        setCurrentLocation(match[1] as 'hk' | 'uk' | 'international');
+      }
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationRef.current && !locationRef.current.contains(event.target as Node)) {
+        setIsLocationOpen(false);
+      }
+    };
+
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setIsMobileMenuOpen(false);
@@ -166,9 +231,38 @@ export default function Header() {
         setExpandedMobileSubMenu(null);
       }
     };
+
+    document.addEventListener('mousedown', handleClickOutside);
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
+
+  const switchLocation = (site: 'international' | 'hk' | 'uk') => {
+    document.cookie = `x-site-context=${site}; path=/; max-age=31536000`;
+    setIsLocationOpen(false);
+
+    const host = window.location.hostname;
+    if (host.includes('megaman.cc') || host.includes('megamanuk.com')) {
+      if (site === 'uk') {
+        window.location.href = 'https://megamanuk.com';
+        return;
+      } else if (site === 'hk') {
+        window.location.href = 'https://hk.megaman.cc';
+        return;
+      } else {
+        window.location.href = 'https://megaman.cc';
+        return;
+      }
+    }
+
+    // In local dev or preview, append query param and reload
+    const url = new URL(window.location.href);
+    url.searchParams.set('site', site);
+    window.location.href = url.toString();
+  };
 
   const toggleMobileCategory = (name: string) => {
     setExpandedMobileMenu(expandedMobileMenu === name ? null : name);
@@ -428,12 +522,75 @@ export default function Header() {
 
         {/* Right side Icons & Mobile Toggle */}
         <div className="flex items-center space-x-3 lg:space-x-4">
-          <button
-            aria-label="Globe"
-            className="w-9 h-9 rounded-full border border-blue-200/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
-          >
-            <FontAwesomeIcon icon={faGlobe} className="text-[14px]" />
-          </button>
+          <div className="relative" ref={locationRef}>
+            <button
+              aria-label="Select Location / Region"
+              onClick={() => setIsLocationOpen(!isLocationOpen)}
+              className={`h-9 px-3 rounded-full border border-blue-200/30 flex items-center space-x-2 text-white hover:bg-white/10 hover:border-white/40 transition-all cursor-pointer ${
+                isLocationOpen ? 'bg-white/20 border-white/50 shadow-inner' : ''
+              }`}
+              title={`Current Location: ${currentLocationConfig.name}`}
+            >
+              <span className="text-sm leading-none">{currentLocationConfig.flag}</span>
+              <span className="text-[11px] font-semibold tracking-wider uppercase font-mono">
+                {currentLocationConfig.shortCode}
+              </span>
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className={`text-[9px] opacity-70 transition-transform duration-200 ${
+                  isLocationOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {/* Location Dropdown */}
+            {isLocationOpen && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-4 py-2.5 border-b border-gray-100">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-gray-400 font-semibold">
+                    Select Region / Location
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    Currently browsing: <strong className="text-[#005288]">{currentLocationConfig.name}</strong>
+                  </p>
+                </div>
+                <div className="p-1.5 space-y-1">
+                  {LOCATIONS.map((loc) => {
+                    const isActive = currentLocation === loc.id;
+                    return (
+                      <button
+                        key={loc.id}
+                        onClick={() => switchLocation(loc.id)}
+                        className={`w-full flex items-center justify-between px-3.5 py-3 rounded-lg text-left transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-[#005288]/10 text-[#005288] font-semibold ring-1 ring-[#005288]/20'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <span className="text-xl leading-none">{loc.flag}</span>
+                          <div>
+                            <div className="text-xs font-semibold flex items-center gap-1.5">
+                              <span>{loc.name}</span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-mono">
+                                {loc.shortCode}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-gray-400 font-mono">{loc.domain}</div>
+                          </div>
+                        </div>
+                        {isActive && (
+                          <div className="w-5 h-5 rounded-full bg-[#005288] text-white flex items-center justify-center text-[10px]">
+                            <FontAwesomeIcon icon={faCheck} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
           <button
             aria-label="Search"
             className="w-9 h-9 rounded-full border border-blue-200/30 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
@@ -539,6 +696,41 @@ export default function Header() {
                 </div>
               );
             })}
+
+            {/* Region / Location Selector for Mobile */}
+            <div className="pt-4 border-t border-[#005e9c]/50">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-blue-200/70">
+                  Region / Location
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-white">
+                  Active: {currentLocationConfig.shortCode}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {LOCATIONS.map((loc) => {
+                  const isActive = currentLocation === loc.id;
+                  return (
+                    <button
+                      key={loc.id}
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        switchLocation(loc.id);
+                      }}
+                      className={`flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all ${
+                        isActive
+                          ? 'bg-[#003457] border-white/40 text-white font-semibold shadow-inner'
+                          : 'bg-[#00416d] border-transparent text-blue-100 hover:text-white hover:bg-[#004e82]'
+                      }`}
+                    >
+                      <span className="text-xl">{loc.flag}</span>
+                      <span className="text-xs mt-1 font-semibold">{loc.shortCode}</span>
+                      <span className="text-[9px] text-blue-200/70 truncate max-w-full">{loc.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Contact & Careers for Mobile */}
             <div className="pt-4 flex flex-col space-y-2 border-t border-[#005e9c]/50">

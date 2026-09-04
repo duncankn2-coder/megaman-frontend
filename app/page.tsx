@@ -71,7 +71,12 @@ export default async function Home() {
     getLatestNews()
   ]);
 
-  const layoutData = homePageData?.[siteContext]?.layout || null;
+  const layoutData = 
+    (homePageData?.[siteContext]?.layout && homePageData[siteContext].layout.length > 0)
+      ? homePageData[siteContext].layout
+      : (homePageData?.international?.layout && homePageData.international.layout.length > 0)
+        ? homePageData.international.layout
+        : (homePageData?.layout || null);
 
   return (
     <HomeClient 
