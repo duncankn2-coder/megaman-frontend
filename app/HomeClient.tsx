@@ -11,6 +11,7 @@ import {
   faChevronRight,
   faProjectDiagram
 } from '@fortawesome/free-solid-svg-icons';
+import CategoriesGridSection from './components/CategoriesGridSection';
 
 interface HeroSlide {
   title: string;
@@ -147,8 +148,19 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Scrollable highlight products container ref
+  // Scrollable highlight products container ref & progress
   const highlightScrollRef = useRef<HTMLDivElement | null>(null);
+  const [highlightScrollProgress, setHighlightScrollProgress] = useState<number>(0);
+
+  const handleHighlightScroll = () => {
+    if (highlightScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = highlightScrollRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll > 0) {
+        setHighlightScrollProgress(Math.min(100, Math.max(0, (scrollLeft / maxScroll) * 100)));
+      }
+    }
+  };
 
   const scrollHighlight = (direction: 'left' | 'right') => {
     if (highlightScrollRef.current) {
@@ -344,68 +356,14 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
             }
 
             case 'categoriesGrid': {
-              const categories = block.categories || [];
               return (
-                <section key={`categories-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200" id="categories-section">
-                  <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-                        {block.subtitle || 'PORTFOLIO OVERVIEW'}
-                      </span>
-                      <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-                        {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
-                      </h2>
-                    </div>
-                    <Link 
-                      href="/products" 
-                      className="text-xs uppercase tracking-widest font-bold border-b border-gray-300 pb-1 hover:border-[#005288] hover:text-[#005288] transition-colors"
-                    >
-                      Browse Catalogues
-                    </Link>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {categories.map((cat, idx) => (
-                      <Link
-                        href={cat.linkUrl || '#'}
-                        key={idx}
-                        className="flex flex-col group"
-                      >
-                        <div className="relative aspect-square w-full overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300 border border-gray-200 bg-gray-50 flex items-center justify-center">
-                          {cat.image ? (
-                            <Image
-                              src={getImageUrl(cat.image)}
-                              alt={cat.title}
-                              fill
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                              className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-700"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                              <span className="text-gray-400 text-xs font-light">No Image Available</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="pt-4 flex flex-col flex-grow">
-                          <h3 className="text-base uppercase tracking-widest font-bold text-gray-900 mb-2 group-hover:text-[#005288] transition-colors">
-                            {cat.title}
-                          </h3>
-                          {cat.description && (
-                            <p className="text-xs text-gray-500 font-light leading-relaxed mb-4 line-clamp-2">
-                              {cat.description}
-                            </p>
-                          )}
-                          <span 
-                            className="text-xs uppercase tracking-widest text-[#005288] font-bold inline-flex items-center gap-2 group-hover:text-[#003c64] transition-colors w-fit border-b border-[#005288] pb-0.5 mt-auto"
-                          >
-                            {cat.linkText || 'Explore'} &rarr;
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
+                <CategoriesGridSection
+                  key={`categories-${blockIdx}`}
+                  title={block.title}
+                  subtitle={block.subtitle}
+                  categories={block.categories || []}
+                  blockIdx={blockIdx}
+                />
               );
             }
 
@@ -445,6 +403,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
 
                   <div 
                     ref={highlightScrollRef}
+                    onScroll={handleHighlightScroll}
                     className="flex overflow-x-auto gap-8 pb-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent snap-x snap-mandatory scroll-smooth no-scrollbar"
                   >
                     {products.map((p, idx) => {
@@ -494,6 +453,18 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                                   <span className="text-gray-700 font-semibold">{p.power} W</span>
                                 </div>
                               )}
+                              {p.luminousFlux && (
+                                <div className="flex justify-between mb-1.5">
+                                  <span>LUMINOUS FLUX</span>
+                                  <span className="text-gray-700 font-semibold">{p.luminousFlux} lm</span>
+                                </div>
+                              )}
+                              {p.colourTemperature && (
+                                <div className="flex justify-between">
+                                  <span>COLOR TEMP</span>
+                                  <span className="text-gray-700 font-semibold">{p.colourTemperature}</span>
+                                </div>
+                              )}
                               {p.colour && (
                                 <div className="flex justify-between">
                                   <span>FITTING COLOR</span>
@@ -515,6 +486,67 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                       );
                     })}
                   </div>
+
+                  {/* Interactive Slide Bar for Products if > 4 */}
+                  {products.length > 4 && (
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-150">
+                      <div className="w-full sm:max-w-xl flex items-center gap-4">
+                        <button
+                          onClick={() => scrollHighlight('left')}
+                          className="w-8 h-8 rounded-full border border-gray-200 hover:border-[#005288] bg-white text-gray-600 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                          aria-label="Slide Left"
+                        >
+                          <FontAwesomeIcon icon={faChevronLeft} className="text-[10px]" />
+                        </button>
+
+                        <div className="relative flex-grow h-7 flex items-center cursor-pointer group">
+                          <div className="w-full h-2 bg-gray-200/80 group-hover:bg-gray-300/80 transition-colors rounded-full overflow-hidden relative">
+                            <div
+                              className="h-full bg-[#005288] group-hover:bg-[#003c64] rounded-full transition-all duration-75 ease-out shadow-xs"
+                              style={{
+                                width: `${Math.max(15, Math.min(60, (4 / Math.max(5, products.length)) * 100))}%`,
+                                marginLeft: `${(highlightScrollProgress / 100) * (100 - Math.max(15, Math.min(60, (4 / Math.max(5, products.length)) * 100)))}%`,
+                              }}
+                            />
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            step={0.1}
+                            value={highlightScrollProgress}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              setHighlightScrollProgress(val);
+                              if (highlightScrollRef.current) {
+                                const { scrollWidth, clientWidth } = highlightScrollRef.current;
+                                const maxScroll = scrollWidth - clientWidth;
+                                highlightScrollRef.current.scrollTo({
+                                  left: (val / 100) * maxScroll,
+                                  behavior: 'auto',
+                                });
+                              }
+                            }}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-10"
+                            aria-label="Slide products left and right"
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => scrollHighlight('right')}
+                          className="w-8 h-8 rounded-full border border-gray-200 hover:border-[#005288] bg-white text-gray-600 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                          aria-label="Slide Right"
+                        >
+                          <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-[11px] font-mono text-gray-500 uppercase tracking-wider">
+                        <span className="inline-block w-2 h-2 rounded-full bg-[#005288]/70 animate-pulse"></span>
+                        <span>Slide Bar ({products.length} Selections)</span>
+                      </div>
+                    </div>
+                  )}
                 </section>
               );
             }
