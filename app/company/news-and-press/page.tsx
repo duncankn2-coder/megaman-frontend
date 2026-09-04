@@ -1,7 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import Footer from '../../components/Footer';
+
+const getImageUrl = (image: any): string => {
+  if (!image) return '';
+  if (typeof image === 'string') return image;
+  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+  if (image.url) {
+    if (image.url.startsWith('http')) return image.url;
+    return `${payloadUrl}${image.url.startsWith('/') ? '' : '/'}${image.url}`;
+  }
+  if (image.filename) return `${payloadUrl}/media/${image.filename}`;
+  return '';
+};
 
 export const revalidate = 60;
 
@@ -100,8 +113,23 @@ export default async function NewsAndPressPage() {
             {articles.map((article: any, idx: number) => (
               <article
                 key={article.id || idx}
-                className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col group"
+                className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col group overflow-hidden"
               >
+                {(() => {
+                  const imgUrl = getImageUrl(article.image);
+                  if (!imgUrl) return null;
+                  return (
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-50 border-b border-gray-100">
+                      <Image
+                        src={imgUrl}
+                        alt={article.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
+                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                      />
+                    </div>
+                  );
+                })()}
                 <div className="p-6 flex flex-col flex-grow">
                   {/* Meta row */}
                   <div className="flex items-center justify-between text-[9px] font-mono text-gray-400 uppercase tracking-widest mb-4 pb-3 border-b border-gray-100">

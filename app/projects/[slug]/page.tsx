@@ -286,21 +286,21 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               if (layout === 'one-third-two-thirds') {
                 return (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-                    <div className="md:col-span-4 relative aspect-[4/3] md:aspect-square overflow-hidden bg-gray-50 border border-gray-200 shadow-sm">
+                    <div className="md:col-span-4 relative aspect-[4/3] md:aspect-square w-full overflow-hidden bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
                       <Image 
                         src={leftSrc} 
                         alt={`${project.title} detailed scene 1/3 layout ${idx}`} 
                         fill 
-                        className="object-cover" 
+                        className="object-contain w-full h-full" 
                       />
                     </div>
-                    <div className="md:col-span-8 relative aspect-[4/3] md:aspect-[16/10] overflow-hidden bg-gray-50 border border-gray-200 shadow-sm">
+                    <div className="md:col-span-8 relative aspect-[4/3] md:aspect-[16/10] w-full overflow-hidden bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
                       {rightSrc && (
                         <Image 
                           src={rightSrc} 
                           alt={`${project.title} detailed scene 2/3 layout ${idx}`} 
                           fill 
-                          className="object-cover" 
+                          className="object-contain w-full h-full" 
                         />
                       )}
                     </div>
@@ -311,21 +311,21 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               if (layout === 'two-thirds-one-third') {
                 return (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-                    <div className="md:col-span-8 relative aspect-[4/3] md:aspect-[16/10] overflow-hidden bg-gray-50 border border-gray-200 shadow-sm">
+                    <div className="md:col-span-8 relative aspect-[4/3] md:aspect-[16/10] w-full overflow-hidden bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
                       <Image 
                         src={leftSrc} 
                         alt={`${project.title} detailed scene 2/3 layout ${idx}`} 
                         fill 
-                        className="object-cover" 
+                        className="object-contain w-full h-full" 
                       />
                     </div>
-                    <div className="md:col-span-4 relative aspect-[4/3] md:aspect-square overflow-hidden bg-gray-50 border border-gray-200 shadow-sm">
+                    <div className="md:col-span-4 relative aspect-[4/3] md:aspect-square w-full overflow-hidden bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
                       {rightSrc && (
                         <Image 
                           src={rightSrc} 
                           alt={`${project.title} detailed scene 1/3 layout ${idx}`} 
                           fill 
-                          className="object-cover" 
+                          className="object-contain w-full h-full" 
                         />
                       )}
                     </div>
@@ -336,21 +336,21 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               if (layout === 'half-half') {
                 return (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                    <div className="relative aspect-[4/3] md:aspect-[16/10] overflow-hidden bg-gray-50 border border-gray-200 shadow-sm">
+                    <div className="relative aspect-[4/3] md:aspect-[16/10] w-full overflow-hidden bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
                       <Image 
                         src={leftSrc} 
                         alt={`${project.title} detailed scene left half ${idx}`} 
                         fill 
-                        className="object-cover" 
+                        className="object-contain w-full h-full" 
                       />
                     </div>
-                    <div className="relative aspect-[4/3] md:aspect-[16/10] overflow-hidden bg-gray-50 border border-gray-200 shadow-sm">
+                    <div className="relative aspect-[4/3] md:aspect-[16/10] w-full overflow-hidden bg-gray-50 border border-gray-200 shadow-sm flex items-center justify-center">
                       {rightSrc && (
                         <Image 
                           src={rightSrc} 
                           alt={`${project.title} detailed scene right half ${idx}`} 
                           fill 
-                          className="object-cover" 
+                          className="object-contain w-full h-full" 
                         />
                       )}
                     </div>

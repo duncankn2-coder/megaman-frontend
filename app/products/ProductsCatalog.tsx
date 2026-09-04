@@ -684,7 +684,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                                   alt={imageItem.alt || family.name}
                                   fill
                                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                  className="object-contain p-8 transition-transform duration-500 group-hover:scale-105"
+                                  className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-105"
                                   priority={false}
                                   unoptimized
                                 />

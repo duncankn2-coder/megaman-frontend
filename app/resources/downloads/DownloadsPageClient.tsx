@@ -217,14 +217,14 @@ export default function DownloadsPageClient({ initialCatalogs }: DownloadsPageCl
                   className="bg-white border border-gray-200 flex flex-col group hover:shadow-lg transition-all duration-500 overflow-hidden relative"
                 >
                   {/* Card Cover Wrapper */}
-                  <div className="relative aspect-[3/4] overflow-hidden bg-gray-50 border-b border-gray-100">
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-50 border-b border-gray-100 flex items-center justify-center">
                     {coverUrl ? (
                       <Image
                         src={coverUrl}
                         alt={item.title}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                        className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (
                       /* Minimalist Premium Typographic Cover Placeholder when no image is uploaded */

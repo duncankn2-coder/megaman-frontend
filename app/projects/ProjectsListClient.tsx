@@ -208,7 +208,7 @@ export default function ProjectsListClient({ initialProjects }: ProjectsListClie
               <Link
                 key={project.id}
                 href={`/projects/${project.slug}`}
-                className="group relative aspect-square w-full overflow-hidden bg-slate-900 border border-gray-150 shadow-sm transition-transform duration-300"
+                className="group relative aspect-square w-full overflow-hidden bg-slate-900 border border-gray-150 shadow-sm transition-transform duration-300 flex items-center justify-center"
               >
                 {/* Image background */}
                 <Image
@@ -216,7 +216,7 @@ export default function ProjectsListClient({ initialProjects }: ProjectsListClie
                   alt={project.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="object-contain w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
                   priority
                 />
 

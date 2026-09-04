@@ -854,7 +854,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       key={media.id}
                       onClick={() => setActiveMediaIndex(idx)}
                       title={media.description || media.alt || ''}
-                      className={`relative aspect-video bg-white border focus:outline-none transition-all cursor-pointer shadow-sm ${
+                      className={`relative aspect-video w-full bg-white border focus:outline-none transition-all cursor-pointer shadow-sm ${
                         activeMediaIndex === idx
                           ? 'border-[#005288] ring-1 ring-[#005288]/30 bg-[#005288]/5'
                           : 'border-gray-250 hover:border-gray-400'

@@ -371,14 +371,14 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                         key={idx}
                         className="flex flex-col group"
                       >
-                        <div className="relative aspect-square overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300 border border-gray-200 bg-gray-50">
+                        <div className="relative aspect-square w-full overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300 border border-gray-200 bg-gray-50 flex items-center justify-center">
                           {cat.image ? (
                             <Image
                               src={getImageUrl(cat.image)}
                               alt={cat.title}
                               fill
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                              className="object-cover group-hover:scale-105 transition-transform duration-700"
+                              className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-700"
                             />
                           ) : (
                             <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
@@ -457,14 +457,14 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                           key={p.id || idx}
                           className="bg-white border border-gray-200 rounded-none overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between flex-shrink-0 w-[290px] md:w-[340px] snap-start"
                         >
-                          <div className="relative aspect-square w-full bg-gray-50 flex items-center justify-center p-8 border-b border-gray-100">
+                          <div className="relative aspect-square w-full bg-gray-50 flex items-center justify-center border-b border-gray-100 overflow-hidden">
                             {imageItem ? (
                               <Image 
                                 src={imageUrl}
                                 alt={p.name}
                                 fill
                                 quality={95}
-                                className="object-contain p-6 sharpen-media"
+                                className="object-contain w-full h-full sharpen-media"
                               />
                             ) : (
                               <div className="text-gray-300 font-mono text-xs uppercase tracking-widest">MEGAMAN<sup>®</sup> Optic</div>
@@ -620,15 +620,15 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                       return (
                         <div key={proj.id || idx} className="flex flex-col gap-6 group">
                           <Link href={`/projects/${proj.slug}`} className="block">
-                            <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 cursor-pointer">
+                            <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 cursor-pointer flex items-center justify-center">
                               <Image 
                                 src={imageUrl} 
                                 alt={proj.title}
                                 fill
                                 quality={95}
-                                className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
+                                className="object-contain w-full h-full transition-transform duration-700 group-hover:scale-102 sharpen-media"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
                             </div>
                           </Link>
 
@@ -676,14 +676,14 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                       <div key={article.id || idx} className="border border-gray-200 p-6 bg-white flex flex-col justify-between min-h-[450px] shadow-sm hover:shadow-md transition-all duration-300 group">
                         <div>
                           {/* News Image */}
-                          <div className="relative aspect-[16/10] w-full overflow-hidden bg-white border border-gray-200/50 mb-4">
+                          <div className="relative aspect-[16/10] w-full overflow-hidden bg-white border border-gray-200/50 mb-4 flex items-center justify-center">
                             {article.image ? (
                               <Image
                                 src={getImageUrl(article.image)}
                                 alt={article.title}
                                 fill
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
-                                className="object-contain group-hover:scale-105 transition-transform duration-700"
+                                className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-700"
                               />
                             ) : (
                               <div className="absolute inset-0 flex items-center justify-center">
@@ -877,15 +877,15 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               
               <div className="flex flex-col gap-6 group">
-                <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 flex items-center justify-center">
                   <Image 
                     src="/hospitality_project_lobby.png" 
                     alt="Hospitality Lounge Project Showcase"
                     fill
                     quality={95}
-                    className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
+                    className="object-contain w-full h-full transition-transform duration-700 group-hover:scale-102 sharpen-media"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
                 </div>
 
                 <div>
@@ -902,15 +902,15 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               </div>
 
               <div className="flex flex-col gap-6 group">
-                <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 flex items-center justify-center">
                   <Image 
                     src="/retail_project_showroom.png" 
                     alt="Luxury Retail Showroom Showcase"
                     fill
                     quality={95}
-                    className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
+                    className="object-contain w-full h-full transition-transform duration-700 group-hover:scale-102 sharpen-media"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
                 </div>
 
                 <div>
