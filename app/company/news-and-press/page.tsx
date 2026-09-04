@@ -119,13 +119,13 @@ export default async function NewsAndPressPage() {
                   const imgUrl = getImageUrl(article.image);
                   if (!imgUrl) return null;
                   return (
-                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-50 border-b border-gray-100">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-50 border-b border-gray-100 flex items-center justify-center">
                       <Image
                         src={imgUrl}
                         alt={article.title}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                        className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-700"
                       />
                     </div>
                   );

@@ -814,7 +814,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       src={getImageUrl(activeMedia)}
                       alt={activeMedia.alt || family.name}
                       fill
-                      className="object-contain p-12 transition-transform duration-700 hover:scale-102"
+                      className="object-contain w-full h-full transition-transform duration-700 hover:scale-102"
                       priority
                       unoptimized
                     />
@@ -865,7 +865,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           src={getImageUrl(media)}
                           alt={media.alt || ''}
                           fill
-                          className="object-contain p-1"
+                          className="object-contain w-full h-full"
                           unoptimized
                         />
                       ) : (
@@ -1084,15 +1084,15 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     return (
                       <div key={proj.id || idx} className="flex flex-col gap-6 group">
                         <Link href={`/projects/${proj.slug}`} className="block">
-                          <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 cursor-pointer">
+                          <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 cursor-pointer flex items-center justify-center">
                             <Image 
                               src={imageUrl} 
                               alt={proj.title}
                               fill
                               quality={95}
-                              className="object-cover transition-transform duration-700 group-hover:scale-102 sharpen-media"
+                              className="object-contain w-full h-full transition-transform duration-700 group-hover:scale-102 sharpen-media"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
                           </div>
                         </Link>
 
@@ -1165,14 +1165,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         key={p.id || idx}
                         className="bg-white border border-gray-200 rounded-none overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between flex-shrink-0 w-[290px] md:w-[340px] snap-start"
                       >
-                        <div className="relative aspect-square w-full bg-gray-50 flex items-center justify-center p-8 border-b border-gray-100">
+                        <div className="relative aspect-square w-full bg-gray-50 flex items-center justify-center border-b border-gray-100 overflow-hidden">
                           {imageItem ? (
                             <Image 
                               src={imageUrl}
                               alt={p.name}
                               fill
                               quality={95}
-                              className="object-contain p-6 sharpen-media"
+                              className="object-contain w-full h-full sharpen-media"
                               unoptimized
                             />
                           ) : (
@@ -1608,13 +1608,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           return (
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                               <div className="md:col-span-5 flex flex-col space-y-4">
-                                <div className="relative aspect-square w-full bg-gray-50 border border-gray-200 rounded-none overflow-hidden flex items-center justify-center p-4 shadow-sm">
+                                <div className="relative aspect-square w-full bg-gray-50 border border-gray-200 rounded-none overflow-hidden flex items-center justify-center shadow-sm">
                                   {activeImage ? (
                                     <Image
                                       src={getImageUrl(activeImage)}
                                       alt={activeDrawerProduct.name}
                                       fill
-                                      className="object-contain p-2"
+                                      className="object-contain w-full h-full"
                                       unoptimized
                                     />
                                   ) : (

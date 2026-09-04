@@ -194,14 +194,14 @@ export default function HospitalityProjectsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start bg-white border border-gray-200 p-8 shadow-sm">
           {/* Left: Render Image with dynamic overlay */}
           <div className="lg:col-span-6 flex flex-col space-y-4">
-            <div className="relative aspect-video w-full border border-gray-200 overflow-hidden bg-gray-50 shadow-inner group">
+            <div className="relative aspect-video w-full border border-gray-200 overflow-hidden bg-gray-50 shadow-inner group flex items-center justify-center">
               <Image 
                 src={zone.image} 
                 alt={zone.title} 
                 fill 
-                className="object-cover transition-transform duration-700 group-hover:scale-102"
+                className="object-contain w-full h-full transition-transform duration-700 group-hover:scale-102"
               />
-              <div className="absolute bottom-4 left-4 bg-slate-950/80 text-white font-mono text-[9px] px-3 py-1 tracking-wider uppercase backdrop-blur-sm">
+              <div className="absolute bottom-4 left-4 bg-slate-950/80 text-white font-mono text-[9px] px-3 py-1 tracking-wider uppercase backdrop-blur-sm pointer-events-none">
                 PLAN FILE STUDY RENDER
               </div>
             </div>
@@ -382,14 +382,14 @@ export default function HospitalityProjectsPage() {
               className="group flex flex-col bg-white border border-gray-200 hover:shadow-lg transition-all duration-300"
             >
               {/* Aspect Square Image */}
-              <div className="relative aspect-square w-full bg-gray-50 border-b border-gray-150 flex items-center justify-center p-8 overflow-hidden">
+              <div className="relative aspect-square w-full bg-gray-50 border-b border-gray-150 flex items-center justify-center overflow-hidden">
                 {/* Fallback to generated default placeholder if not resolved */}
                 <Image 
                   src={prod.img.includes('/media/') && !idx ? '/original (3).png' : prod.img} 
-                  alt={prod.title}
-                  fill
+                  alt={prod.title} 
+                  fill 
                   sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-contain p-8 transition-transform duration-500 group-hover:scale-102"
+                  className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-102"
                 />
                 <span className="absolute top-4 left-4 bg-white border border-gray-150 font-mono text-[8px] font-bold px-2.5 py-1 tracking-wider uppercase">
                   {prod.tag}

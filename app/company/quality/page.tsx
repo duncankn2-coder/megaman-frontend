@@ -170,36 +170,36 @@ export default function QualityPage() {
       {/* Grid of Quality Images */}
       <section className="container mx-auto px-6 md:px-12 max-w-7xl mt-16 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white p-2 shadow-sm group overflow-hidden">
-            <div className="relative w-full h-full overflow-hidden">
+          <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white shadow-sm group overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
               <Image
                 src="/images/quality_photo_1.png"
                 alt="Megaman Quality Control Laboratory"
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-500"
               />
             </div>
           </div>
-          <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white p-2 shadow-sm group overflow-hidden">
-            <div className="relative w-full h-full overflow-hidden">
+          <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white shadow-sm group overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
               <Image
                 src="/images/quality_photo_2.png"
                 alt="Luminaires Rigorous Quality Testing"
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-500"
               />
             </div>
           </div>
-          <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white p-2 shadow-sm group overflow-hidden">
-            <div className="relative w-full h-full overflow-hidden">
+          <div className="relative aspect-video md:aspect-[4/3] w-full border border-gray-200 bg-white shadow-sm group overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
               <Image
                 src="/images/quality_photo_3.png"
                 alt="International Standard Quality Inspection"
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-500"
               />
             </div>
           </div>
