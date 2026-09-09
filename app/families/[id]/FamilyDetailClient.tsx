@@ -235,7 +235,7 @@ const expandSpecNames = (specNames: string[]): string[] => {
     if (lower.includes('cct') || lower.includes('temp')) {
       expanded.push('cct_k', 'cct', 'colourtemperature', 'colortemperature', 'colour_temp', 'colortemp');
     }
-    if (lower.includes('colour') || lower.includes('color')) {
+    if ((lower.includes('colour') || lower.includes('color')) && !lower.includes('temp') && !lower.includes('cct') && !lower.includes('rendering') && !lower.includes('consistency')) {
       expanded.push('fitting_colour', 'colour', 'color', 'luminaires_color');
     }
     if (lower.includes('power') || lower.includes('watt') || lower.includes('system power')) {
