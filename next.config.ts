@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 let protocol: 'http' | 'https' = 'http';
@@ -16,6 +17,23 @@ try {
 
 const nextConfig: NextConfig = {
   /* config options here */
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/.next/**',
+          'E:/System Volume Information/**',
+          'E:/found.*/**',
+          '**/System Volume Information/**',
+          '**/found.*/**',
+        ],
+      };
+    }
+    return config;
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -30,37 +48,38 @@ const nextConfig: NextConfig = {
         protocol: 'http',
         hostname: 'localhost',
         port: '3000',
-        pathname: '/api/media/file/**',
+        pathname: '/**',
       },
       {
         protocol: 'http',
         hostname: 'localhost',
+        port: '3001',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
         port: '3000',
-        pathname: '/media/**',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '3001',
+        pathname: '/**',
       },
       // Dynamically support whatever NEXT_PUBLIC_PAYLOAD_URL is configured
       {
         protocol: protocol,
         hostname: hostname,
         port: port || undefined,
-        pathname: '/api/media/file/**',
-      },
-      {
-        protocol: protocol,
-        hostname: hostname,
-        port: port || undefined,
-        pathname: '/media/**',
+        pathname: '/**',
       },
       // Add wildcard vercel.app domains just in case they are used
       {
         protocol: 'https',
         hostname: '*.vercel.app',
-        pathname: '/api/media/file/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.vercel.app',
-        pathname: '/media/**',
+        pathname: '/**',
       },
       // Explicit backend production hostname
       {

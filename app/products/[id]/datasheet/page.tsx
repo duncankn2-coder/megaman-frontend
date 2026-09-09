@@ -246,32 +246,40 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
     return '/placeholder.png';
   };
 
-  const getSpec = (specName: string, defaultValue = ''): string => {
-    // 1. Try to fetch from selected SKU specifications JSON first
-    if (selectedSku?.specifications && selectedSku.specifications[specName] !== undefined && selectedSku.specifications[specName] !== null) {
-      return String(selectedSku.specifications[specName]);
-    }
-    
-    // 2. Try to fetch from SKU direct attributes
-    if (specName === 'model_identifier' && selectedSku?.name) return selectedSku.name;
-    if (specName === 'customer_model_no_new' && selectedSku?.modelNumber) return selectedSku.modelNumber;
-    if (specName === 'fitting_colour' && selectedSku?.colour) return selectedSku.colour;
-    if (specName === 'colourTemp' && selectedSku?.colourTemperature) return selectedSku.colourTemperature;
-    if (specName === 'cct_k' && selectedSku?.colourTemperature) return selectedSku.colourTemperature.replace(/[^\d]/g, '');
-    if (specName === 'on_mode_power_w' && selectedSku?.wattage) return selectedSku.wattage;
-    if (specName === 'mounting' && selectedSku?.lampBase) return selectedSku.lampBase;
-    if (specName === 'ean' && selectedSku?.eanBarcode) return selectedSku.eanBarcode;
-    if (specName === 'inner_itf' && selectedSku?.innerBoxItf) return selectedSku.innerBoxItf;
-    if (specName === 'outer_itf' && selectedSku?.outerBoxItf) return selectedSku.outerBoxItf;
-    if (specName === 'packaging' && selectedSku?.packingMethod) return selectedSku.packingMethod;
+  const isFilled = (val: any): boolean => {
+    if (val === undefined || val === null) return false;
+    const s = String(val).trim();
+    return s !== '' && s !== '—' && s !== '-' && s.toLowerCase() !== 'undefined' && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'n/a';
+  };
 
-    // 3. Fallback to product specifications JSON (legacy format)
-    if (product.specifications && product.specifications[specName] !== undefined && product.specifications[specName] !== null) {
-      return String(product.specifications[specName]);
+  const getSpec = (specName: string, defaultValue = '—'): string => {
+    // 1. Try to fetch from SKU direct attributes (entry fields) first if filled
+    if (specName === 'model_identifier' && selectedSku?.name && isFilled(selectedSku.name)) return selectedSku.name;
+    if (specName === 'customer_model_no_new' && selectedSku?.modelNumber && isFilled(selectedSku.modelNumber)) return selectedSku.modelNumber;
+    if ((specName === 'fitting_colour' || specName === 'colour' || specName === 'color') && selectedSku?.colour && isFilled(selectedSku.colour)) return selectedSku.colour;
+    if ((specName === 'colourTemp' || specName === 'colourTemperature' || specName === 'Color Temperature' || specName === 'CCT') && selectedSku?.colourTemperature && isFilled(selectedSku.colourTemperature)) return selectedSku.colourTemperature;
+    if (specName === 'cct_k' && selectedSku?.colourTemperature && isFilled(selectedSku.colourTemperature)) return selectedSku.colourTemperature.replace(/[^\d]/g, '');
+    if ((specName === 'on_mode_power_w' || specName === 'power' || specName === 'wattage') && selectedSku?.wattage && isFilled(selectedSku.wattage)) return selectedSku.wattage;
+    if ((specName === 'mounting' || specName === 'lampBase') && selectedSku?.lampBase && isFilled(selectedSku.lampBase)) return selectedSku.lampBase;
+    if (specName === 'ean' && selectedSku?.eanBarcode && isFilled(selectedSku.eanBarcode)) return selectedSku.eanBarcode;
+    if (specName === 'inner_itf' && selectedSku?.innerBoxItf && isFilled(selectedSku.innerBoxItf)) return selectedSku.innerBoxItf;
+    if (specName === 'outer_itf' && selectedSku?.outerBoxItf && isFilled(selectedSku.outerBoxItf)) return selectedSku.outerBoxItf;
+    if (specName === 'packaging' && selectedSku?.packingMethod && isFilled(selectedSku.packingMethod)) return selectedSku.packingMethod;
+
+    // 2. Fallback to SKU specifications JSON (General Data) if skipped in entry field
+    if (selectedSku?.specifications && selectedSku.specifications[specName] !== undefined && selectedSku.specifications[specName] !== null) {
+      const val = String(selectedSku.specifications[specName]).trim();
+      if (isFilled(val)) return val;
     }
-    if (specName === 'power' && product.power) return product.power;
-    if (specName === 'colourTemperature' && product.colourTemperature) return product.colourTemperature;
-    if (specName === 'colour' && product.colour) return product.colour;
+
+    // 3. Fallback to product specifications JSON (General Data)
+    if (product.specifications && product.specifications[specName] !== undefined && product.specifications[specName] !== null) {
+      const val = String(product.specifications[specName]).trim();
+      if (isFilled(val)) return val;
+    }
+    if ((specName === 'power' || specName === 'wattage' || specName === 'on_mode_power_w') && product.power && isFilled(product.power)) return product.power;
+    if ((specName === 'colourTemperature' || specName === 'cct_k' || specName === 'colourTemp') && product.colourTemperature && isFilled(product.colourTemperature)) return product.colourTemperature;
+    if ((specName === 'colour' || specName === 'fitting_colour') && product.colour && isFilled(product.colour)) return product.colour;
     return defaultValue;
   };
 

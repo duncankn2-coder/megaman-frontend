@@ -124,6 +124,9 @@ const getImageUrl = (image: any): string => {
     if (image.startsWith('/')) {
       return image;
     }
+    if (/^[0-9a-fA-F]{24}$/.test(image)) {
+      return '/placeholder.png';
+    }
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     return `${cleanBaseUrl}/media/${image}`;
   }
@@ -131,6 +134,9 @@ const getImageUrl = (image: any): string => {
   if (image.url) {
     if (image.url.startsWith('http') || image.url.startsWith('//')) {
       return resolveAbsoluteUrl(image.url);
+    }
+    if (/^[0-9a-fA-F]{24}$/.test(image.url)) {
+      return '/placeholder.png';
     }
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const cleanPath = image.url.startsWith('/') ? image.url : `/${image.url}`;
@@ -251,6 +257,12 @@ const expandSpecNames = (specNames: string[]): string[] => {
   return Array.from(new Set(expanded));
 };
 
+const isFieldFilled = (val: any): boolean => {
+  if (val === undefined || val === null) return false;
+  const str = String(val).trim();
+  return str !== '' && str !== '—' && str !== '-' && str.toLowerCase() !== 'undefined' && str.toLowerCase() !== 'null' && str.toLowerCase() !== 'n/a';
+};
+
 // Extraction utility for technical parameters inside product specifications JSON (RZB Style)
 const getProductSpec = (productObj: any, specNames: string[], defaultValue = '—'): string => {
   if (!productObj) return defaultValue;
@@ -258,51 +270,53 @@ const getProductSpec = (productObj: any, specNames: string[], defaultValue = '�
   const targetProduct = productObj.product && typeof productObj.product === 'object' ? productObj.product : productObj;
   const expandedNames = expandSpecNames(specNames);
 
-  // 1. Try specifications JSON (on targetProduct or productObj)
+  // 1. Try direct entry attributes on targetProduct / productObj first if filled
+  for (const name of expandedNames) {
+    if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
+      if (isFieldFilled(targetProduct.name)) return String(targetProduct.name).trim();
+      if (isFieldFilled(productObj.name)) return String(productObj.name).trim();
+      if (isFieldFilled(productObj.modelNumber)) return String(productObj.modelNumber).trim();
+    }
+    if (name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') {
+      const pwr = targetProduct.power || targetProduct.wattage || productObj.wattage || productObj.power;
+      if (isFieldFilled(pwr)) return String(pwr).trim();
+    }
+    if (name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') {
+      const ct = targetProduct.colourTemperature || targetProduct.colorTemperature || productObj.colourTemperature;
+      if (isFieldFilled(ct)) return String(ct).trim();
+    }
+    if (name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') {
+      const col = targetProduct.colour || targetProduct.color || productObj.colour;
+      if (isFieldFilled(col)) return String(col).trim();
+    }
+    if (name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') {
+      const ipVal = targetProduct.ip || productObj.ip;
+      if (isFieldFilled(ipVal)) return String(ipVal).trim();
+    }
+    if (name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type') {
+      const gear = targetProduct.connector || productObj.connector;
+      if (isFieldFilled(gear)) return String(gear).trim();
+    }
+  }
+
+  // 2. Otherwise fetch from general data specifications JSON (on targetProduct or productObj)
   const specs = (targetProduct.specifications || productObj.specifications) as Record<string, unknown> | undefined;
   if (specs) {
     for (const name of expandedNames) {
-      if (specs[name] !== undefined && specs[name] !== null) {
-        const val = String(specs[name]).trim();
-        if (val !== '' && val !== 'undefined' && val !== 'null') {
-          return val;
-        }
+      if (isFieldFilled(specs[name])) {
+        return String(specs[name]).trim();
       }
     }
   }
 
-  // 2. Try parsed description specifications
+  // 3. Fallback to parsed description specifications
   const desc = targetProduct.description || productObj.description || '';
   if (desc) {
     const descSpecs = parseDescriptionSpecs(desc);
     for (const name of expandedNames) {
-      if (descSpecs[name] !== undefined && String(descSpecs[name]).trim() !== '') {
+      if (isFieldFilled(descSpecs[name])) {
         return descSpecs[name];
       }
-    }
-  }
-
-  // 3. Try direct attributes
-  for (const name of expandedNames) {
-    if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
-      if (targetProduct.name && targetProduct.name !== '—') return targetProduct.name;
-      if (productObj.name && productObj.name !== '—') return productObj.name;
-      if (productObj.modelNumber) return productObj.modelNumber;
-    }
-    if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && (targetProduct.power || targetProduct.wattage || productObj.wattage || productObj.power)) {
-      return targetProduct.power || targetProduct.wattage || productObj.wattage || productObj.power;
-    }
-    if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && (targetProduct.colourTemperature || targetProduct.colorTemperature || productObj.colourTemperature)) {
-      return targetProduct.colourTemperature || targetProduct.colorTemperature || productObj.colourTemperature;
-    }
-    if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && (targetProduct.colour || targetProduct.color || productObj.colour)) {
-      return targetProduct.colour || targetProduct.color || productObj.colour;
-    }
-    if ((name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') && (targetProduct.ip || productObj.ip)) {
-      return targetProduct.ip || productObj.ip;
-    }
-    if ((name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type') && (targetProduct.connector || productObj.connector)) {
-      return targetProduct.connector || productObj.connector;
     }
   }
 
@@ -361,65 +375,89 @@ const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string =>
   const parent = sku.product && typeof sku.product === 'object' ? sku.product : null;
   const expandedNames = expandSpecNames(specNames);
 
-  // 1. Try SKU specifications JSON first (holds SKU or General Data spreadsheet values)
+  // 1. Check entry fields on SKU first:
+  // If Colour, Power, and Colour Temperature (or other entry fields) were filled, use the data in the entry field!
+  for (const name of expandedNames) {
+    if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
+      if (isFieldFilled(sku.name)) return String(sku.name).trim();
+    }
+    if (name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour' || name === 'luminaires_color') {
+      if (isFieldFilled(sku.colour || sku.color)) return String(sku.colour || sku.color).trim();
+    }
+    if (name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w' || name === 'light_source_on_mode_power_w') {
+      if (isFieldFilled(sku.wattage || sku.power)) return String(sku.wattage || sku.power).trim();
+    }
+    if (name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k' || name === 'colour_temp' || name === 'colortemp') {
+      if (isFieldFilled(sku.colourTemperature || sku.colorTemperature)) return String(sku.colourTemperature || sku.colorTemperature).trim();
+    }
+    if (name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip' || name === 'ip_rating') {
+      if (isFieldFilled(sku.ip)) return String(sku.ip).trim();
+    }
+    if (name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type' || name === 'connector') {
+      if (isFieldFilled(sku.connector)) return String(sku.connector).trim();
+    }
+    if (name === 'voltage' || name === 'Voltage' || name === 'rated_voltage_v') {
+      if (isFieldFilled(sku.voltage)) return String(sku.voltage).trim();
+    }
+    if (name === 'lampBase' || name === 'lamp base' || name === 'cap_type' || name === 'base') {
+      if (isFieldFilled(sku.lampBase)) return String(sku.lampBase).trim();
+    }
+  }
+
+  // 2. If Colour, Power, Colour Temperature (or any other spec) was skipped in the entry field:
+  // Fetch from General Data!
+  // A) Try SKU specifications JSON (holds General Data spreadsheet row linked to this SKU)
   if (sku.specifications) {
     for (const name of expandedNames) {
-      if (sku.specifications[name] !== undefined && sku.specifications[name] !== null) {
-        const val = String(sku.specifications[name]).trim();
-        if (val !== '' && val !== 'undefined' && val !== 'null') return val;
+      if (isFieldFilled(sku.specifications[name])) {
+        return String(sku.specifications[name]).trim();
       }
     }
   }
 
-  // 2. Try Parent Product specifications JSON (holds General Data spreadsheet values)
+  // B) Try Parent Product specifications JSON (holds General Data spreadsheet row of parent base model)
   if (parent?.specifications) {
     for (const name of expandedNames) {
-      if (parent.specifications[name] !== undefined && parent.specifications[name] !== null) {
-        const val = String(parent.specifications[name]).trim();
-        if (val !== '' && val !== 'undefined' && val !== 'null') return val;
+      if (isFieldFilled(parent.specifications[name])) {
+        return String(parent.specifications[name]).trim();
       }
     }
   }
 
-  // 3. Try parsed description specifications (from parent or SKU description string)
+  // C) Try parsed description specifications (from parent or SKU description string)
   const descSpecs = parseDescriptionSpecs(parent?.description || sku.description || '');
   for (const name of expandedNames) {
-    if (descSpecs[name] !== undefined && String(descSpecs[name]).trim() !== '') {
+    if (isFieldFilled(descSpecs[name])) {
       return descSpecs[name];
     }
   }
 
-  // 4. Fallback to direct attributes on SKU
-  for (const name of expandedNames) {
-    if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
-      if (sku.name && sku.name !== '—') return sku.name;
-    }
-    if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && sku.colour) return sku.colour;
-    if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && sku.wattage) return sku.wattage;
-    if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && sku.colourTemperature) return sku.colourTemperature;
-    if ((name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') && sku.ip) return sku.ip;
-    if ((name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type') && sku.connector) return sku.connector;
-    if ((name === 'voltage' || name === 'Voltage' || name === 'rated_voltage_v') && sku.voltage) return sku.voltage;
-    if ((name === 'lampBase' || name === 'lamp base' || name === 'cap_type') && sku.lampBase) return sku.lampBase;
-  }
-
-  // 5. Fallback to direct attributes on Parent Product
+  // D) Fallback to direct attributes on Parent Product
   if (parent) {
     for (const name of expandedNames) {
-      if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && (parent.power || parent.wattage)) return parent.power || parent.wattage;
-      if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && (parent.colourTemperature || parent.colorTemperature)) return parent.colourTemperature || parent.colorTemperature;
-      if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && (parent.colour || parent.color)) return parent.colour || parent.color;
-      if (name === 'customer_model_no_new' && parent.name) return parent.name;
+      if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && isFieldFilled(parent.power || parent.wattage)) {
+        return String(parent.power || parent.wattage).trim();
+      }
+      if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && isFieldFilled(parent.colourTemperature || parent.colorTemperature)) {
+        return String(parent.colourTemperature || parent.colorTemperature).trim();
+      }
+      if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && isFieldFilled(parent.colour || parent.color)) {
+        return String(parent.colour || parent.color).trim();
+      }
+      if (name === 'customer_model_no_new' && isFieldFilled(parent.name)) {
+        return String(parent.name).trim();
+      }
     }
   }
 
   return defaultValue;
 };
 
-const parseCcts = (cctStr: string): string[] => {
+const parseCcts = (cctStr: any): string[] => {
   if (!cctStr || cctStr === '—') return [];
   
-  const clean = cctStr.trim();
+  const clean = String(cctStr).trim();
+  if (!clean || clean === '—' || clean === 'undefined' || clean === 'null') return [];
   
   // Check if it matches a sequence of 4-digit numbers like "300040006500"
   if (/^\d{8,16}$/.test(clean) && clean.length % 4 === 0) {
@@ -442,14 +480,15 @@ const parseCcts = (cctStr: string): string[] => {
   });
 };
 
-const parseFluxMap = (fluxStr: string): Record<string, string> => {
+const parseFluxMap = (fluxStr: any): Record<string, string> => {
   const result: Record<string, string> = {};
   if (!fluxStr || fluxStr === '—') return result;
 
-  if (fluxStr.includes('@')) {
+  const clean = String(fluxStr).trim();
+  if (clean.includes('@')) {
     const regex = /([0-9\/\s+]+)\s*@\s*([0-9a-zA-Z\/\+]+)/g;
     let match;
-    while ((match = regex.exec(fluxStr)) !== null) {
+    while ((match = regex.exec(clean)) !== null) {
       const fluxVal = match[1].trim();
       const cctCondition = match[2].trim();
       
@@ -462,20 +501,21 @@ const parseFluxMap = (fluxStr: string): Record<string, string> => {
   return result;
 };
 
-const getFluxForCct = (fluxStr: string, targetCct: string, cctIndex: number, totalCcts: number): string => {
+const getFluxForCct = (fluxStr: any, targetCct: string, cctIndex: number, totalCcts: number): string => {
   if (!fluxStr || fluxStr === '—') return '—';
   
-  const fluxMap = parseFluxMap(fluxStr);
+  const clean = String(fluxStr).trim();
+  const fluxMap = parseFluxMap(clean);
   if (fluxMap[targetCct]) {
     return fluxMap[targetCct];
   }
   
-  const fluxParts = fluxStr.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
+  const fluxParts = clean.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
   if (fluxParts.length === totalCcts && cctIndex < fluxParts.length) {
     return fluxParts[cctIndex];
   }
   
-  return fluxStr;
+  return clean;
 };
 
 export default function FamilyDetailClient({ family }: FamilyDetailClientProps) {
