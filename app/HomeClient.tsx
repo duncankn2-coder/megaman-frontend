@@ -19,6 +19,7 @@ interface HeroSlide {
   subtitle?: string;
   description?: string;
   image: any;
+  hideButton?: boolean;
   ctaText?: string;
   ctaLink?: string;
 }
@@ -223,10 +224,29 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               return (
                 <section 
                   key={`hero-${blockIdx}`}
-                  className="relative bg-gray-50 border-b border-gray-200 min-h-[640px] md:h-[75vh] flex items-center overflow-hidden"
+                  className={`relative bg-gray-50 border-b border-gray-200 min-h-[640px] md:h-[75vh] flex items-center overflow-hidden group ${currentSlideData.ctaLink ? 'cursor-pointer' : ''}`}
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                 >
+                  {/* Clickable Banner Overlay Link */}
+                  {currentSlideData.ctaLink && (
+                    currentSlideData.ctaLink.startsWith('http') ? (
+                      <a
+                        href={currentSlideData.ctaLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 z-10 cursor-pointer"
+                        aria-label={currentSlideData.title || currentSlideData.subtitle || 'Banner'}
+                      />
+                    ) : (
+                      <Link
+                        href={currentSlideData.ctaLink}
+                        className="absolute inset-0 z-10 cursor-pointer"
+                        aria-label={currentSlideData.title || currentSlideData.subtitle || 'Banner'}
+                      />
+                    )
+                  )}
+
                   <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0">
                     <div className="absolute left-[33%] top-0 bottom-0 w-[1px] bg-black"></div>
                     <div className="absolute left-[66%] top-0 bottom-0 w-[1px] bg-black"></div>
@@ -266,10 +286,10 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                         );
                       }
                     })()}
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent z-10"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent z-10 pointer-events-none"></div>
                   </div>
 
-                  <div className="container mx-auto max-w-7xl px-6 md:px-12 relative z-20 w-full">
+                  <div className="container mx-auto max-w-7xl px-6 md:px-12 relative z-20 w-full pointer-events-none">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
                       
                       {/* Left: Text Details */}
@@ -303,16 +323,15 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                           </p>
                         )}
 
-                        {/* CTA button */}
-                        {currentSlideData.ctaLink && (
+                        {/* CTA button (Visual button, whole banner is clickable) */}
+                        {!currentSlideData.hideButton && currentSlideData.ctaText && (
                           <div className="pt-6">
-                            <a 
-                              href={currentSlideData.ctaLink}
-                              className="bg-[#005288] hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
+                            <span 
+                              className="bg-[#005288] group-hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
                             >
                               <FontAwesomeIcon icon={faArrowRight} />
-                              {currentSlideData.ctaText || 'EXPLORE RANGE'}
-                            </a>
+                              {currentSlideData.ctaText}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -327,14 +346,20 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                   {slides.length > 1 && (
                     <>
                       <button 
-                        onClick={handlePrevSlide}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePrevSlide();
+                        }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-30 pointer-events-auto"
                       >
                         <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
                       </button>
                       <button 
-                        onClick={handleNextSlide}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNextSlide();
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-30 pointer-events-auto"
                       >
                         <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
                       </button>
@@ -343,11 +368,14 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
 
                   {/* Bottom Slide Indicators */}
                   {slides.length > 1 && (
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30 pointer-events-auto">
                       {slides.map((_, idx) => (
                         <button
                           key={idx}
-                          onClick={() => setActiveSlide(idx)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveSlide(idx);
+                          }}
                           className={`h-1 cursor-pointer transition-all duration-300 rounded-none focus:outline-none ${
                             activeSlide === idx 
                               ? 'bg-[#005288] w-10' 
