@@ -12,11 +12,23 @@ import {
   faProjectDiagram
 } from '@fortawesome/free-solid-svg-icons';
 import CategoriesGridSection from './components/CategoriesGridSection';
+import { 
+  resolveTitleColor, 
+  resolveTitleSize, 
+  resolveSubtitleColor, 
+  resolveSubtitleSize 
+} from './utils/typography';
 
 interface HeroSlide {
   title?: string;
   hideTitle?: boolean;
+  titleColor?: string;
+  titleCustomColor?: string;
+  titleSize?: string;
   subtitle?: string;
+  subtitleColor?: string;
+  subtitleCustomColor?: string;
+  subtitleSize?: string;
   description?: string;
   image: any;
   hideButton?: boolean;
@@ -38,7 +50,13 @@ interface Block {
   slides?: HeroSlide[];
   title?: string;
   hideTitle?: boolean;
+  titleColor?: string;
+  titleCustomColor?: string;
+  titleSize?: string;
   subtitle?: string;
+  subtitleColor?: string;
+  subtitleCustomColor?: string;
+  subtitleSize?: string;
   categories?: CategoryItem[];
   content?: string;
   image?: any;
@@ -288,28 +306,46 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                       
                       {/* Left: Text Details */}
                       <div className="lg:col-span-6 space-y-6">
-                        {currentSlideData.subtitle && (
-                          <div className="flex items-center gap-3">
-                            <span className="h-[2px] w-10 bg-[#005288]"></span>
-                            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
-                              {currentSlideData.subtitle}
-                            </p>
-                          </div>
-                        )}
+                        {currentSlideData.subtitle && (() => {
+                          const subColor = resolveSubtitleColor(currentSlideData.subtitleColor, currentSlideData.subtitleCustomColor, 'text-[#005288]');
+                          const subSize = resolveSubtitleSize(currentSlideData.subtitleSize, 'text-[10px]');
+                          return (
+                            <div className="flex items-center gap-3">
+                              <span 
+                                className={`h-[2px] w-10 ${subColor.barClass || ''}`}
+                                style={subColor.barStyle}
+                              />
+                              <p 
+                                className={`${subSize} uppercase tracking-[0.25em] font-bold ${subColor.className}`}
+                                style={subColor.style}
+                              >
+                                {currentSlideData.subtitle}
+                              </p>
+                            </div>
+                          );
+                        })()}
 
-                        {!currentSlideData.hideTitle && currentSlideData.title && (
-                          <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
-                            {currentSlideData.title.split(' ').map((word, i) => {
-                              const isBlue = word.toLowerCase() === 'downloads' || word.toLowerCase() === 'circular' || word.toLowerCase() === 'elegance' || word.toLowerCase() === 'smart' || word.toLowerCase() === 'home' || word.toLowerCase() === 'iot';
-                              return (
-                                <span key={i} className={isBlue ? "font-bold text-[#005288]" : ""}>
-                                  {word}{' '}
-                                  {i === 1 && (currentSlideData.title?.split(' ').length ?? 0) > 2 && <br />}
-                                </span>
-                              );
-                            })}
-                          </h1>
-                        )}
+                        {!currentSlideData.hideTitle && currentSlideData.title && (() => {
+                          const tColor = resolveTitleColor(currentSlideData.titleColor, currentSlideData.titleCustomColor, 'text-gray-900');
+                          const tSize = resolveTitleSize(currentSlideData.titleSize, 'text-4xl md:text-5xl');
+                          const isExplicitColor = currentSlideData.titleColor && currentSlideData.titleColor !== 'default';
+                          return (
+                            <h1 
+                              className={`${tSize} font-light uppercase tracking-widest leading-[1.1] ${tColor.className}`}
+                              style={tColor.style}
+                            >
+                              {currentSlideData.title.split(' ').map((word, i) => {
+                                const isBlue = word.toLowerCase() === 'downloads' || word.toLowerCase() === 'circular' || word.toLowerCase() === 'elegance' || word.toLowerCase() === 'smart' || word.toLowerCase() === 'home' || word.toLowerCase() === 'iot';
+                                return (
+                                  <span key={i} className={isBlue ? (isExplicitColor ? "font-bold" : "font-bold text-[#005288]") : ""}>
+                                    {word}{' '}
+                                    {i === 1 && (currentSlideData.title?.split(' ').length ?? 0) > 2 && <br />}
+                                  </span>
+                                );
+                              })}
+                            </h1>
+                          );
+                        })()}
 
                         {currentSlideData.description && (
                           <p className="text-sm md:text-base text-gray-500 font-light max-w-md leading-relaxed">
@@ -390,6 +426,12 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                   title={block.title}
                   subtitle={block.subtitle}
                   hideTitle={block.hideTitle}
+                  titleColor={block.titleColor}
+                  titleCustomColor={block.titleCustomColor}
+                  titleSize={block.titleSize}
+                  subtitleColor={block.subtitleColor}
+                  subtitleCustomColor={block.subtitleCustomColor}
+                  subtitleSize={block.subtitleSize}
                   categories={block.categories || []}
                   blockIdx={blockIdx}
                 />
@@ -400,17 +442,28 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               const products = block.products || [];
               if (products.length === 0) return null;
               
+              const hpTitleColor = resolveTitleColor(block.titleColor, block.titleCustomColor, 'text-gray-900');
+              const hpTitleSize = resolveTitleSize(block.titleSize, 'text-3xl');
+              const hpSubColor = resolveSubtitleColor(block.subtitleColor, block.subtitleCustomColor, 'text-[#005288]');
+              const hpSubSize = resolveSubtitleSize(block.subtitleSize, 'text-[10px]');
+
               return (
                 <section key={`highlights-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200 bg-[#fafafa]/50">
                   <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                     <div>
                       {block.subtitle && (
-                        <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                        <span 
+                          className={`${hpSubSize} font-bold uppercase tracking-[0.25em] mb-2 block ${hpSubColor.className}`}
+                          style={hpSubColor.style}
+                        >
                           {block.subtitle}
                         </span>
                       )}
                       {!block.hideTitle && block.title && (
-                        <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                        <h2 
+                          className={`${hpTitleSize} font-light uppercase tracking-widest ${hpTitleColor.className}`}
+                          style={hpTitleColor.style}
+                        >
                           {block.title.split(' ')[0]} <span className="font-bold">{block.title.split(' ').slice(1).join(' ')}</span>
                         </h2>
                       )}
@@ -528,6 +581,12 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               const isSplitRight = block.layout === 'split-right';
               const imageUrl = getImageUrl(block.image);
 
+              const edTitleColor = resolveTitleColor(block.titleColor, block.titleCustomColor, 'text-gray-900');
+              const edTitleSize = resolveTitleSize(block.titleSize, 'text-3xl');
+              const edSubColor = resolveSubtitleColor(block.subtitleColor, block.subtitleCustomColor, 'text-[#005288]');
+              const edSubSize = resolveSubtitleSize(block.subtitleSize, 'text-[10px]');
+              const isEdExplicitColor = block.titleColor && block.titleColor !== 'default';
+
               return (
                 <section key={`editorial-${blockIdx}`} className="py-24 border-b border-gray-200 bg-white">
                   <div className="max-w-7xl mx-auto px-6 md:px-12">
@@ -549,20 +608,32 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                       <div className={block.image ? "lg:col-span-6 space-y-6" : "lg:col-span-12 space-y-6 max-w-3xl mx-auto text-center"}>
                         {block.subtitle && (
                           <div className={`flex items-center gap-3 ${!block.image ? "justify-center" : ""}`}>
-                            <span className="h-[2px] w-10 bg-[#005288]"></span>
-                            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
+                            <span 
+                              className={`h-[2px] w-10 ${edSubColor.barClass || ''}`}
+                              style={edSubColor.barStyle}
+                            />
+                            <p 
+                              className={`${edSubSize} uppercase tracking-[0.25em] font-bold ${edSubColor.className}`}
+                              style={edSubColor.style}
+                            >
                               {block.subtitle}
                             </p>
                           </div>
                         )}
 
                         {!block.hideTitle && block.title && (
-                          <h2 className="text-3xl font-light uppercase tracking-widest leading-snug text-gray-900">
-                            {block.title.split(' ').map((w, idx) => (
-                              <span key={idx} className={w.toLowerCase() === 'technology' || w.toLowerCase() === 'precision' ? "font-bold text-[#005288]" : ""}>
-                                {w}{' '}
-                              </span>
-                            ))}
+                          <h2 
+                            className={`${edTitleSize} font-light uppercase tracking-widest leading-snug ${edTitleColor.className}`}
+                            style={edTitleColor.style}
+                          >
+                            {block.title.split(' ').map((w, idx) => {
+                              const isKeyword = w.toLowerCase() === 'technology' || w.toLowerCase() === 'precision';
+                              return (
+                                <span key={idx} className={isKeyword ? (isEdExplicitColor ? "font-bold" : "font-bold text-[#005288]") : ""}>
+                                  {w}{' '}
+                                </span>
+                              );
+                            })}
                           </h2>
                         )}
 
@@ -603,21 +674,31 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                 </section>
               );
             }
-
-            case 'inspiration': {
+            case 'inspiration': {
               const projects = block.projects || [];
               if (projects.length === 0) return null;
+
+              const insTitleColor = resolveTitleColor(block.titleColor, block.titleCustomColor, 'text-gray-900');
+              const insTitleSize = resolveTitleSize(block.titleSize, 'text-3xl');
+              const insSubColor = resolveSubtitleColor(block.subtitleColor, block.subtitleCustomColor, 'text-[#005288]');
+              const insSubSize = resolveSubtitleSize(block.subtitleSize, 'text-[10px]');
 
               return (
                 <section key={`inspiration-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200">
                   <div className="mb-16">
                     {block.subtitle && (
-                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                      <span 
+                        className={`${insSubSize} font-bold uppercase tracking-[0.25em] mb-2 block ${insSubColor.className}`}
+                        style={insSubColor.style}
+                      >
                         {block.subtitle}
                       </span>
                     )}
                     {!block.hideTitle && block.title && (
-                      <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                      <h2 
+                        className={`${insTitleSize} font-light uppercase tracking-widest ${insTitleColor.className}`}
+                        style={insTitleColor.style}
+                      >
                         {block.title.split(' ')[0]} <span className="font-bold">{block.title.split(' ').slice(1).join(' ')}</span>
                       </h2>
                     )}
@@ -633,7 +714,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                             <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 cursor-pointer flex items-center justify-center">
                               <Image 
                                 src={imageUrl} 
-                                alt={proj.title}
+                                alt={proj.title} 
                                 fill
                                 quality={95}
                                 className="object-contain w-full h-full transition-transform duration-700 group-hover:scale-102 sharpen-media"
@@ -670,16 +751,27 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               
               if (displayNews.length === 0) return null;
 
+              const newsTitleColor = resolveTitleColor(block.titleColor, block.titleCustomColor, 'text-gray-900');
+              const newsTitleSize = resolveTitleSize(block.titleSize, 'text-3xl');
+              const newsSubColor = resolveSubtitleColor(block.subtitleColor, block.subtitleCustomColor, 'text-[#005288]');
+              const newsSubSize = resolveSubtitleSize(block.subtitleSize, 'text-[10px]');
+
               return (
                 <section key={`news-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
                   <div className="mb-16">
                     {block.subtitle && (
-                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                      <span 
+                        className={`${newsSubSize} font-bold uppercase tracking-[0.25em] mb-2 block ${newsSubColor.className}`}
+                        style={newsSubColor.style}
+                      >
                         {block.subtitle}
                       </span>
                     )}
                     {!block.hideTitle && block.title && (
-                      <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                      <h2 
+                        className={`${newsTitleSize} font-light uppercase tracking-widest ${newsTitleColor.className}`}
+                        style={newsTitleColor.style}
+                      >
                         {block.title.split(' ')[0]} <span className="font-bold">{block.title.split(' ').slice(1).join(' ')}</span>
                       </h2>
                     )}

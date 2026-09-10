@@ -6,7 +6,14 @@ import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
-export interface CategoryItem {
+import {
+  resolveTitleColor,
+  resolveTitleSize,
+  resolveSubtitleColor,
+  resolveSubtitleSize,
+} from '../utils/typography';
+
+interface CategoryItem {
   title: string;
   image?: any;
   description?: string;
@@ -16,8 +23,14 @@ export interface CategoryItem {
 
 interface CategoriesGridSectionProps {
   title?: string;
-  subtitle?: string;
   hideTitle?: boolean;
+  titleColor?: string;
+  titleCustomColor?: string;
+  titleSize?: string;
+  subtitle?: string;
+  subtitleColor?: string;
+  subtitleCustomColor?: string;
+  subtitleSize?: string;
   categories: CategoryItem[];
   blockIdx?: number | string;
 }
@@ -38,8 +51,14 @@ const getImageUrl = (image: any): string => {
 
 export default function CategoriesGridSection({
   title = 'PRODUCT CATEGORIES',
-  subtitle,
   hideTitle = false,
+  titleColor,
+  titleCustomColor,
+  titleSize,
+  subtitle,
+  subtitleColor,
+  subtitleCustomColor,
+  subtitleSize,
   categories = [],
   blockIdx = 0,
 }: CategoriesGridSectionProps) {
@@ -165,16 +184,30 @@ export default function CategoriesGridSection({
       {((!hideTitle && title) || subtitle) ? (
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
-            {subtitle && (
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-                {subtitle}
-              </span>
-            )}
-            {!hideTitle && title && (
-              <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-                {title.split(' ')[0]} <span className="font-bold">{title.split(' ').slice(1).join(' ')}</span>
-              </h2>
-            )}
+            {subtitle && (() => {
+              const subStyle = resolveSubtitleColor(subtitleColor, subtitleCustomColor, 'text-[#005288]');
+              const subSize = resolveSubtitleSize(subtitleSize, 'text-[10px]');
+              return (
+                <span 
+                  className={`${subSize} font-bold uppercase tracking-[0.25em] mb-2 block ${subStyle.className}`}
+                  style={subStyle.style}
+                >
+                  {subtitle}
+                </span>
+              );
+            })()}
+            {!hideTitle && title && (() => {
+              const tStyle = resolveTitleColor(titleColor, titleCustomColor, 'text-gray-900');
+              const tSize = resolveTitleSize(titleSize, 'text-3xl');
+              return (
+                <h2 
+                  className={`${tSize} font-light uppercase tracking-widest ${tStyle.className}`}
+                  style={tStyle.style}
+                >
+                  {title.split(' ')[0]} <span className="font-bold">{title.split(' ').slice(1).join(' ')}</span>
+                </h2>
+              );
+            })()}
           </div>
           
           <div>

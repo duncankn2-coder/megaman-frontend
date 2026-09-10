@@ -4,11 +4,20 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { 
+  resolveTitleColor, 
+  resolveTitleSize, 
+  resolveSubtitleColor, 
+  resolveSubtitleSize 
+} from '../../utils/typography';
 
 interface CaptionItem {
   id?: string;
   title?: string;
   hideTitle?: boolean;
+  titleColor?: string;
+  titleCustomColor?: string;
+  titleSize?: string;
   content?: string;
   align?: 'left' | 'center' | 'right';
   startPercent?: number;
@@ -22,6 +31,12 @@ interface ScrollVideoBlockProps {
     title?: string;
     subtitle?: string;
     hideTitle?: boolean;
+    titleColor?: string;
+    titleCustomColor?: string;
+    titleSize?: string;
+    subtitleColor?: string;
+    subtitleCustomColor?: string;
+    subtitleSize?: string;
     video?: any;
     mobileVideo?: any;
     captions?: CaptionItem[];
@@ -226,14 +241,24 @@ export default function ScrollVideoBlock({ block }: ScrollVideoBlockProps) {
         </div>
 
         {/* Section Subtitle Badge (Fixed top center - rendered only if block.subtitle exists) */}
-        {block.subtitle && (
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-3 bg-black/40 backdrop-blur-md px-5 py-2 border border-white/10">
-            <span className="w-2 h-2 rounded-full bg-[#005288] animate-pulse"></span>
-            <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-gray-300">
-              {block.subtitle}
-            </span>
-          </div>
-        )}
+        {block.subtitle && (() => {
+          const subColor = resolveSubtitleColor(block.subtitleColor, block.subtitleCustomColor, 'text-gray-300');
+          const subSize = resolveSubtitleSize(block.subtitleSize, 'text-[10px]');
+          return (
+            <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-3 bg-black/40 backdrop-blur-md px-5 py-2 border border-white/10">
+              <span 
+                className={`w-2 h-2 rounded-full animate-pulse ${subColor.barClass || 'bg-[#005288]'}`}
+                style={subColor.barStyle}
+              />
+              <span 
+                className={`${subSize} uppercase font-bold tracking-[0.25em] ${subColor.className}`}
+                style={subColor.style}
+              >
+                {block.subtitle}
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Storytelling Captions Stack */}
         <div className="container mx-auto px-6 md:px-12 max-w-7xl relative z-20 w-full h-full flex items-center">
@@ -248,6 +273,9 @@ export default function ScrollVideoBlock({ block }: ScrollVideoBlockProps) {
                 : cap.align === 'right' 
                 ? 'ml-auto text-right items-end' 
                 : 'mr-auto text-left items-start';
+
+            const capTitleColor = resolveTitleColor(cap.titleColor, cap.titleCustomColor, 'text-white');
+            const capTitleSize = resolveTitleSize(cap.titleSize, 'text-2xl md:text-4xl');
 
             return (
               <div
@@ -264,7 +292,10 @@ export default function ScrollVideoBlock({ block }: ScrollVideoBlockProps) {
                 </span>
 
                 {!cap.hideTitle && cap.title && (
-                  <h3 className="text-2xl md:text-4xl font-light uppercase tracking-wider text-white mb-4 leading-tight">
+                  <h3 
+                    className={`${capTitleSize} font-light uppercase tracking-wider mb-4 leading-tight ${capTitleColor.className}`}
+                    style={capTitleColor.style}
+                  >
                     {cap.title}
                   </h3>
                 )}
