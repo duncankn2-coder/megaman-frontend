@@ -17,6 +17,7 @@ export interface CategoryItem {
 interface CategoriesGridSectionProps {
   title?: string;
   subtitle?: string;
+  hideTitle?: boolean;
   categories: CategoryItem[];
   blockIdx?: number | string;
 }
@@ -37,7 +38,8 @@ const getImageUrl = (image: any): string => {
 
 export default function CategoriesGridSection({
   title = 'PRODUCT CATEGORIES',
-  subtitle = 'PORTFOLIO OVERVIEW',
+  subtitle,
+  hideTitle = false,
   categories = [],
   blockIdx = 0,
 }: CategoriesGridSectionProps) {
@@ -160,17 +162,32 @@ export default function CategoriesGridSection({
   return (
     <section key={`categories-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200" id="categories-section">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-            {subtitle}
-          </span>
-          <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-            {title?.split(' ')[0]} <span className="font-bold">{title?.split(' ').slice(1).join(' ')}</span>
-          </h2>
+      {((!hideTitle && title) || subtitle) ? (
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+          <div>
+            {subtitle && (
+              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                {subtitle}
+              </span>
+            )}
+            {!hideTitle && title && (
+              <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                {title.split(' ')[0]} <span className="font-bold">{title.split(' ').slice(1).join(' ')}</span>
+              </h2>
+            )}
+          </div>
+          
+          <div>
+            <Link 
+              href="/products" 
+              className="text-xs uppercase tracking-widest font-bold border-b border-gray-300 pb-1 hover:border-[#005288] hover:text-[#005288] transition-colors"
+            >
+              Browse Catalogues
+            </Link>
+          </div>
         </div>
-        
-        <div>
+      ) : (
+        <div className="flex justify-end mb-8">
           <Link 
             href="/products" 
             className="text-xs uppercase tracking-widest font-bold border-b border-gray-300 pb-1 hover:border-[#005288] hover:text-[#005288] transition-colors"
@@ -178,7 +195,7 @@ export default function CategoriesGridSection({
             Browse Catalogues
           </Link>
         </div>
-      </div>
+      )}
 
       {/* Grid vs Slider Layout */}
       {!isSlider ? (

@@ -7,7 +7,8 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 interface CaptionItem {
   id?: string;
-  title: string;
+  title?: string;
+  hideTitle?: boolean;
   content?: string;
   align?: 'left' | 'center' | 'right';
   startPercent?: number;
@@ -20,6 +21,7 @@ interface ScrollVideoBlockProps {
   block: {
     title?: string;
     subtitle?: string;
+    hideTitle?: boolean;
     video?: any;
     mobileVideo?: any;
     captions?: CaptionItem[];
@@ -261,9 +263,11 @@ export default function ScrollVideoBlock({ block }: ScrollVideoBlockProps) {
                   0{idx + 1} / 0{captionsList.length}
                 </span>
 
-                <h3 className="text-2xl md:text-4xl font-light uppercase tracking-wider text-white mb-4 leading-tight">
-                  {cap.title}
-                </h3>
+                {!cap.hideTitle && cap.title && (
+                  <h3 className="text-2xl md:text-4xl font-light uppercase tracking-wider text-white mb-4 leading-tight">
+                    {cap.title}
+                  </h3>
+                )}
 
                 {cap.content && (
                   <p className="text-xs md:text-sm text-gray-300 font-light leading-relaxed mb-6 whitespace-pre-line">

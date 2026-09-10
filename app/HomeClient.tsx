@@ -14,8 +14,9 @@ import {
 import CategoriesGridSection from './components/CategoriesGridSection';
 
 interface HeroSlide {
-  title: string;
-  subtitle: string;
+  title?: string;
+  hideTitle?: boolean;
+  subtitle?: string;
   description?: string;
   image: any;
   ctaText?: string;
@@ -35,6 +36,7 @@ interface Block {
   id?: string;
   slides?: HeroSlide[];
   title?: string;
+  hideTitle?: boolean;
   subtitle?: string;
   categories?: CategoryItem[];
   content?: string;
@@ -255,7 +257,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                         return (
                           <Image 
                             src={url} 
-                            alt={getImageAlt(media, currentSlideData.title)} 
+                            alt={getImageAlt(media, currentSlideData.title || 'Slide')} 
                             fill
                             quality={100}
                             className="object-cover transition-opacity duration-700 sharpen-media"
@@ -272,24 +274,28 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                       
                       {/* Left: Text Details */}
                       <div className="lg:col-span-6 space-y-6">
-                        <div className="flex items-center gap-3">
-                          <span className="h-[2px] w-10 bg-[#005288]"></span>
-                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
-                            {currentSlideData.subtitle}
-                          </p>
-                        </div>
+                        {currentSlideData.subtitle && (
+                          <div className="flex items-center gap-3">
+                            <span className="h-[2px] w-10 bg-[#005288]"></span>
+                            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#005288]">
+                              {currentSlideData.subtitle}
+                            </p>
+                          </div>
+                        )}
 
-                        <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
-                          {currentSlideData.title.split(' ').map((word, i) => {
-                            const isBlue = word.toLowerCase() === 'downloads' || word.toLowerCase() === 'circular' || word.toLowerCase() === 'elegance' || word.toLowerCase() === 'smart' || word.toLowerCase() === 'home' || word.toLowerCase() === 'iot';
-                            return (
-                              <span key={i} className={isBlue ? "font-bold text-[#005288]" : ""}>
-                                {word}{' '}
-                                {i === 1 && currentSlideData.title.split(' ').length > 2 && <br />}
-                              </span>
-                            );
-                          })}
-                        </h1>
+                        {!currentSlideData.hideTitle && currentSlideData.title && (
+                          <h1 className="text-4xl md:text-5xl font-light uppercase tracking-widest leading-[1.1] text-gray-900">
+                            {currentSlideData.title.split(' ').map((word, i) => {
+                              const isBlue = word.toLowerCase() === 'downloads' || word.toLowerCase() === 'circular' || word.toLowerCase() === 'elegance' || word.toLowerCase() === 'smart' || word.toLowerCase() === 'home' || word.toLowerCase() === 'iot';
+                              return (
+                                <span key={i} className={isBlue ? "font-bold text-[#005288]" : ""}>
+                                  {word}{' '}
+                                  {i === 1 && (currentSlideData.title?.split(' ').length ?? 0) > 2 && <br />}
+                                </span>
+                              );
+                            })}
+                          </h1>
+                        )}
 
                         {currentSlideData.description && (
                           <p className="text-sm md:text-base text-gray-500 font-light max-w-md leading-relaxed">
@@ -361,6 +367,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                   key={`categories-${blockIdx}`}
                   title={block.title}
                   subtitle={block.subtitle}
+                  hideTitle={block.hideTitle}
                   categories={block.categories || []}
                   blockIdx={blockIdx}
                 />
@@ -375,12 +382,16 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                 <section key={`highlights-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200 bg-[#fafafa]/50">
                   <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-                        {block.subtitle || 'PREMIUM SELECTIONS'}
-                      </span>
-                      <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-                        {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
-                      </h2>
+                      {block.subtitle && (
+                        <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                          {block.subtitle}
+                        </span>
+                      )}
+                      {!block.hideTitle && block.title && (
+                        <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                          {block.title.split(' ')[0]} <span className="font-bold">{block.title.split(' ').slice(1).join(' ')}</span>
+                        </h2>
+                      )}
                     </div>
                     {/* Navigation Buttons for Horizontal Scroll */}
                     <div className="flex items-center gap-3">
@@ -523,13 +534,15 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                           </div>
                         )}
 
-                        <h2 className="text-3xl font-light uppercase tracking-widest leading-snug text-gray-900">
-                          {block.title?.split(' ').map((w, idx) => (
-                            <span key={idx} className={w.toLowerCase() === 'technology' || w.toLowerCase() === 'precision' ? "font-bold text-[#005288]" : ""}>
-                              {w}{' '}
-                            </span>
-                          ))}
-                        </h2>
+                        {!block.hideTitle && block.title && (
+                          <h2 className="text-3xl font-light uppercase tracking-widest leading-snug text-gray-900">
+                            {block.title.split(' ').map((w, idx) => (
+                              <span key={idx} className={w.toLowerCase() === 'technology' || w.toLowerCase() === 'precision' ? "font-bold text-[#005288]" : ""}>
+                                {w}{' '}
+                              </span>
+                            ))}
+                          </h2>
+                        )}
 
                         {block.content && (
                           <p className="text-sm text-gray-500 font-light leading-relaxed">
@@ -576,12 +589,16 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               return (
                 <section key={`inspiration-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200">
                   <div className="mb-16">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-                      {block.subtitle || 'PROJECTS & REFERENCES'}
-                    </span>
-                    <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-                      {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
-                    </h2>
+                    {block.subtitle && (
+                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                        {block.subtitle}
+                      </span>
+                    )}
+                    {!block.hideTitle && block.title && (
+                      <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                        {block.title.split(' ')[0]} <span className="font-bold">{block.title.split(' ').slice(1).join(' ')}</span>
+                      </h2>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -634,12 +651,16 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               return (
                 <section key={`news-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
                   <div className="mb-16">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-                      {block.subtitle || 'PRESS & MEDIA'}
-                    </span>
-                    <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-                      {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
-                    </h2>
+                    {block.subtitle && (
+                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                        {block.subtitle}
+                      </span>
+                    )}
+                    {!block.hideTitle && block.title && (
+                      <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                        {block.title.split(' ')[0]} <span className="font-bold">{block.title.split(' ').slice(1).join(' ')}</span>
+                      </h2>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

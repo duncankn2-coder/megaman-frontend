@@ -70,6 +70,7 @@ interface Block {
   blockType: string;
   id?: string;
   title?: string;
+  hideTitle?: boolean;
   subtitle?: string;
   content?: string;
   image?: any;
@@ -1056,13 +1057,15 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         </div>
                       )}
 
-                      <h2 className="text-3xl font-light uppercase tracking-widest leading-snug text-gray-900">
-                        {block.title?.split(' ').map((w, idx) => (
-                          <span key={idx} className={w.toLowerCase() === 'technology' || w.toLowerCase() === 'precision' ? "font-bold text-[#005288]" : ""}>
-                            {w}{' '}
-                          </span>
-                        ))}
-                      </h2>
+                      {!block.hideTitle && block.title && (
+                        <h2 className="text-3xl font-light uppercase tracking-widest leading-snug text-gray-900">
+                          {block.title.split(' ').map((w, idx) => (
+                            <span key={idx} className={w.toLowerCase() === 'technology' || w.toLowerCase() === 'precision' ? "font-bold text-[#005288]" : ""}>
+                              {w}{' '}
+                            </span>
+                          ))}
+                        </h2>
+                      )}
 
                       {block.content && (
                         <p className="text-sm text-gray-500 font-light leading-relaxed">
@@ -1109,12 +1112,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
             return (
               <section key={`inspiration-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200">
                 <div className="mb-16">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-                    {block.subtitle || 'PROJECTS & REFERENCES'}
-                  </span>
-                  <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-                    {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
-                  </h2>
+                  {block.subtitle && (
+                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                      {block.subtitle}
+                    </span>
+                  )}
+                  {!block.hideTitle && block.title && (
+                    <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                      {block.title.split(' ')[0]} <span className="font-bold">{block.title.split(' ').slice(1).join(' ')}</span>
+                    </h2>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -1165,12 +1172,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <section key={`highlights-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200 bg-[#fafafa]/50">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
-                      {block.subtitle || 'PREMIUM SELECTIONS'}
-                    </span>
-                    <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
-                      {block.title?.split(' ')[0]} <span className="font-bold">{block.title?.split(' ').slice(1).join(' ')}</span>
-                    </h2>
+                    {block.subtitle && (
+                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-2 block">
+                        {block.subtitle}
+                      </span>
+                    )}
+                    {!block.hideTitle && block.title && (
+                      <h2 className="text-3xl font-light uppercase tracking-widest text-gray-900">
+                        {block.title.split(' ')[0]} <span className="font-bold">{block.title.split(' ').slice(1).join(' ')}</span>
+                      </h2>
+                    )}
                   </div>
                   {/* Navigation Buttons for Horizontal Scroll */}
                   <div className="flex items-center gap-3">

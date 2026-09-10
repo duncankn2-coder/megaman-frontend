@@ -24,6 +24,7 @@ interface ContentRow {
 interface Project {
   id: string;
   title: string;
+  hideTitle?: boolean;
   slug: string;
   description?: string;
   location: string;
@@ -206,9 +207,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <FontAwesomeIcon icon={faBuilding} className="opacity-80" />
                 <span>{getApplicationLabel(project.applicationType)} Application Study</span>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-light uppercase tracking-widest leading-none">
-                {project.title}
-              </h1>
+              {!project.hideTitle && project.title && (
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-light uppercase tracking-widest leading-none">
+                  {project.title}
+                </h1>
+              )}
             </div>
 
             <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-gray-300">

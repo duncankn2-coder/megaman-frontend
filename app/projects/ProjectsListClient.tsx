@@ -14,6 +14,7 @@ interface Media {
 interface Project {
   id: string;
   title: string;
+  hideTitle?: boolean;
   slug: string;
   description?: string;
   location: string;
