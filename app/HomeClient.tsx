@@ -247,12 +247,6 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                     )
                   )}
 
-                  <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0">
-                    <div className="absolute left-[33%] top-0 bottom-0 w-[1px] bg-black"></div>
-                    <div className="absolute left-[66%] top-0 bottom-0 w-[1px] bg-black"></div>
-                    <div className="absolute left-0 right-0 top-[50%] h-[1px] bg-black"></div>
-                  </div>
-
                   {/* Slide Background Image or Video */}
                   <div className="absolute inset-0 z-0">
                     {(() => {
@@ -280,13 +274,13 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                             alt={getImageAlt(media, currentSlideData.title || 'Slide')} 
                             fill
                             quality={100}
+                            unoptimized
                             className="object-cover transition-opacity duration-700 sharpen-media"
                             priority
                           />
                         );
                       }
                     })()}
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent z-10 pointer-events-none"></div>
                   </div>
 
                   <div className="container mx-auto max-w-7xl px-6 md:px-12 relative z-20 w-full pointer-events-none">
