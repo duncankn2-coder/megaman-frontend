@@ -981,9 +981,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
               {/* RZB Certifications Bar */}
               <div className="mt-12 pt-6 border-t border-gray-200 flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex flex-wrap gap-3 items-center text-[9px] uppercase tracking-wider font-mono text-gray-500">
-                  {family.symbols && family.symbols.length > 0 ? (
-                    family.symbols.map((symbol) => {
+                {family.symbols && family.symbols.length > 0 ? (
+                  <div className="flex flex-wrap gap-3 items-center text-[9px] uppercase tracking-wider font-mono text-gray-500">
+                    {family.symbols.map((symbol) => {
+                      if (!symbol || typeof symbol === 'string') return null;
                       if (symbol.icon) {
                         return (
                           <div key={symbol.id} className="relative h-6 w-12 bg-white flex items-center justify-center p-0.5 shadow-sm border border-gray-200" title={symbol.name}>
@@ -1009,16 +1010,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           {symbol.name}
                         </span>
                       );
-                    })
-                  ) : (
-                    <>
-                      <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">CE</span>
-                      <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">IP54</span>
-                      <span className="border border-gray-200 bg-gray-50 px-2 py-0.5">IK08</span>
-                      <span className="border border-[#005288]/20 text-[#005288] bg-[#005288]/5 px-2 py-0.5 font-bold">HCL Ready</span>
-                    </>
-                  )}
-                </div>
+                    })}
+                  </div>
+                ) : (
+                  <div />
+                )}
                 <a
                   href="#variants"
                   className="bg-[#005288] hover:bg-[#003c64] text-white text-xs font-bold uppercase tracking-wider px-6 py-3.5 transition-all duration-300 shadow-sm"
