@@ -4,6 +4,7 @@ import Image from 'next/image';
 import PrintController from './PrintController';
 import DismantleInstructionPages from '../eprel-light-source/DismantleInstructionPages';
 import { renderWithSup } from '../../../utils/text';
+import { formatSpecValue, roundToTwoDecimals } from '../../../utils/formatDecimals';
 
 interface Product {
   id: string;
@@ -252,7 +253,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
     return s !== '' && s !== '—' && s !== '-' && s.toLowerCase() !== 'undefined' && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'n/a';
   };
 
-  const getSpec = (specName: string, defaultValue = '—'): string => {
+  const getRawSpec = (specName: string, defaultValue = '—'): string => {
     // 1. Try to fetch from SKU direct attributes (entry fields) first if filled
     if (specName === 'model_identifier' && selectedSku?.name && isFilled(selectedSku.name)) return selectedSku.name;
     if (specName === 'customer_model_no_new' && selectedSku?.modelNumber && isFilled(selectedSku.modelNumber)) return selectedSku.modelNumber;
@@ -281,6 +282,11 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
     if ((specName === 'colourTemperature' || specName === 'cct_k' || specName === 'colourTemp') && product.colourTemperature && isFilled(product.colourTemperature)) return product.colourTemperature;
     if ((specName === 'colour' || specName === 'fitting_colour') && product.colour && isFilled(product.colour)) return product.colour;
     return defaultValue;
+  };
+
+  const getSpec = (specName: string, defaultValue = '—'): string => {
+    const raw = getRawSpec(specName, defaultValue);
+    return raw === defaultValue ? defaultValue : formatSpecValue(raw, specName);
   };
 
   // Header tracking variables
@@ -337,10 +343,11 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
       efficacyVal = '—';
     }
   } else if (efficacyVal) {
-    efficacyVal = `${efficacyVal} lm/W`;
+    efficacyVal = efficacyVal.toLowerCase().includes('lm/w') ? efficacyVal : `${efficacyVal} lm/W`;
   } else {
     efficacyVal = '—';
   }
+  efficacyVal = roundToTwoDecimals(efficacyVal);
 
   // Compute dynamic spec summary string for right header
   const specSummaryParts = [];

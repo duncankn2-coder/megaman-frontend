@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import PrintController from '../eprel-light-source/PrintController';
 import DismantleInstructionPages from '../eprel-light-source/DismantleInstructionPages';
+import { formatSpecValue } from '../../../utils/formatDecimals';
 
 interface Product {
   id: string;
@@ -130,7 +131,7 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
   };
 
   // Helper to extract values from specifications or SKU direct attributes
-  const getSpec = (key: string, fallback = 'N/A'): string => {
+  const getRawSpec = (key: string, fallback = 'N/A'): string => {
     // 1. Check SKU specifications
     if (selectedSku?.specifications && selectedSku.specifications[key] !== undefined && selectedSku.specifications[key] !== null) {
       const val = String(selectedSku.specifications[key]).trim();
@@ -142,6 +143,11 @@ export default async function ControlGearDocumentPage({ params, searchParams }: 
       if (!isInvalid(val)) return val;
     }
     return fallback;
+  };
+
+  const getSpec = (key: string, fallback = 'N/A'): string => {
+    const raw = getRawSpec(key, fallback);
+    return raw === fallback ? fallback : formatSpecValue(raw, key);
   };
 
   const getMultiSpec = (keys: string[], fallback = 'N/A'): string => {

@@ -12,6 +12,7 @@ import {
   resolveSubtitleColor, 
   resolveSubtitleSize 
 } from '../../utils/typography';
+import { formatSpecValue, roundToTwoDecimals } from '../../utils/formatDecimals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faDownload, 
@@ -279,8 +280,54 @@ const isFieldFilled = (val: any): boolean => {
   return str !== '' && str !== '—' && str !== '-' && str.toLowerCase() !== 'undefined' && str.toLowerCase() !== 'null' && str.toLowerCase() !== 'n/a';
 };
 
+const parseDescriptionSpecs = (desc: string): Record<string, string> => {
+  const specs: Record<string, string> = {};
+  if (!desc) return specs;
+  const parts = desc.split('/').map(p => p.trim());
+  for (const part of parts) {
+    if (part.includes(':')) {
+      const [key, val] = part.split(':').map(x => x.trim());
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === 'housing material') specs['housing_material'] = val;
+      else if (lowerKey === 'cover material') specs['diffuser_material'] = val;
+      else if (lowerKey === 'color' || lowerKey === 'colour') specs['fitting_colour'] = val;
+      else if (lowerKey === 'dimming type') {
+        specs['dimming_type'] = val;
+        specs['control_gear'] = val;
+        specs['connector'] = val;
+      }
+      else if (lowerKey === 'recessed cut out') specs['recessed_cut_out'] = val;
+      else if (lowerKey === 'shape') specs['shape'] = val;
+    } else {
+      const lowerPart = part.toLowerCase();
+      if (/^ac\d+~\d+/i.test(part) || /^ac\d+-\d+/i.test(part)) {
+        const v = part.replace(/^ac/i, '').replace('~', '-');
+        specs['rated_voltage_v'] = `${v} VAC`;
+        specs['voltage'] = `${v} VAC`;
+        specs['frequency_hz'] = '50/60 Hz';
+        specs['frequency'] = '50/60 Hz';
+      }
+      else if (/^ip\d+/i.test(part)) {
+        specs['ip'] = part;
+        specs['ipRating'] = part;
+      }
+      else if (/^cl\s+[i|v|x]+/i.test(part)) {
+        specs['protection_class'] = part;
+      }
+      else if (lowerPart.includes('hrs') || lowerPart.includes('lifetime') || lowerPart.includes('life')) {
+        specs['norminal_life_h'] = part;
+        specs['nominal_life_h'] = part;
+      }
+      else if (/^\d+°/.test(part)) {
+        specs['beam_angle'] = part;
+      }
+    }
+  }
+  return specs;
+};
+
 // Extraction utility for technical parameters inside product specifications JSON (RZB Style)
-const getProductSpec = (productObj: any, specNames: string[], defaultValue = '—'): string => {
+const getRawProductSpec = (productObj: any, specNames: string[], defaultValue = '—'): string => {
   if (!productObj) return defaultValue;
 
   const targetProduct = productObj.product && typeof productObj.product === 'object' ? productObj.product : productObj;
@@ -339,53 +386,12 @@ const getProductSpec = (productObj: any, specNames: string[], defaultValue = '�
   return defaultValue;
 };
 
-const parseDescriptionSpecs = (desc: string): Record<string, string> => {
-  const specs: Record<string, string> = {};
-  if (!desc) return specs;
-  const parts = desc.split('/').map(p => p.trim());
-  for (const part of parts) {
-    if (part.includes(':')) {
-      const [key, val] = part.split(':').map(x => x.trim());
-      const lowerKey = key.toLowerCase();
-      if (lowerKey === 'housing material') specs['housing_material'] = val;
-      else if (lowerKey === 'cover material') specs['diffuser_material'] = val;
-      else if (lowerKey === 'color' || lowerKey === 'colour') specs['fitting_colour'] = val;
-      else if (lowerKey === 'dimming type') {
-        specs['dimming_type'] = val;
-        specs['control_gear'] = val;
-        specs['connector'] = val;
-      }
-      else if (lowerKey === 'recessed cut out') specs['recessed_cut_out'] = val;
-      else if (lowerKey === 'shape') specs['shape'] = val;
-    } else {
-      const lowerPart = part.toLowerCase();
-      if (/^ac\d+~\d+/i.test(part) || /^ac\d+-\d+/i.test(part)) {
-        const v = part.replace(/^ac/i, '').replace('~', '-');
-        specs['rated_voltage_v'] = `${v} VAC`;
-        specs['voltage'] = `${v} VAC`;
-        specs['frequency_hz'] = '50/60 Hz';
-        specs['frequency'] = '50/60 Hz';
-      }
-      else if (/^ip\d+/i.test(part)) {
-        specs['ip'] = part;
-        specs['ipRating'] = part;
-      }
-      else if (/^cl\s+[i|v|x]+/i.test(part)) {
-        specs['protection_class'] = part;
-      }
-      else if (lowerPart.includes('hrs') || lowerPart.includes('lifetime') || lowerPart.includes('life')) {
-        specs['norminal_life_h'] = part;
-        specs['nominal_life_h'] = part;
-      }
-      else if (/^\d+°/.test(part)) {
-        specs['beam_angle'] = part;
-      }
-    }
-  }
-  return specs;
+const getProductSpec = (productObj: any, specNames: string[], defaultValue = '—'): string => {
+  const raw = getRawProductSpec(productObj, specNames, defaultValue);
+  return raw === defaultValue ? defaultValue : formatSpecValue(raw, specNames);
 };
 
-const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string => {
+const getRawSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string => {
   if (!sku) return defaultValue;
   
   const parent = sku.product && typeof sku.product === 'object' ? sku.product : null;
@@ -467,6 +473,11 @@ const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string =>
   }
 
   return defaultValue;
+};
+
+const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string => {
+  const raw = getRawSkuSpec(sku, specNames, defaultValue);
+  return raw === defaultValue ? defaultValue : formatSpecValue(raw, specNames);
 };
 
 const parseCcts = (cctStr: any): string[] => {
@@ -1543,6 +1554,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           if (efficacy !== '—' && !efficacy.toLowerCase().includes('lm/w') && !isNaN(parseFloat(efficacy))) {
                             efficacy = `${efficacy} lm/W`;
                           }
+                          efficacy = roundToTwoDecimals(efficacy);
 
                           const isFirst = i === 0;
 
