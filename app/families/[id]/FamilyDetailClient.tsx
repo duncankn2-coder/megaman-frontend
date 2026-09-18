@@ -55,6 +55,7 @@ interface Product {
   techDocControlGear?: MediaFile | null;
   techDocContainingProduct?: MediaFile | null;
   techDocLightSource?: MediaFile | null;
+  symbols?: SymbolItem[] | null;
 }
 
 interface MediaItem {
@@ -556,7 +557,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     'cri',
     'efficacy',
     'ip',
-    'connector'
+    'connector',
+    'symbols',
   ];
 
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
@@ -708,6 +710,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       modelNumber: p.name,
       specifications: p.specifications,
       description: p.description,
+      symbols: p.symbols,
     }));
 
     const combinedSkus = [...skus, ...fallbackSkus];
@@ -832,6 +835,21 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       return matchesPower && matchesColorTemp && matchesFinish && matchesIp && matchesBase && matchesVoltage && matchesGear && matchesSearch;
     });
   }, [family.products, skus, powerFilter, colorTempFilter, finishFilter, ipFilter, baseFilter, voltageFilter, gearFilter, searchQuery]);
+
+  const hasAnyProductSymbols = useMemo(() => {
+    return (family.products || []).some(p => {
+      if (typeof p === 'object' && p !== null && Array.isArray((p as any).symbols) && (p as any).symbols.length > 0) {
+        return true;
+      }
+      return false;
+    }) || skus.some(s => {
+      const parent = typeof s.product === 'object' ? s.product : null;
+      const syms = parent?.symbols || s.symbols;
+      return Array.isArray(syms) && syms.length > 0;
+    });
+  }, [family.products, skus]);
+
+  const showSymbolsColumn = activeParams.includes('symbols') || hasAnyProductSymbols;
 
   return (
     <div className="bg-[#fcfcfc] text-gray-800 min-h-screen pb-24 relative font-sans selection:bg-[#005288] selection:text-white">
@@ -1493,6 +1511,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Control Gear</th>}
                     {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Lamp Base</th>}
                     {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Voltage</th>}
+                    {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Symbols</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200/70 text-gray-700">
@@ -1500,6 +1519,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const parent = typeof sku.product === 'object' ? sku.product : null;
                     const mmCode = sku.name;
                     const modelNo = parent?.name || sku.modelNumber || '—';
+                    const productSymbols = (parent?.symbols || sku.symbols || []) as SymbolItem[];
                     
                     const isEvenModel = modelIndex % 2 === 0;
                     const modelBgClass = isEvenModel ? 'bg-white' : 'bg-[#f4f8fc]';
@@ -1622,6 +1642,48 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               {activeParams.includes('voltage') && isFirst && (
                                 <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—')}
+                                </td>
+                              )}
+                              {showSymbolsColumn && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center align-middle ${modelBgClass}`}>
+                                  {productSymbols && productSymbols.length > 0 ? (
+                                    <div className="flex flex-wrap items-center justify-center gap-1.5 min-w-[70px]">
+                                      {productSymbols.map((symbol) => {
+                                        if (!symbol || typeof symbol === 'string') return null;
+                                        if (symbol.icon) {
+                                          return (
+                                            <div 
+                                              key={symbol.id} 
+                                              className="relative h-5 w-8 bg-white flex items-center justify-center p-0.5 shadow-xs border border-gray-200" 
+                                              title={symbol.name}
+                                            >
+                                              <Image
+                                                src={getImageUrl(symbol.icon)}
+                                                alt={symbol.name}
+                                                fill
+                                                className="object-contain"
+                                                unoptimized
+                                              />
+                                            </div>
+                                          );
+                                        }
+                                        return (
+                                          <span 
+                                            key={symbol.id} 
+                                            className={`border px-1.5 py-0.5 text-[9px] font-mono leading-tight whitespace-nowrap ${
+                                              symbol.isHighlighted 
+                                                ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold' 
+                                                : 'border-gray-200 bg-gray-50 text-gray-600'
+                                            }`}
+                                          >
+                                            {symbol.name}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400">—</span>
+                                  )}
                                 </td>
                               )}
                             </tr>
@@ -1827,6 +1889,53 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     <span>Dimmable via architectural DALI systems</span>
                                   </div>
                                 </div>
+
+                                {/* Product Symbols & Certifications */}
+                                {(() => {
+                                  const drawerSymbols = (parent?.symbols || activeDrawerProduct.symbols || []) as SymbolItem[];
+                                  if (!drawerSymbols || drawerSymbols.length === 0) return null;
+                                  return (
+                                    <div className="pt-4 border-t border-gray-200 space-y-2">
+                                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] font-sans">
+                                        Certifications & Symbols
+                                      </h4>
+                                      <div className="flex flex-wrap gap-2 items-center">
+                                        {drawerSymbols.map((symbol) => {
+                                          if (!symbol || typeof symbol === 'string') return null;
+                                          if (symbol.icon) {
+                                            return (
+                                              <div 
+                                                key={symbol.id} 
+                                                className="relative h-7 w-12 bg-white flex items-center justify-center p-1 shadow-xs border border-gray-200" 
+                                                title={symbol.name}
+                                              >
+                                                <Image
+                                                  src={getImageUrl(symbol.icon)}
+                                                  alt={symbol.name}
+                                                  fill
+                                                  className="object-contain"
+                                                  unoptimized
+                                                />
+                                              </div>
+                                            );
+                                          }
+                                          return (
+                                            <span 
+                                              key={symbol.id} 
+                                              className={`border px-2.5 py-1 text-xs font-mono uppercase tracking-wider ${
+                                                symbol.isHighlighted 
+                                                  ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold' 
+                                                  : 'border-gray-200 bg-gray-50 text-gray-700'
+                                              }`}
+                                            >
+                                              {symbol.name}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
                           );
@@ -1895,6 +2004,37 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             </table>
                           </div>
                         </div>
+
+                        {/* Symbols & Certifications */}
+                        {(() => {
+                          const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                          const drawerSymbols = (parent?.symbols || activeDrawerProduct.symbols || []) as SymbolItem[];
+                          if (!drawerSymbols || drawerSymbols.length === 0) return null;
+                          return (
+                            <div className="space-y-2">
+                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                                Symbols & Certifications
+                              </h4>
+                              <div className="border border-gray-250 p-3 bg-white flex flex-wrap items-center gap-2 shadow-sm">
+                                {drawerSymbols.map(symbol => {
+                                  if (!symbol || typeof symbol === 'string') return null;
+                                  if (symbol.icon) {
+                                    return (
+                                      <div key={symbol.id} className="relative h-6 w-11 bg-white flex items-center justify-center p-0.5 shadow-xs border border-gray-200" title={symbol.name}>
+                                        <Image src={getImageUrl(symbol.icon)} alt={symbol.name} fill className="object-contain" unoptimized />
+                                      </div>
+                                    );
+                                  }
+                                  return (
+                                    <span key={symbol.id} className={`border px-2 py-0.5 text-[10px] font-mono ${symbol.isHighlighted ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold' : 'border-gray-200 bg-gray-50 text-gray-700'}`}>
+                                      {symbol.name}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* Table 3: Performance Data */}
                         <div className="space-y-2">

@@ -13,6 +13,7 @@ interface Product {
   power?: string;
   colourTemperature?: string;
   specifications?: Record<string, unknown> | null;
+  symbols?: SymbolItem[] | null;
 }
 
 interface MediaItem {
