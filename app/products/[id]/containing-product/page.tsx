@@ -354,11 +354,13 @@ export default async function ContainingProductDocumentPage({ params, searchPara
       </A4Page>
 
       {/* PAGE 2+: DISMANTLE INSTRUCTION (MERGED FULL-PAGE PDF RENDER FROM FAMILY) */}
-      <DismantleInstructionPages 
-        diPdfUrl={diPdfUrl} 
-        familyName={familyName} 
-        startPageNumber={2} 
-      />
+      {diPdfUrl && (
+        <DismantleInstructionPages 
+          diPdfUrl={diPdfUrl} 
+          familyName={familyName} 
+          startPageNumber={2} 
+        />
+      )}
     </div>
   );
 }
