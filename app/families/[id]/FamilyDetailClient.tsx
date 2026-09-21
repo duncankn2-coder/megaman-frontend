@@ -1011,12 +1011,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               {/* RZB Certifications Bar */}
               <div className="mt-12 pt-6 border-t border-gray-200 flex flex-wrap gap-4 items-center justify-between">
                 {family.symbols && family.symbols.length > 0 ? (
-                  <div className="flex flex-wrap gap-3 items-center text-[9px] uppercase tracking-wider font-mono text-gray-500">
+                  <div className="flex flex-wrap gap-4 items-center">
                     {family.symbols.map((symbol) => {
                       if (!symbol || typeof symbol === 'string') return null;
                       if (symbol.icon) {
                         return (
-                          <div key={symbol.id} className="relative h-6 w-12 bg-white flex items-center justify-center p-0.5 shadow-sm border border-gray-200" title={symbol.name}>
+                          <div 
+                            key={symbol.id} 
+                            className="relative h-12 w-12 md:h-14 md:w-14 flex items-center justify-center transition-transform hover:scale-105" 
+                            title={symbol.name}
+                          >
                             <Image
                               src={getImageUrl(symbol.icon)}
                               alt={symbol.name}
@@ -1030,10 +1034,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       return (
                         <span 
                           key={symbol.id} 
-                          className={`border px-2 py-0.5 ${
+                          className={`px-3 py-1 text-xs md:text-sm font-mono uppercase tracking-wider ${
                             symbol.isHighlighted 
-                              ? 'border-[#005288]/20 text-[#005288] bg-[#005288]/5 font-bold' 
-                              : 'border-gray-200 bg-gray-50'
+                              ? 'text-[#005288] bg-[#005288]/10 font-bold' 
+                              : 'bg-gray-100 text-gray-700 font-medium'
                           }`}
                         >
                           {symbol.name}
@@ -1899,14 +1903,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] font-sans">
                                         Certifications & Symbols
                                       </h4>
-                                      <div className="flex flex-wrap gap-2 items-center">
+                                      <div className="flex flex-wrap gap-3 items-center">
                                         {drawerSymbols.map((symbol) => {
                                           if (!symbol || typeof symbol === 'string') return null;
                                           if (symbol.icon) {
                                             return (
                                               <div 
                                                 key={symbol.id} 
-                                                className="relative h-7 w-12 bg-white flex items-center justify-center p-1 shadow-xs border border-gray-200" 
+                                                className="relative h-10 w-10 md:h-11 md:w-11 flex items-center justify-center transition-transform hover:scale-105" 
                                                 title={symbol.name}
                                               >
                                                 <Image
@@ -1922,10 +1926,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                           return (
                                             <span 
                                               key={symbol.id} 
-                                              className={`border px-2.5 py-1 text-xs font-mono uppercase tracking-wider ${
+                                              className={`px-3 py-1 text-xs font-mono uppercase tracking-wider ${
                                                 symbol.isHighlighted 
-                                                  ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold' 
-                                                  : 'border-gray-200 bg-gray-50 text-gray-700'
+                                                  ? 'text-[#005288] bg-[#005288]/10 font-bold' 
+                                                  : 'bg-gray-100 text-gray-700 font-medium'
                                               }`}
                                             >
                                               {symbol.name}
@@ -2015,18 +2019,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
                                 Symbols & Certifications
                               </h4>
-                              <div className="border border-gray-250 p-3 bg-white flex flex-wrap items-center gap-2 shadow-sm">
+                              <div className="py-2 flex flex-wrap items-center gap-3">
                                 {drawerSymbols.map(symbol => {
                                   if (!symbol || typeof symbol === 'string') return null;
                                   if (symbol.icon) {
                                     return (
-                                      <div key={symbol.id} className="relative h-6 w-11 bg-white flex items-center justify-center p-0.5 shadow-xs border border-gray-200" title={symbol.name}>
+                                      <div key={symbol.id} className="relative h-9 w-9 md:h-10 md:w-10 flex items-center justify-center transition-transform hover:scale-105" title={symbol.name}>
                                         <Image src={getImageUrl(symbol.icon)} alt={symbol.name} fill className="object-contain" unoptimized />
                                       </div>
                                     );
                                   }
                                   return (
-                                    <span key={symbol.id} className={`border px-2 py-0.5 text-[10px] font-mono ${symbol.isHighlighted ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold' : 'border-gray-200 bg-gray-50 text-gray-700'}`}>
+                                    <span key={symbol.id} className={`px-2.5 py-1 text-xs font-mono uppercase tracking-wider ${symbol.isHighlighted ? 'text-[#005288] bg-[#005288]/10 font-bold' : 'bg-gray-100 text-gray-700 font-medium'}`}>
                                       {symbol.name}
                                     </span>
                                   );
