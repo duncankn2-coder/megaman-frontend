@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ScrollVideoBlock from './ScrollVideoBlock';
@@ -70,7 +70,7 @@ interface MediaItem {
 interface SymbolItem {
   id: string;
   name: string;
-  icon?: { url: string; alt?: string; filename?: string } | null;
+  icon?: { url?: string; alt?: string; filename?: string; [key: string]: any } | string | null;
   isHighlighted?: boolean;
 }
 
@@ -573,6 +573,114 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [gearFilter, setGearFilter] = useState('All');
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
   const [skus, setSkus] = useState<any[]>([]);
+  const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
+
+  const [allSymbolsMap, setAllSymbolsMap] = useState<Record<string, SymbolItem>>(() => {
+    const initialMap: Record<string, SymbolItem> = {};
+    (family.symbols || []).forEach((s: any) => {
+      if (s && typeof s === 'object' && s.id) {
+        initialMap[String(s.id)] = s;
+      }
+    });
+    (family.products || []).forEach((p: any) => {
+      if (p && typeof p === 'object' && Array.isArray(p.symbols)) {
+        p.symbols.forEach((s: any) => {
+          if (s && typeof s === 'object' && s.id) {
+            initialMap[String(s.id)] = s;
+          }
+        });
+      }
+    });
+    return initialMap;
+  });
+
+  useEffect(() => {
+    async function fetchAllSymbols() {
+      try {
+        const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+        const res = await fetch(`${payloadUrl}/api/symbols?limit=100&depth=2`);
+        if (res.ok) {
+          const data = await res.json();
+          setAllSymbolsMap(prev => {
+            const nextMap = { ...prev };
+            (data.docs || []).forEach((s: any) => {
+              if (s && s.id) {
+                nextMap[String(s.id)] = s;
+              }
+            });
+            return nextMap;
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching symbols in FamilyDetailClient:', err);
+      }
+    }
+    fetchAllSymbols();
+  }, []);
+
+  const resolveSymbol = useCallback((sym: any): SymbolItem | null => {
+    if (!sym) return null;
+    const symId = typeof sym === 'string' ? sym : (sym.id || sym._id);
+    const fromMap = symId ? allSymbolsMap[String(symId)] : null;
+
+    if (typeof sym === 'string') {
+      return fromMap || { id: sym, name: sym };
+    }
+
+    const iconObj = (sym.icon && typeof sym.icon === 'object' && (sym.icon.url || sym.icon.filename))
+      ? sym.icon
+      : fromMap?.icon || sym.icon;
+
+    return {
+      id: String(sym.id || symId || Math.random()),
+      name: sym.name || fromMap?.name || '',
+      isHighlighted: sym.isHighlighted ?? fromMap?.isHighlighted ?? false,
+      icon: iconObj,
+    };
+  }, [allSymbolsMap]);
+
+  // Map family products by model number and ID to call back symbols according to product model number
+  const productModelSymbolsMap = useMemo(() => {
+    const map = new Map<string, SymbolItem[]>();
+    (family.products || []).forEach(p => {
+      if (p && typeof p === 'object') {
+        const syms = (p.symbols || []) as SymbolItem[];
+        if (p.name) {
+          map.set(p.name.trim().toLowerCase(), syms);
+        }
+        if (p.id) {
+          map.set(String(p.id), syms);
+        }
+      }
+    });
+    return map;
+  }, [family.products]);
+
+  // Helper to reliably call back symbols according to the model no. of the product
+  const getSymbolsForProduct = useCallback((prodOrSku: any): SymbolItem[] => {
+    if (!prodOrSku) return [];
+    const model = (typeof prodOrSku.product === 'object' ? prodOrSku.product?.name : '') || 
+                  prodOrSku.modelNumber || 
+                  prodOrSku.name || 
+                  '';
+    const prodId = typeof prodOrSku.product === 'object' ? prodOrSku.product?.id : (prodOrSku.product || prodOrSku.id);
+    
+    let matchedSymbols: any[] | undefined;
+    if (model && model !== '—') {
+      matchedSymbols = productModelSymbolsMap.get(model.trim().toLowerCase());
+    }
+    if ((!matchedSymbols || matchedSymbols.length === 0) && prodId) {
+      matchedSymbols = productModelSymbolsMap.get(String(prodId));
+    }
+    if (!matchedSymbols || matchedSymbols.length === 0) {
+      const parent = typeof prodOrSku.product === 'object' ? prodOrSku.product : null;
+      matchedSymbols = parent?.symbols || prodOrSku.symbols || [];
+    }
+    
+    return (matchedSymbols || [])
+      .map(resolveSymbol)
+      .filter((s): s is SymbolItem => Boolean(s && s.name));
+  }, [productModelSymbolsMap, resolveSymbol]);
 
   useEffect(() => {
     async function fetchSkus() {
@@ -584,7 +692,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         const productIds = validProducts.map(p => p.id);
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
         const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${id}`).join('&');
-        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=2`);
+        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=3`);
         if (response.ok) {
           const data = await response.json();
           setSkus(data.docs || []);
@@ -843,11 +951,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       }
       return false;
     }) || skus.some(s => {
-      const parent = typeof s.product === 'object' ? s.product : null;
-      const syms = parent?.symbols || s.symbols;
-      return Array.isArray(syms) && syms.length > 0;
+      const syms = getSymbolsForProduct(s);
+      return syms.length > 0;
     });
-  }, [family.products, skus]);
+  }, [family.products, skus, getSymbolsForProduct]);
 
   const showSymbolsColumn = activeParams.includes('symbols') || hasAnyProductSymbols;
 
@@ -1011,9 +1118,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <div className="mt-12 pt-6 border-t border-gray-200 flex flex-wrap gap-4 items-center justify-between">
                 {family.symbols && family.symbols.length > 0 ? (
                   <div className="flex flex-wrap gap-4 items-center">
-                    {family.symbols.map((symbol) => {
-                      if (!symbol || typeof symbol === 'string') return null;
-                      if (symbol.icon) {
+                    {family.symbols.map((rawSym) => {
+                      const symbol = resolveSymbol(rawSym);
+                      if (!symbol || !symbol.name) return null;
+                      const iconUrl = symbol.icon ? getImageUrl(symbol.icon) : '';
+                      const hasValidIcon = !failedImageIds[symbol.id] && iconUrl && iconUrl !== '/placeholder.png';
+                      if (hasValidIcon) {
                         return (
                           <div
                             key={symbol.id}
@@ -1021,11 +1131,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             title={symbol.name}
                           >
                             <Image
-                              src={getImageUrl(symbol.icon)}
+                              src={iconUrl}
                               alt={symbol.name}
                               fill
                               className="object-contain"
                               unoptimized
+                              onError={() => setFailedImageIds(prev => ({ ...prev, [symbol.id]: true }))}
                             />
                           </div>
                         );
@@ -1037,6 +1148,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             ? 'text-[#005288] bg-[#005288]/10 font-bold'
                             : 'bg-gray-100 text-gray-700 font-medium'
                             }`}
+                          title={symbol.name}
                         >
                           {symbol.name}
                         </span>
@@ -1518,10 +1630,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 </thead>
                 <tbody className="divide-y divide-gray-200/70 text-gray-700">
                   {filteredSkus.map((sku, modelIndex) => {
-                    const parent = typeof sku.product === 'object' ? sku.product : null;
+                    const parent = typeof sku.product === 'object' && sku.product !== null ? sku.product : null;
                     const mmCode = sku.name;
                     const modelNo = parent?.name || sku.modelNumber || '—';
-                    const productSymbols = (parent?.symbols || sku.symbols || []) as SymbolItem[];
+                    // Call back symbols according to the model no. of the product
+                    const productSymbols = getSymbolsForProduct(sku);
 
                     const isEvenModel = modelIndex % 2 === 0;
                     const modelBgClass = isEvenModel ? 'bg-white' : 'bg-[#f4f8fc]';
@@ -1651,20 +1764,22 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   {productSymbols && productSymbols.length > 0 ? (
                                     <div className="flex flex-wrap items-center justify-center gap-1.5 min-w-[70px]">
                                       {productSymbols.map((symbol) => {
-                                        if (!symbol || typeof symbol === 'string') return null;
-                                        if (symbol.icon) {
+                                        const iconUrl = symbol.icon ? getImageUrl(symbol.icon) : '';
+                                        const hasValidIcon = !failedImageIds[symbol.id] && iconUrl && iconUrl !== '/placeholder.png';
+                                        if (hasValidIcon) {
                                           return (
                                             <div
                                               key={symbol.id}
-                                              className="relative h-5 w-8 bg-white flex items-center justify-center p-0.5 shadow-xs border border-gray-200"
+                                              className="relative h-6 w-10 bg-white flex items-center justify-center p-0.5 shadow-xs border border-gray-200 rounded hover:border-[#005288]/40 transition-colors"
                                               title={symbol.name}
                                             >
                                               <Image
-                                                src={getImageUrl(symbol.icon)}
+                                                src={iconUrl}
                                                 alt={symbol.name}
                                                 fill
                                                 className="object-contain"
                                                 unoptimized
+                                                onError={() => setFailedImageIds(prev => ({ ...prev, [symbol.id]: true }))}
                                               />
                                             </div>
                                           );
@@ -1672,10 +1787,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                         return (
                                           <span
                                             key={symbol.id}
-                                            className={`border px-1.5 py-0.5 text-[9px] font-mono leading-tight whitespace-nowrap ${symbol.isHighlighted
+                                            className={`border px-1.5 py-0.5 text-[9px] font-mono leading-tight whitespace-nowrap rounded ${symbol.isHighlighted
                                               ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold'
                                               : 'border-gray-200 bg-gray-50 text-gray-600'
                                               }`}
+                                            title={symbol.name}
                                           >
                                             {symbol.name}
                                           </span>
@@ -1890,7 +2006,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                                 {/* Product Symbols & Certifications */}
                                 {(() => {
-                                  const drawerSymbols = (parent?.symbols || activeDrawerProduct.symbols || []) as SymbolItem[];
+                                  const drawerSymbols = getSymbolsForProduct(activeDrawerProduct);
                                   if (!drawerSymbols || drawerSymbols.length === 0) return null;
                                   return (
                                     <div className="pt-4 border-t border-gray-200 space-y-2">
@@ -1899,8 +2015,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       </h4>
                                       <div className="flex flex-wrap gap-3 items-center">
                                         {drawerSymbols.map((symbol) => {
-                                          if (!symbol || typeof symbol === 'string') return null;
-                                          if (symbol.icon) {
+                                          const iconUrl = symbol.icon ? getImageUrl(symbol.icon) : '';
+                                          const hasValidIcon = !failedImageIds[symbol.id] && iconUrl && iconUrl !== '/placeholder.png';
+                                          if (hasValidIcon) {
                                             return (
                                               <div
                                                 key={symbol.id}
@@ -1908,11 +2025,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                                 title={symbol.name}
                                               >
                                                 <Image
-                                                  src={getImageUrl(symbol.icon)}
+                                                  src={iconUrl}
                                                   alt={symbol.name}
                                                   fill
                                                   className="object-contain"
                                                   unoptimized
+                                                  onError={() => setFailedImageIds(prev => ({ ...prev, [symbol.id]: true }))}
                                                 />
                                               </div>
                                             );
@@ -1924,6 +2042,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                                 ? 'text-[#005288] bg-[#005288]/10 font-bold'
                                                 : 'bg-gray-100 text-gray-700 font-medium'
                                                 }`}
+                                              title={symbol.name}
                                             >
                                               {symbol.name}
                                             </span>
@@ -2004,8 +2123,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                         {/* Symbols & Certifications */}
                         {(() => {
-                          const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                          const drawerSymbols = (parent?.symbols || activeDrawerProduct.symbols || []) as SymbolItem[];
+                          const drawerSymbols = getSymbolsForProduct(activeDrawerProduct);
                           if (!drawerSymbols || drawerSymbols.length === 0) return null;
                           return (
                             <div className="space-y-2">
@@ -2014,16 +2132,17 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               </h4>
                               <div className="py-2 flex flex-wrap items-center gap-3">
                                 {drawerSymbols.map(symbol => {
-                                  if (!symbol || typeof symbol === 'string') return null;
-                                  if (symbol.icon) {
+                                  const iconUrl = symbol.icon ? getImageUrl(symbol.icon) : '';
+                                  const hasValidIcon = !failedImageIds[symbol.id] && iconUrl && iconUrl !== '/placeholder.png';
+                                  if (hasValidIcon) {
                                     return (
                                       <div key={symbol.id} className="relative h-9 w-9 md:h-10 md:w-10 flex items-center justify-center transition-transform hover:scale-105" title={symbol.name}>
-                                        <Image src={getImageUrl(symbol.icon)} alt={symbol.name} fill className="object-contain" unoptimized />
+                                        <Image src={iconUrl} alt={symbol.name} fill className="object-contain" unoptimized onError={() => setFailedImageIds(prev => ({ ...prev, [symbol.id]: true }))} />
                                       </div>
                                     );
                                   }
                                   return (
-                                    <span key={symbol.id} className={`px-2.5 py-1 text-xs font-mono uppercase tracking-wider ${symbol.isHighlighted ? 'text-[#005288] bg-[#005288]/10 font-bold' : 'bg-gray-100 text-gray-700 font-medium'}`}>
+                                    <span key={symbol.id} className={`px-2.5 py-1 text-xs font-mono uppercase tracking-wider ${symbol.isHighlighted ? 'text-[#005288] bg-[#005288]/10 font-bold' : 'bg-gray-100 text-gray-700 font-medium'}`} title={symbol.name}>
                                       {symbol.name}
                                     </span>
                                   );
