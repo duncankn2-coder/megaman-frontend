@@ -6,20 +6,20 @@ import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ScrollVideoBlock from './ScrollVideoBlock';
-import { 
-  resolveTitleColor, 
-  resolveTitleSize, 
-  resolveSubtitleColor, 
-  resolveSubtitleSize 
+import {
+  resolveTitleColor,
+  resolveTitleSize,
+  resolveSubtitleColor,
+  resolveSubtitleSize
 } from '../../utils/typography';
 import { formatSpecValue, roundToTwoDecimals } from '../../utils/formatDecimals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faDownload, 
-  faFilePdf, 
-  faLightbulb, 
-  faCheck, 
-  faTimes, 
+import {
+  faDownload,
+  faFilePdf,
+  faLightbulb,
+  faCheck,
+  faTimes,
   faInfoCircle,
   faSlidersH,
   faSearch,
@@ -214,10 +214,10 @@ const getMediaUrl = (media: any): string => {
 // Helper to clean up and deduplicate raw IP values (e.g. "IP65/IP65" -> "IP65")
 const formatIpRating = (ipStr: string): string => {
   if (!ipStr || ipStr === '—' || ipStr === 'undefined' || ipStr === 'null') return '—';
-  
+
   const clean = String(ipStr).trim();
   const parts = clean.split(/[\/,;]/).map(p => p.trim()).filter(Boolean);
-  
+
   const normalizedParts = parts.map(p => {
     if (/^ip\d+/i.test(p)) {
       return p.toUpperCase();
@@ -229,7 +229,7 @@ const formatIpRating = (ipStr: string): string => {
   if (unique.length === 1) {
     return unique[0];
   }
-  
+
   return unique.join('/');
 };
 
@@ -394,7 +394,7 @@ const getProductSpec = (productObj: any, specNames: string[], defaultValue = '�
 
 const getRawSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string => {
   if (!sku) return defaultValue;
-  
+
   const parent = sku.product && typeof sku.product === 'object' ? sku.product : null;
   const expandedNames = expandSpecNames(specNames);
 
@@ -483,10 +483,10 @@ const getSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string =>
 
 const parseCcts = (cctStr: any): string[] => {
   if (!cctStr || cctStr === '—') return [];
-  
+
   const clean = String(cctStr).trim();
   if (!clean || clean === '—' || clean === 'undefined' || clean === 'null') return [];
-  
+
   // Check if it matches a sequence of 4-digit numbers like "300040006500"
   if (/^\d{8,16}$/.test(clean) && clean.length % 4 === 0) {
     const parts: string[] = [];
@@ -495,7 +495,7 @@ const parseCcts = (cctStr: any): string[] => {
     }
     return parts;
   }
-  
+
   const splitParts = clean.split(/[\/,;+]/).map(p => p.trim()).filter(Boolean);
   return splitParts.map(p => {
     let part = p;
@@ -519,7 +519,7 @@ const parseFluxMap = (fluxStr: any): Record<string, string> => {
     while ((match = regex.exec(clean)) !== null) {
       const fluxVal = match[1].trim();
       const cctCondition = match[2].trim();
-      
+
       const ccts = parseCcts(cctCondition);
       for (const cct of ccts) {
         result[cct] = fluxVal;
@@ -531,18 +531,18 @@ const parseFluxMap = (fluxStr: any): Record<string, string> => {
 
 const getFluxForCct = (fluxStr: any, targetCct: string, cctIndex: number, totalCcts: number): string => {
   if (!fluxStr || fluxStr === '—') return '—';
-  
+
   const clean = String(fluxStr).trim();
   const fluxMap = parseFluxMap(clean);
   if (fluxMap[targetCct]) {
     return fluxMap[targetCct];
   }
-  
+
   const fluxParts = clean.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
   if (fluxParts.length === totalCcts && cctIndex < fluxParts.length) {
     return fluxParts[cctIndex];
   }
-  
+
   return clean;
 };
 
@@ -645,7 +645,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         fullUrl = `${cleanBaseUrl}${cleanPath}`;
       }
       const filename = fileObj.filename || fileObj.url.split('/').pop() || 'download';
-      
+
       // Fetch the file as a blob to force direct download without opening in a new tab
       fetch(fullUrl)
         .then(response => {
@@ -689,7 +689,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     const bases = new Set<string>();
     const voltages = new Set<string>();
     const gears = new Set<string>();
-    
+
     const productIdsWithSkus = new Set(
       skus.map(s => {
         const prodId = typeof s.product === 'object' ? s.product?.id : s.product;
@@ -802,7 +802,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       const baseVal = getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type']);
       const voltVal = getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v']);
       const gearVal = getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear', 'type_terminal block']);
-      
+
       const matchesPower = powerFilter === 'All' || pwr === powerFilter || (() => {
         const powerParts = pwr.split(/[\/+]/).map((p: string) => p.trim()).filter(Boolean);
         return powerParts.some((part: string) => {
@@ -825,9 +825,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       const matchesBase = baseFilter === 'All' || baseVal === baseFilter;
       const matchesVoltage = voltageFilter === 'All' || voltVal === voltageFilter;
       const matchesGear = gearFilter === 'All' || gearVal === gearFilter;
-      
+
       const parentName = typeof sku.product === 'object' ? sku.product?.name : '';
-      const matchesSearch = searchQuery === '' || 
+      const matchesSearch = searchQuery === '' ||
         (sku.name && sku.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (sku.modelNumber && sku.modelNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (parentName && parentName.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -853,7 +853,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
   return (
     <div className="bg-[#fcfcfc] text-gray-800 min-h-screen pb-24 relative font-sans selection:bg-[#005288] selection:text-white">
-      
+
       {/* Self-contained high-performance slide keyframe animation for the drawer */}
       <style>{`
         @keyframes drawerSlideIn {
@@ -880,7 +880,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
       {/* RZB Triona-style Hero Product Showcase (RZB Dual-Column Split Grid) */}
       <section className="border-b border-gray-200 py-16 bg-white relative">
-        
+
         {/* Fine drafting-blueprint crosshairs & grids */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]">
           <div className="absolute left-[33%] top-0 bottom-0 w-[1px] bg-black"></div>
@@ -889,7 +889,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
         <div className="container mx-auto px-6 md:px-12 max-w-7xl relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-            
+
             {/* Left Column: Interactive Product Gallery (Sidelite Optical Vibe) */}
             <div className="lg:col-span-7 flex flex-col space-y-6">
               <div className="relative aspect-video w-full bg-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
@@ -905,9 +905,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     />
                   ) : (
                     <video controls className="w-full h-full object-contain">
-                      <source 
-                        src={getMediaUrl(activeMedia)} 
-                        type="video/mp4" 
+                      <source
+                        src={getMediaUrl(activeMedia)}
+                        type="video/mp4"
                       />
                       Your browser does not support the video tag.
                     </video>
@@ -939,11 +939,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       key={media.id}
                       onClick={() => setActiveMediaIndex(idx)}
                       title={media.description || media.alt || ''}
-                      className={`relative aspect-video w-full bg-white border focus:outline-none transition-all cursor-pointer shadow-sm ${
-                        activeMediaIndex === idx
-                          ? 'border-[#005288] ring-1 ring-[#005288]/30 bg-[#005288]/5'
-                          : 'border-gray-250 hover:border-gray-400'
-                      }`}
+                      className={`relative aspect-video w-full bg-white border focus:outline-none transition-all cursor-pointer shadow-sm ${activeMediaIndex === idx
+                        ? 'border-[#005288] ring-1 ring-[#005288]/30 bg-[#005288]/5'
+                        : 'border-gray-250 hover:border-gray-400'
+                        }`}
                     >
                       {media.type === 'image' ? (
                         <Image
@@ -967,11 +966,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
             {/* Right Column: RZB Toledo Series Key Information & Certifications */}
             <div className="lg:col-span-5 flex flex-col justify-between h-full">
               <div>
-                
+
                 <h1 className="text-4xl lg:text-5xl font-light uppercase tracking-widest text-gray-900 leading-none mb-6">
                   {family.name}
                 </h1>
-                
+
                 {family.description ? (
                   <p className="text-gray-500 font-light text-sm md:text-base leading-relaxed mb-8">
                     {family.description}
@@ -990,13 +989,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   {((family.features && family.features.length > 0)
                     ? family.features.map(f => f.feature)
                     : [
-                        "Excellent light uniformity through high-performance PMMA diffuser",
-                        "Circadian biology support with optional Tunable White (HCL) controls",
-                        "Ultra-thin recessed height, ideal for tight ceiling cutouts",
-                        "Pre-wired plug & play connection for rapid installation",
-                        "Spring clip system for immediate, tool-free mounting",
-                        "Ingress protection class IP54/IP65 options available"
-                      ]
+                      "Excellent light uniformity through high-performance PMMA diffuser",
+                      "Circadian biology support with optional Tunable White (HCL) controls",
+                      "Ultra-thin recessed height, ideal for tight ceiling cutouts",
+                      "Pre-wired plug & play connection for rapid installation",
+                      "Spring clip system for immediate, tool-free mounting",
+                      "Ingress protection class IP54/IP65 options available"
+                    ]
                   ).map((feat, idx) => (
                     <div key={idx} className="flex items-start gap-3">
                       <div className="w-4 h-4 rounded-full bg-[#005288]/10 flex items-center justify-center mt-0.5 flex-shrink-0">
@@ -1016,9 +1015,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       if (!symbol || typeof symbol === 'string') return null;
                       if (symbol.icon) {
                         return (
-                          <div 
-                            key={symbol.id} 
-                            className="relative h-12 w-12 md:h-14 md:w-14 flex items-center justify-center transition-transform hover:scale-105" 
+                          <div
+                            key={symbol.id}
+                            className="relative h-12 w-12 md:h-14 md:w-14 flex items-center justify-center transition-transform hover:scale-105"
                             title={symbol.name}
                           >
                             <Image
@@ -1032,13 +1031,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         );
                       }
                       return (
-                        <span 
-                          key={symbol.id} 
-                          className={`px-3 py-1 text-xs md:text-sm font-mono uppercase tracking-wider ${
-                            symbol.isHighlighted 
-                              ? 'text-[#005288] bg-[#005288]/10 font-bold' 
-                              : 'bg-gray-100 text-gray-700 font-medium'
-                          }`}
+                        <span
+                          key={symbol.id}
+                          className={`px-3 py-1 text-xs md:text-sm font-mono uppercase tracking-wider ${symbol.isHighlighted
+                            ? 'text-[#005288] bg-[#005288]/10 font-bold'
+                            : 'bg-gray-100 text-gray-700 font-medium'
+                            }`}
                         >
                           {symbol.name}
                         </span>
@@ -1056,7 +1054,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 </a>
               </div>
             </div>
-            
+
           </div>
         </div>
       </section>
@@ -1083,11 +1081,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <section key={`editorial-${blockIdx}`} className="py-24 border-b border-gray-200 bg-white">
                 <div className="max-w-7xl mx-auto px-6 md:px-12">
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                    
+
                     {/* Left Column (Image if split-left, otherwise text) */}
                     {isSplitLeft && block.image && (
                       <div className="lg:col-span-6 relative h-[450px] w-full border border-gray-200 bg-gray-50 shadow-sm overflow-hidden">
-                        <Image 
+                        <Image
                           src={imageUrl}
                           alt={block.title || "Editorial"}
                           fill
@@ -1100,11 +1098,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     <div className={block.image ? "lg:col-span-6 space-y-6" : "lg:col-span-12 space-y-6 max-w-3xl mx-auto text-center"}>
                       {block.subtitle && (
                         <div className={`flex items-center gap-3 ${!block.image ? "justify-center" : ""}`}>
-                          <span 
+                          <span
                             className={`h-[2px] w-10 ${edSubColor.barClass || ''}`}
                             style={edSubColor.barStyle}
                           />
-                          <p 
+                          <p
                             className={`${edSubSize} uppercase tracking-[0.25em] font-bold ${edSubColor.className}`}
                             style={edSubColor.style}
                           >
@@ -1114,7 +1112,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       )}
 
                       {!block.hideTitle && block.title && (
-                        <h2 
+                        <h2
                           className={`${edTitleSize} font-light uppercase tracking-widest leading-snug ${edTitleColor.className}`}
                           style={edTitleColor.style}
                         >
@@ -1137,7 +1135,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                       {block.linkUrl && block.linkText && (
                         <div className="pt-4">
-                          <Link 
+                          <Link
                             href={block.linkUrl}
                             className="bg-[#005288] hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
                           >
@@ -1151,7 +1149,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {/* Right Column (Image if split-right) */}
                     {isSplitRight && block.image && (
                       <div className="lg:col-span-6 relative h-[450px] w-full border border-gray-200 bg-gray-50 shadow-sm overflow-hidden">
-                        <Image 
+                        <Image
                           src={imageUrl}
                           alt={block.title || "Editorial"}
                           fill
@@ -1180,7 +1178,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <section key={`inspiration-${blockIdx}`} className="py-24 px-6 md:px-12 max-w-7xl mx-auto border-b border-gray-200">
                 <div className="mb-16">
                   {block.subtitle && (
-                    <span 
+                    <span
                       className={`${insSubSize} font-bold uppercase tracking-[0.25em] mb-2 block ${insSubColor.className}`}
                       style={insSubColor.style}
                     >
@@ -1188,7 +1186,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     </span>
                   )}
                   {!block.hideTitle && block.title && (
-                    <h2 
+                    <h2
                       className={`${insTitleSize} font-light uppercase tracking-widest ${insTitleColor.className}`}
                       style={insTitleColor.style}
                     >
@@ -1200,14 +1198,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   {projects.map((proj, idx) => {
                     const imageUrl = getImageUrl(proj.listImage || proj.bannerImage || proj.images);
-                    
+
                     return (
                       <div key={proj.id || idx} className="flex flex-col gap-6 group">
                         <Link href={`/projects/${proj.slug}`} className="block">
                           <div className="relative h-[420px] w-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50 cursor-pointer flex items-center justify-center">
-                            <Image 
-                              src={imageUrl} 
-                              alt={proj.title} 
+                            <Image
+                              src={imageUrl}
+                              alt={proj.title}
                               fill
                               quality={95}
                               className="object-contain w-full h-full transition-transform duration-700 group-hover:scale-102 sharpen-media"
@@ -1240,7 +1238,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
           case 'highlightProducts': {
             const products = block.products || [];
             if (products.length === 0) return null;
-            
+
             const hpTitleColor = resolveTitleColor(block.titleColor, block.titleCustomColor, 'text-gray-900');
             const hpTitleSize = resolveTitleSize(block.titleSize, 'text-3xl');
             const hpSubColor = resolveSubtitleColor(block.subtitleColor, block.subtitleCustomColor, 'text-[#005288]');
@@ -1251,7 +1249,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                   <div>
                     {block.subtitle && (
-                      <span 
+                      <span
                         className={`${hpSubSize} font-bold uppercase tracking-[0.25em] mb-2 block ${hpSubColor.className}`}
                         style={hpSubColor.style}
                       >
@@ -1259,7 +1257,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       </span>
                     )}
                     {!block.hideTitle && block.title && (
-                      <h2 
+                      <h2
                         className={`${hpTitleSize} font-light uppercase tracking-widest ${hpTitleColor.className}`}
                         style={hpTitleColor.style}
                       >
@@ -1269,14 +1267,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   </div>
                   {/* Navigation Buttons for Horizontal Scroll */}
                   <div className="flex items-center gap-3">
-                    <button 
+                    <button
                       onClick={() => scrollHighlight('left')}
                       className="w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white text-gray-500 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm"
                       aria-label="Scroll left"
                     >
                       <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
                     </button>
-                    <button 
+                    <button
                       onClick={() => scrollHighlight('right')}
                       className="w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white text-gray-500 hover:text-[#005288] flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm"
                       aria-label="Scroll right"
@@ -1286,7 +1284,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   </div>
                 </div>
 
-                <div 
+                <div
                   ref={highlightScrollRef}
                   className="flex overflow-x-auto gap-8 pb-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent snap-x snap-mandatory scroll-smooth no-scrollbar"
                 >
@@ -1296,13 +1294,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const familyId = p.families?.id || p.families;
 
                     return (
-                      <div 
+                      <div
                         key={p.id || idx}
                         className="bg-white border border-gray-200 rounded-none overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between flex-shrink-0 w-[290px] md:w-[340px] snap-start"
                       >
                         <div className="relative aspect-square w-full bg-gray-50 flex items-center justify-center border-b border-gray-100 overflow-hidden">
                           {imageItem ? (
-                            <Image 
+                            <Image
                               src={imageUrl}
                               alt={p.name}
                               fill
@@ -1346,7 +1344,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             )}
 
                             {familyId && (
-                              <Link 
+                              <Link
                                 href={`/families/${familyId}`}
                                 className="mt-6 w-full bg-gray-50 border border-gray-200 text-gray-700 hover:text-white hover:bg-[#005288] hover:border-[#005288] py-2.5 text-[9px] uppercase font-bold tracking-widest flex items-center justify-center gap-2 transition-all"
                               >
@@ -1371,7 +1369,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       {/* SECTION: Technical Configurator (RZB Toledo Configurator Spreadsheet) */}
       <section id="variants" className="container mx-auto px-6 md:px-12 max-w-7xl mt-16">
         <div className="bg-white border border-gray-200 p-6 md:p-8 relative shadow-sm">
-          
+
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-200">
             <div>
               <h2 className="text-xl uppercase tracking-widest text-gray-900 font-light">TECHNICAL CONFIGURATIONS</h2>
@@ -1524,7 +1522,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const mmCode = sku.name;
                     const modelNo = parent?.name || sku.modelNumber || '—';
                     const productSymbols = (parent?.symbols || sku.symbols || []) as SymbolItem[];
-                    
+
                     const isEvenModel = modelIndex % 2 === 0;
                     const modelBgClass = isEvenModel ? 'bg-white' : 'bg-[#f4f8fc]';
                     const modelHoverClass = isEvenModel ? 'hover:bg-blue-50/50' : 'hover:bg-blue-100/40';
@@ -1536,7 +1534,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const cri = getSkuSpec(sku, ['cri', 'CRI', 'Colour rendering index', 'ra'], '—');
                     const ip = formatIpRating(getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip'], '—'));
                     const control = getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear', 'connector', 'type_terminal block', 'cap_type'], '—');
-                    
+
                     const allCcts = parseCcts(cct);
                     const cctsToRender = allCcts.filter(part => {
                       if (colorTempFilter === 'All') return true;
@@ -1557,7 +1555,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                           const fluxParts = subFlux.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
                           const powerParts = power.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
-                          
+
                           let efficacy = getSkuSpec(sku, ['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy'], '—');
                           if (efficacy === '—' && fluxParts.length > 0 && powerParts.length > 0) {
                             const efficacies = fluxParts.map((f, idx) => {
@@ -1566,7 +1564,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               const numP = parseFloat(p);
                               return (!isNaN(numF) && !isNaN(numP) && numP > 0) ? Math.round(numF / numP) : null;
                             }).filter(val => val !== null) as number[];
-                            
+
                             if (efficacies.length > 1) {
                               const minEff = Math.min(...efficacies);
                               const maxEff = Math.max(...efficacies);
@@ -1583,8 +1581,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const isFirst = i === 0;
 
                           return (
-                            <tr 
-                              key={`${sku.id}-sub-${subCct}`} 
+                            <tr
+                              key={`${sku.id}-sub-${subCct}`}
                               onClick={() => handleOpenProduct(sku)}
                               className={`text-xs md:text-sm ${modelBgClass} ${modelHoverClass} hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-200/70`}
                             >
@@ -1656,9 +1654,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                         if (!symbol || typeof symbol === 'string') return null;
                                         if (symbol.icon) {
                                           return (
-                                            <div 
-                                              key={symbol.id} 
-                                              className="relative h-5 w-8 bg-white flex items-center justify-center p-0.5 shadow-xs border border-gray-200" 
+                                            <div
+                                              key={symbol.id}
+                                              className="relative h-5 w-8 bg-white flex items-center justify-center p-0.5 shadow-xs border border-gray-200"
                                               title={symbol.name}
                                             >
                                               <Image
@@ -1672,13 +1670,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                           );
                                         }
                                         return (
-                                          <span 
-                                            key={symbol.id} 
-                                            className={`border px-1.5 py-0.5 text-[9px] font-mono leading-tight whitespace-nowrap ${
-                                              symbol.isHighlighted 
-                                                ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold' 
-                                                : 'border-gray-200 bg-gray-50 text-gray-600'
-                                            }`}
+                                          <span
+                                            key={symbol.id}
+                                            className={`border px-1.5 py-0.5 text-[9px] font-mono leading-tight whitespace-nowrap ${symbol.isHighlighted
+                                              ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold'
+                                              : 'border-gray-200 bg-gray-50 text-gray-600'
+                                              }`}
                                           >
                                             {symbol.name}
                                           </span>
@@ -1706,21 +1703,21 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       {/* RZB-Style Technical Drawer Overlay Container (Fully Accessible and Clickable Fix) */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          
+
           {/* Dark Backdrop Overlay */}
-          <div 
+          <div
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out cursor-pointer"
             onClick={() => setSelectedProduct(null)}
           />
-          
+
           {/* Right sliding detail panel drawer (Light Re-Themed) */}
           <div className="relative h-full w-full max-w-2xl bg-white border-l border-gray-200 shadow-2xl flex flex-col justify-between animate-drawer-slide z-10 text-gray-800">
-            
+
             {activeDrawerProduct && (
               <>
                 {/* Drawer Content Scroll Wrapper */}
                 <div className="flex-grow flex flex-col h-[calc(100vh-80px)] overflow-y-auto">
-                  
+
                   {/* Header */}
                   <div className="px-8 py-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-transparent">
                     <div>
@@ -1728,7 +1725,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         MM CODE: {activeDrawerProduct.name}
                       </h3>
                     </div>
-                    
+
                     <button
                       onClick={() => setSelectedProduct(null)}
                       className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none"
@@ -1739,35 +1736,32 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                   {/* Technical Drawer Tabs Bar (RZB Style Light Re-Themed) */}
                   <div className="flex border-b border-gray-200 bg-gray-50 px-8 text-xs font-bold uppercase tracking-widest font-sans">
-                    <button 
+                    <button
                       onClick={() => setActiveModalTab('overview')}
-                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-                        activeModalTab === 'overview' 
-                          ? 'border-[#005288] text-[#005288]' 
-                          : 'border-transparent text-gray-400 hover:text-gray-600'
-                      }`}
+                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeModalTab === 'overview'
+                        ? 'border-[#005288] text-[#005288]'
+                        : 'border-transparent text-gray-400 hover:text-gray-600'
+                        }`}
                     >
                       <FontAwesomeIcon icon={faInfoCircle} />
                       Overview
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveModalTab('technical')}
-                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-                        activeModalTab === 'technical' 
-                          ? 'border-[#005288] text-[#005288]' 
-                          : 'border-transparent text-gray-400 hover:text-gray-600'
-                      }`}
+                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeModalTab === 'technical'
+                        ? 'border-[#005288] text-[#005288]'
+                        : 'border-transparent text-gray-400 hover:text-gray-600'
+                        }`}
                     >
                       <FontAwesomeIcon icon={faCogs} />
                       Technical Data
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveModalTab('photometrics')}
-                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-                        activeModalTab === 'photometrics' 
-                          ? 'border-[#005288] text-[#005288]' 
-                          : 'border-transparent text-gray-400 hover:text-gray-600'
-                      }`}
+                      className={`py-4 px-6 border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeModalTab === 'photometrics'
+                        ? 'border-[#005288] text-[#005288]'
+                        : 'border-transparent text-gray-400 hover:text-gray-600'
+                        }`}
                     >
                       <FontAwesomeIcon icon={faDownload} />
                       Download
@@ -1776,7 +1770,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                   {/* Tab Contents Area */}
                   <div className="p-8 flex-grow">
-                    
+
                     {/* TAB 1: OVERVIEW */}
                     {activeModalTab === 'overview' && (
                       <div className="space-y-6 animate-fade-in">
@@ -1784,7 +1778,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                           // Use the parent model No.'s image — SKUs (MM codes) don't carry their own images
                           const activeImage = parent?.images || activeDrawerProduct.images;
-                          
+
                           return (
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                               <div className="md:col-span-5 flex flex-col space-y-4">
@@ -1801,74 +1795,74 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-4xl" />
                                   )}
                                 </div>
-                                 {/* Line Drawing / Dimensional Outline Box */}
-                                 {(() => {
-                                   const lineDrawingFile = activeDrawerProduct.lineDrawing || parent?.lineDrawing;
-                                   const heightVal = getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '');
-                                   const diamVal = getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter', 'width_mm'], '');
+                                {/* Line Drawing / Dimensional Outline Box */}
+                                {(() => {
+                                  const lineDrawingFile = activeDrawerProduct.lineDrawing || parent?.lineDrawing;
+                                  const heightVal = getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '');
+                                  const diamVal = getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter', 'width_mm'], '');
 
-                                   return (
-                                     <div className="bg-gray-50 border border-gray-200 p-3 flex flex-col items-center justify-center shadow-sm relative group overflow-hidden">
-                                       <div className="w-full flex items-center justify-between border-b border-gray-200/80 pb-1.5 mb-2">
-                                         <span className="text-[9px] font-bold uppercase tracking-widest text-[#005288] font-sans">
-                                           Dimensional Line Drawing
-                                         </span>
-                                         <span className="text-[8px] font-mono text-gray-400 uppercase">
-                                           CAD Outline
-                                         </span>
-                                       </div>
+                                  return (
+                                    <div className="bg-gray-50 border border-gray-200 p-3 flex flex-col items-center justify-center shadow-sm relative group overflow-hidden">
+                                      <div className="w-full flex items-center justify-between border-b border-gray-200/80 pb-1.5 mb-2">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-[#005288] font-sans">
+                                          Dimensional Line Drawing
+                                        </span>
+                                        <span className="text-[8px] font-mono text-gray-400 uppercase">
+                                          CAD Outline
+                                        </span>
+                                      </div>
 
-                                       <div className="relative aspect-[4/3] w-full bg-white border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
-                                         {lineDrawingFile ? (
-                                           <img 
-                                             src={getImageUrl(lineDrawingFile)} 
-                                             alt="Line Drawing" 
-                                             className="max-h-full max-w-full object-contain"
-                                           />
-                                         ) : (
-                                           <svg viewBox="0 0 160 140" className="w-full h-full text-gray-600">
-                                             {/* Outer Luminaire Contour */}
-                                             <path d="M 80 18 C 50 18 35 38 35 62 C 35 86 50 102 58 114 L 58 126 L 102 126 L 102 114 C 110 102 125 86 125 62 C 125 38 110 18 80 18 Z" fill="none" stroke="#005288" strokeWidth="1.5" />
-                                             <path d="M 58 126 L 102 126 M 58 129 L 102 129 M 60 132 L 100 132" fill="none" stroke="#005288" strokeWidth="1.2" />
+                                      <div className="relative aspect-[4/3] w-full bg-white border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                        {lineDrawingFile ? (
+                                          <img
+                                            src={getImageUrl(lineDrawingFile)}
+                                            alt="Line Drawing"
+                                            className="max-h-full max-w-full object-contain"
+                                          />
+                                        ) : (
+                                          <svg viewBox="0 0 160 140" className="w-full h-full text-gray-600">
+                                            {/* Outer Luminaire Contour */}
+                                            <path d="M 80 18 C 50 18 35 38 35 62 C 35 86 50 102 58 114 L 58 126 L 102 126 L 102 114 C 110 102 125 86 125 62 C 125 38 110 18 80 18 Z" fill="none" stroke="#005288" strokeWidth="1.5" />
+                                            <path d="M 58 126 L 102 126 M 58 129 L 102 129 M 60 132 L 100 132" fill="none" stroke="#005288" strokeWidth="1.2" />
 
-                                             {/* Internal Lens / Reflector outline */}
-                                             <ellipse cx="80" cy="50" rx="32" ry="12" fill="none" stroke="#9ca3af" strokeWidth="0.8" strokeDasharray="2,2" />
-                                             <line x1="80" y1="18" x2="80" y2="126" stroke="#e5e7eb" strokeWidth="0.6" strokeDasharray="3,3" />
+                                            {/* Internal Lens / Reflector outline */}
+                                            <ellipse cx="80" cy="50" rx="32" ry="12" fill="none" stroke="#9ca3af" strokeWidth="0.8" strokeDasharray="2,2" />
+                                            <line x1="80" y1="18" x2="80" y2="126" stroke="#e5e7eb" strokeWidth="0.6" strokeDasharray="3,3" />
 
-                                             {/* Height Dimension line on left */}
-                                             <line x1="18" y1="18" x2="18" y2="132" stroke="#009fe3" strokeWidth="1" />
-                                             <line x1="13" y1="18" x2="23" y2="18" stroke="#009fe3" strokeWidth="1" />
-                                             <line x1="13" y1="132" x2="23" y2="132" stroke="#009fe3" strokeWidth="1" />
-                                             <text x="10" y="78" fill="#009fe3" fontSize="7" fontWeight="bold" textAnchor="middle" transform="rotate(-90 10 78)">
-                                               {heightVal ? `${heightVal}mm` : 'H'}
-                                             </text>
+                                            {/* Height Dimension line on left */}
+                                            <line x1="18" y1="18" x2="18" y2="132" stroke="#009fe3" strokeWidth="1" />
+                                            <line x1="13" y1="18" x2="23" y2="18" stroke="#009fe3" strokeWidth="1" />
+                                            <line x1="13" y1="132" x2="23" y2="132" stroke="#009fe3" strokeWidth="1" />
+                                            <text x="10" y="78" fill="#009fe3" fontSize="7" fontWeight="bold" textAnchor="middle" transform="rotate(-90 10 78)">
+                                              {heightVal ? `${heightVal}mm` : 'H'}
+                                            </text>
 
-                                             {/* Diameter Dimension line at bottom */}
-                                             <line x1="35" y1="137" x2="125" y2="137" stroke="#009fe3" strokeWidth="1" />
-                                             <line x1="35" y1="133" x2="35" y2="139" stroke="#009fe3" strokeWidth="1" />
-                                             <line x1="125" y1="133" x2="125" y2="139" stroke="#009fe3" strokeWidth="1" />
-                                             <text x="80" y="139" fill="#009fe3" fontSize="6.5" fontWeight="bold" textAnchor="middle">
-                                               {diamVal ? `Ø ${diamVal}mm` : 'D'}
-                                             </text>
-                                           </svg>
-                                         )}
-                                       </div>
+                                            {/* Diameter Dimension line at bottom */}
+                                            <line x1="35" y1="137" x2="125" y2="137" stroke="#009fe3" strokeWidth="1" />
+                                            <line x1="35" y1="133" x2="35" y2="139" stroke="#009fe3" strokeWidth="1" />
+                                            <line x1="125" y1="133" x2="125" y2="139" stroke="#009fe3" strokeWidth="1" />
+                                            <text x="80" y="139" fill="#009fe3" fontSize="6.5" fontWeight="bold" textAnchor="middle">
+                                              {diamVal ? `Ø ${diamVal}mm` : 'D'}
+                                            </text>
+                                          </svg>
+                                        )}
+                                      </div>
 
-                                       <div className="w-full flex items-center justify-between mt-2 text-[8px] font-mono text-gray-400">
-                                         <span>{lineDrawingFile ? (lineDrawingFile.filename || 'Uploaded File') : 'Technical CAD Outline'}</span>
-                                         {lineDrawingFile && (
-                                           <button 
-                                             onClick={() => handleDownloadFile(lineDrawingFile, 'Line Drawing')}
-                                             className="inline-flex items-center gap-1 font-bold text-[#005288] hover:underline cursor-pointer"
-                                           >
-                                             <FontAwesomeIcon icon={faDownload} className="text-[8px]" />
-                                             <span>Download</span>
-                                           </button>
-                                         )}
-                                       </div>
-                                     </div>
-                                   );
-                                 })()}
+                                      <div className="w-full flex items-center justify-between mt-2 text-[8px] font-mono text-gray-400">
+                                        <span>{lineDrawingFile ? (lineDrawingFile.filename || 'Uploaded File') : 'Technical CAD Outline'}</span>
+                                        {lineDrawingFile && (
+                                          <button
+                                            onClick={() => handleDownloadFile(lineDrawingFile, 'Line Drawing')}
+                                            className="inline-flex items-center gap-1 font-bold text-[#005288] hover:underline cursor-pointer"
+                                          >
+                                            <FontAwesomeIcon icon={faDownload} className="text-[8px]" />
+                                            <span>Download</span>
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                               </div>
 
                               <div className="md:col-span-7 space-y-4">
@@ -1908,9 +1902,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                           if (!symbol || typeof symbol === 'string') return null;
                                           if (symbol.icon) {
                                             return (
-                                              <div 
-                                                key={symbol.id} 
-                                                className="relative h-10 w-10 md:h-11 md:w-11 flex items-center justify-center transition-transform hover:scale-105" 
+                                              <div
+                                                key={symbol.id}
+                                                className="relative h-10 w-10 md:h-11 md:w-11 flex items-center justify-center transition-transform hover:scale-105"
                                                 title={symbol.name}
                                               >
                                                 <Image
@@ -1924,13 +1918,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                             );
                                           }
                                           return (
-                                            <span 
-                                              key={symbol.id} 
-                                              className={`px-3 py-1 text-xs font-mono uppercase tracking-wider ${
-                                                symbol.isHighlighted 
-                                                  ? 'text-[#005288] bg-[#005288]/10 font-bold' 
-                                                  : 'bg-gray-100 text-gray-700 font-medium'
-                                              }`}
+                                            <span
+                                              key={symbol.id}
+                                              className={`px-3 py-1 text-xs font-mono uppercase tracking-wider ${symbol.isHighlighted
+                                                ? 'text-[#005288] bg-[#005288]/10 font-bold'
+                                                : 'bg-gray-100 text-gray-700 font-medium'
+                                                }`}
                                             >
                                               {symbol.name}
                                             </span>
@@ -1951,7 +1944,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {/* TAB 2: TECHNICAL DATA (Detailed parameters) */}
                     {activeModalTab === 'technical' && (
                       <div className="space-y-6 animate-fade-in font-mono text-[11px] text-gray-700">
-                        
+
                         {/* Table 1: Electrical Data */}
                         <div className="space-y-2">
                           <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
@@ -2052,7 +2045,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   const totalFlux = getSkuSpec(activeDrawerProduct, ['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm'], '—');
                                   const rawEfficacy = getSkuSpec(activeDrawerProduct, ['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy'], '');
                                   const rawPower = getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w'], '');
-                                  
+
                                   let efficacyVal = rawEfficacy;
                                   if (!efficacyVal) {
                                     const numFlux = parseInt(totalFlux);
@@ -2110,7 +2103,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {/* TAB 3: PHOTOMETRICS (Vector light curves & CADs) */}
                     {activeModalTab === 'photometrics' && (
                       <div className="space-y-8 animate-fade-in">
-                        
+
                         {/* Section 1: Photometric & Technical Diagrams Grid */}
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
@@ -2130,7 +2123,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               </div>
 
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                
+
                                 {/* 1. Light Spectrum Graph */}
                                 <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
                                   <div>
@@ -2146,9 +2139,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                                     <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
                                       {spectrumFile ? (
-                                        <img 
-                                          src={getImageUrl(spectrumFile)} 
-                                          alt="Light Spectrum Graph" 
+                                        <img
+                                          src={getImageUrl(spectrumFile)}
+                                          alt="Light Spectrum Graph"
                                           className="max-h-full max-w-full object-contain"
                                         />
                                       ) : (
@@ -2179,14 +2172,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                           <rect x="25" y="96" width="160" height="4" fill="url(#spectrumRainbow)" rx="1" />
 
                                           {/* Spectral Emission Curve */}
-                                          <path 
-                                            d="M 25 95 Q 40 93 48 30 T 65 75 T 100 40 T 145 65 T 185 95 Z" 
-                                            fill="url(#spectrumFill)" 
+                                          <path
+                                            d="M 25 95 Q 40 93 48 30 T 65 75 T 100 40 T 145 65 T 185 95 Z"
+                                            fill="url(#spectrumFill)"
                                           />
-                                          <path 
-                                            d="M 25 95 Q 40 93 48 30 T 65 75 T 100 40 T 145 65 T 185 95" 
-                                            fill="none" 
-                                            stroke="#005288" 
+                                          <path
+                                            d="M 25 95 Q 40 93 48 30 T 65 75 T 100 40 T 145 65 T 185 95"
+                                            fill="none"
+                                            stroke="#005288"
                                             strokeWidth="1.8"
                                             strokeLinecap="round"
                                           />
@@ -2211,7 +2204,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       {spectrumFile ? (spectrumFile.filename || 'Uploaded File') : 'Standard Spectral Power'}
                                     </span>
                                     {spectrumFile ? (
-                                      <button 
+                                      <button
                                         onClick={() => handleDownloadFile(spectrumFile, 'Light Spectrum Graph')}
                                         className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
                                       >
@@ -2239,9 +2232,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                                     <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
                                       {polarFile ? (
-                                        <img 
-                                          src={getImageUrl(polarFile)} 
-                                          alt="Photometric Polar Diagram" 
+                                        <img
+                                          src={getImageUrl(polarFile)}
+                                          alt="Photometric Polar Diagram"
                                           className="max-h-full max-w-full object-contain"
                                         />
                                       ) : (
@@ -2259,18 +2252,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                           <line x1="110" y1="25" x2="30" y2="105" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
 
                                           {/* C0-C180 Luminous Intensity Curve */}
-                                          <path 
-                                            d="M 70 65 Q 52 85 45 98 T 32 105 T 52 92 Q 70 65 88 92 T 108 105 T 95 98 Z" 
-                                            fill="rgba(0, 82, 136, 0.08)" 
-                                            stroke="#005288" 
+                                          <path
+                                            d="M 70 65 Q 52 85 45 98 T 32 105 T 52 92 Q 70 65 88 92 T 108 105 T 95 98 Z"
+                                            fill="rgba(0, 82, 136, 0.08)"
+                                            stroke="#005288"
                                             strokeWidth="1.6"
                                           />
 
                                           {/* C90-C270 Luminous Intensity Curve (Dashed) */}
-                                          <path 
-                                            d="M 70 65 Q 56 82 50 94 T 38 100 T 56 88 Q 70 65 84 88 T 102 100 T 90 94 Z" 
-                                            fill="none" 
-                                            stroke="#009fe3" 
+                                          <path
+                                            d="M 70 65 Q 56 82 50 94 T 38 100 T 56 88 Q 70 65 84 88 T 102 100 T 90 94 Z"
+                                            fill="none"
+                                            stroke="#009fe3"
                                             strokeWidth="1.2"
                                             strokeDasharray="3,2"
                                           />
@@ -2294,7 +2287,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       {polarFile ? (polarFile.filename || 'Uploaded File') : 'Direct/Indirect Polar Curve'}
                                     </span>
                                     {polarFile ? (
-                                      <button 
+                                      <button
                                         onClick={() => handleDownloadFile(polarFile, 'Photometric Polar Diagram')}
                                         className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
                                       >
@@ -2322,9 +2315,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                                     <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
                                       {beamFile ? (
-                                        <img 
-                                          src={getImageUrl(beamFile)} 
-                                          alt="Beam Angle Diagram" 
+                                        <img
+                                          src={getImageUrl(beamFile)}
+                                          alt="Beam Angle Diagram"
                                           className="max-h-full max-w-full object-contain"
                                         />
                                       ) : (
@@ -2373,7 +2366,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       {beamFile ? (beamFile.filename || 'Uploaded File') : 'Illuminance Cone Angle'}
                                     </span>
                                     {beamFile ? (
-                                      <button 
+                                      <button
                                         onClick={() => handleDownloadFile(beamFile, 'Beam Angle Diagram')}
                                         className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
                                       >
@@ -2393,28 +2386,28 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                         {/* Section 2: CAD & Architectural Databases + Technical Documents */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-6">
-                          
+
                           {/* CAD & Architectural Databases */}
                           <div className="space-y-4">
                             <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
                               CAD & Architectural Databases
                             </h4>
-                            
+
                             {(() => {
                               const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                               const ldtFile = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
                               const iesFile = activeDrawerProduct.photometryIes || parent?.photometryIes;
-                              
+
                               return (
                                 <div className="grid grid-cols-1 gap-2 text-xs">
-                                  <button 
+                                  <button
                                     onClick={() => handleDownloadFile(ldtFile, 'Dialux LDT File is available on request. Please contact Megaman support.')}
                                     className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
                                   >
                                     <span>DIALUX PHOTOMETRIC [LDT]</span>
                                     <FontAwesomeIcon icon={faDownload} />
                                   </button>
-                                  <button 
+                                  <button
                                     onClick={() => handleDownloadFile(iesFile, 'IES lighting calculations are available on request. Please contact Megaman support.')}
                                     className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
                                   >
@@ -2432,9 +2425,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                               const famObj = family || (parent && typeof parent.families === 'object' ? parent.families : null);
                               const familyDi = famObj?.dismantleInstructionPdf || null;
-                              
+
                               const specs = (activeDrawerProduct.specifications || parent?.specifications || {}) as Record<string, any>;
-                              
+
                               const isValidDriverModel = (val: any) => {
                                 if (val === null || val === undefined) return false;
                                 const str = String(val).trim().toLowerCase();
@@ -2448,7 +2441,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               const showContainingProductDoc = hasContainingProductSpecs || Boolean(activeDrawerProduct.techDocContainingProduct || parent?.techDocContainingProduct) || Boolean(familyDi);
                               const techDocLightSourceFile = activeDrawerProduct.techDocLightSource || parent?.techDocLightSource;
                               const showLightSourceDoc = Boolean(techDocLightSourceFile) || Boolean(familyDi) || isValidDriverModel(specs.model_identifier) || Boolean(parent);
-                              
+
                               const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
                                 ? activeDrawerProduct.id
                                 : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
@@ -2457,7 +2450,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                 : `?sku=${activeDrawerProduct.name}`;
 
                               if (!showControlGearDoc && !showContainingProductDoc && !showLightSourceDoc) return null;
-                              
+
                               return (
                                 <div>
                                   <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans mb-4">
@@ -2465,7 +2458,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   </h4>
                                   <div className="grid grid-cols-1 gap-2 text-xs">
                                     {showLightSourceDoc && (
-                                      <Link 
+                                      <Link
                                         href={`/products/${parentId}/eprel-light-source${skuQuery}`}
                                         target="_blank"
                                         className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
@@ -2475,7 +2468,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       </Link>
                                     )}
                                     {showControlGearDoc && (
-                                      <Link 
+                                      <Link
                                         href={`/products/${parentId}/control-gear${skuQuery}`}
                                         target="_blank"
                                         className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
@@ -2485,7 +2478,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       </Link>
                                     )}
                                     {showContainingProductDoc && (
-                                      <Link 
+                                      <Link
                                         href={`/products/${parentId}/containing-product${skuQuery}`}
                                         target="_blank"
                                         className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
@@ -2525,7 +2518,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       return (
                         <>
                           {pdfFile ? (
-                            <button 
+                            <button
                               onClick={() => handleDownloadFile(pdfFile, '')}
                               className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm"
                             >
@@ -2533,7 +2526,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               DOWNLOAD DATASHEET
                             </button>
                           ) : (
-                            <Link 
+                            <Link
                               href={pdfLink}
                               target="_blank"
                               className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm inline-flex items-center justify-center"

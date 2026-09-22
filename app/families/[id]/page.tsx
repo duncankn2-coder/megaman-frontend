@@ -41,12 +41,13 @@ interface Family {
   features?: { id?: string; feature: string }[];
   symbols?: SymbolItem[];
   layout?: any[];
+  selectedParameters?: string[];
 }
 
 async function getFamily(id: string): Promise<Family | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/families/${id}?depth=2`, {
+    const response = await fetch(`${payloadUrl}/api/families/${id}?depth=3`, {
       next: { revalidate: 60 },
     });
     if (!response.ok) {
