@@ -995,7 +995,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         </div>
 
         <div className="container mx-auto px-6 md:px-12 max-w-7xl relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
 
             {/* Left Column: Interactive Product Gallery (Sidelite Optical Vibe) */}
             <div className="lg:col-span-7 flex flex-col space-y-6">
