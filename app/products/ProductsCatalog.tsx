@@ -676,18 +676,20 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                             href={`/families/${family.id}`}
                             className="group flex flex-col bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100/50"
                           >
-                            {/* Aspect Square Image Canvas */}
-                            <div className="relative aspect-square w-full bg-transparent overflow-hidden flex items-center justify-center">
+                            {/* Aspect Square Image Canvas with margin/padding around product */}
+                            <div className="relative aspect-square w-full bg-transparent overflow-hidden flex items-center justify-center p-6 sm:p-8">
                               {imageItem ? (
-                                <Image
-                                  src={getImageUrl(imageItem)}
-                                  alt={imageItem.alt || family.name}
-                                  fill
-                                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                  className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-105"
-                                  priority={false}
-                                  unoptimized
-                                />
+                                <div className="relative w-full h-full flex items-center justify-center">
+                                  <Image
+                                    src={getImageUrl(imageItem)}
+                                    alt={imageItem.alt || family.name}
+                                    fill
+                                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                    className="object-contain transition-transform duration-500 group-hover:scale-105"
+                                    priority={false}
+                                    unoptimized
+                                  />
+                                </div>
                               ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
                                   {/* Elegant Geometric Vector Wireframe Placeholder */}
@@ -701,7 +703,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                               )}
                               
                               {/* Corner Tag */}
-                              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-gray-100 px-3 py-1 rounded-full shadow-sm">
+                              <div className="absolute top-3 left-3 z-10 bg-white/90 backdrop-blur-sm border border-gray-100 px-3 py-1 rounded-full shadow-sm">
                                 <span className="text-[10px] font-bold text-black tracking-wider uppercase">
                                   {categoryTag}
                                 </span>
