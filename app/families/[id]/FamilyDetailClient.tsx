@@ -351,7 +351,7 @@ const getRawProductSpec = (productObj: any, specNames: string[], defaultValue = 
     }
     if (name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') {
       const col = targetProduct.colour || targetProduct.color || productObj.colour;
-      if (isFieldFilled(col)) return String(col).trim();
+      if (isFieldFilled(col) && !/^\d{4}/.test(String(col).trim())) return String(col).trim();
     }
     if (name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip') {
       const ipVal = targetProduct.ip || productObj.ip;
@@ -405,7 +405,8 @@ const getRawSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string
       if (isFieldFilled(sku.name)) return String(sku.name).trim();
     }
     if (name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour' || name === 'luminaires_color') {
-      if (isFieldFilled(sku.colour || sku.color)) return String(sku.colour || sku.color).trim();
+      const col = sku.colour || sku.color;
+      if (isFieldFilled(col) && !/^\d{4}/.test(String(col).trim())) return String(col).trim();
     }
     if (name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w' || name === 'light_source_on_mode_power_w') {
       if (isFieldFilled(sku.wattage || sku.power)) return String(sku.wattage || sku.power).trim();
@@ -1670,6 +1671,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const powerParts = power.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
 
                           let efficacy = getSkuSpec(sku, ['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy'], '—');
+                          if (efficacy !== '—' && efficacy.includes('@')) {
+                            efficacy = getFluxForCct(efficacy, subCct, cctIndex, allCcts.length);
+                          }
+
                           if (efficacy === '—' && fluxParts.length > 0 && powerParts.length > 0) {
                             const efficacies = fluxParts.map((f, idx) => {
                               const p = powerParts[idx] || powerParts[0];
@@ -1679,9 +1684,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             }).filter(val => val !== null) as number[];
 
                             if (efficacies.length > 1) {
-                              const minEff = Math.min(...efficacies);
-                              const maxEff = Math.max(...efficacies);
-                              efficacy = minEff === maxEff ? `${minEff} lm/W` : `${minEff}-${maxEff} lm/W`;
+                              efficacy = `${efficacies.join('/')} lm/W`;
                             } else if (efficacies.length === 1) {
                               efficacy = `${efficacies[0]} lm/W`;
                             }
