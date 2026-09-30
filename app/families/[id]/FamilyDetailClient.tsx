@@ -109,6 +109,14 @@ interface Family {
   layout?: Block[];
   selectedParameters?: string[];
   dismantleInstructionPdf?: MediaFile | null;
+  datasheet?: {
+    enabled?: boolean;
+    title?: string | null;
+    subtitle?: string | null;
+    headerImage?: any;
+    pages?: any[];
+    notes?: string | null;
+  } | null;
 }
 
 interface FamilyDetailClientProps {
@@ -1190,12 +1198,24 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 ) : (
                   <div />
                 )}
-                <a
-                  href="#variants"
-                  className="bg-[#005288] hover:bg-[#003c64] text-white text-xs font-bold uppercase tracking-wider px-6 py-3.5 transition-all duration-300 shadow-sm"
-                >
-                  Configure {family.products?.length || 0} Models &darr;
-                </a>
+                <div className="flex flex-col gap-2.5">
+                  <a
+                    href="#variants"
+                    className="bg-[#005288] hover:bg-[#003c64] text-white text-xs font-bold uppercase tracking-wider px-6 py-3.5 transition-all duration-300 shadow-sm text-center"
+                  >
+                    Configure {family.products?.length || 0} Models &darr;
+                  </a>
+                  {Boolean(family.datasheet?.enabled) && (
+                    <Link
+                      href={`/families/${family.id}/datasheet`}
+                      target="_blank"
+                      className="bg-white border border-[#005288] text-[#005288] hover:bg-[#005288] hover:text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition-all duration-300 shadow-sm inline-flex items-center justify-center gap-2 text-center"
+                    >
+                      <FontAwesomeIcon icon={faFilePdf} className="text-xs" />
+                      Family Datasheet
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
 

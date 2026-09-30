@@ -42,6 +42,7 @@ interface Family {
   symbols?: SymbolItem[];
   layout?: any[];
   selectedParameters?: string[];
+  datasheet?: any;
 }
 
 async function getFamily(id: string): Promise<Family | null> {
