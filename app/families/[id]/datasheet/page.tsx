@@ -432,14 +432,40 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
   const seriesSubtitle = datasheet.subtitle || family.description || '';
 
   return (
-    <div className="min-h-screen bg-neutral-100 py-6 print:py-0 print:bg-white text-gray-900 font-sans">
-      <div className="max-w-[1100px] mx-auto px-4 print:px-0">
+    <div className="min-h-screen bg-neutral-100 py-6 print:py-0 print:bg-white text-gray-900 font-sans print:m-0 print:p-0">
+      {/* Inline Print Styles ensuring exact A4 sizing & clean PDF output */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm 12mm;
+          }
+          header, nav, .site-header, .no-print {
+            display: none !important;
+          }
+          html, body, main {
+            background: #ffffff !important;
+            color: #111827 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          tr {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+        }
+      `}</style>
+
+      <div className="max-w-[1100px] mx-auto px-4 print:px-0 print:max-w-none print:w-full print:m-0">
         
         {/* Print / Navigation Bar */}
         <FamilyPrintController familyId={family.id} seriesTitle={seriesTitle} />
 
         {/* Datasheet Document Container */}
-        <div className="flex flex-col gap-8 print:gap-0">
+        <div className="flex flex-col gap-8 print:gap-0 print:block">
           {pages.map((page: any, pageIdx: number) => {
             const pageNum = page.pageNumber || pageIdx + 1;
             const tables = page.tables || [];
@@ -448,7 +474,7 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
             return (
               <div
                 key={`page-${pageIdx}`}
-                className="bg-white p-8 md:p-12 print:p-8 shadow-sm border border-gray-200 print:border-none print:shadow-none min-h-[1050px] flex flex-col justify-between print:break-after-page mb-8 print:mb-0"
+                className="datasheet-a4-page bg-white p-8 md:p-12 print:p-0 shadow-sm border border-gray-200 print:border-none print:shadow-none min-h-[1050px] print:min-h-[275mm] flex flex-col justify-between print:justify-between mb-8 print:mb-0"
               >
                 <div>
                   {/* Page Header */}

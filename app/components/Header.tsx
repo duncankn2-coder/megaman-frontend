@@ -274,7 +274,7 @@ export default function Header({ initialSiteContext = 'international' }: HeaderP
   };
 
   return (
-    <header className="bg-[#005288] sticky top-0 z-50 shadow-md transition-all duration-300">
+    <header className="bg-[#005288] sticky top-0 z-50 shadow-md transition-all duration-300 print:hidden">
       {/* Main Navbar */}
       <div className="container mx-auto flex justify-between items-center px-4 py-4 lg:py-5">
         {/* Logo */}

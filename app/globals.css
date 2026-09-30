@@ -134,3 +134,65 @@ body {
   -webkit-transform: translate3d(0, 0, 0);
 }
 
+/* Print styles: A4 Paper Datasheet PDF export */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+
+  /* Exclude website header, navigation, and controls */
+  header,
+  nav,
+  .site-header,
+  .no-print,
+  [data-print-hide="true"] {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Prevent row cutoffs inside tables */
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Each datasheet page is an A4 page with header on top, content in middle, footer at bottom */
+  .datasheet-a4-page {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: 275mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .datasheet-a4-page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+}
+
