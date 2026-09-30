@@ -65,7 +65,7 @@ export default function CategoriesGridSection({
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   // Mouse drag-to-scroll state
   const isMouseDownRef = useRef(false);
@@ -73,13 +73,11 @@ export default function CategoriesGridSection({
   const scrollLeftRef = useRef(0);
   const hasMovedRef = useRef(false);
 
-  const isSlider = categories.length > 4;
-
   const updateScrollState = useCallback(() => {
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     const maxScroll = scrollWidth - clientWidth;
-    if (maxScroll <= 0) {
+    if (maxScroll <= 4) {
       setCanScrollLeft(false);
       setCanScrollRight(false);
       return;
@@ -89,12 +87,26 @@ export default function CategoriesGridSection({
   }, []);
 
   useEffect(() => {
-    if (isSlider) {
-      updateScrollState();
-      window.addEventListener('resize', updateScrollState);
-      return () => window.removeEventListener('resize', updateScrollState);
+    updateScrollState();
+    const timer = setTimeout(updateScrollState, 150);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && scrollRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        updateScrollState();
+      });
+      resizeObserver.observe(scrollRef.current);
     }
-  }, [isSlider, updateScrollState]);
+
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      clearTimeout(timer);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [updateScrollState, categories]);
 
   const scrollByDirection = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
@@ -136,6 +148,10 @@ export default function CategoriesGridSection({
       hasMovedRef.current = false;
     }
   };
+
+  if (!categories || categories.length === 0) {
+    return null;
+  }
 
   const renderCategoryCard = (cat: CategoryItem, idx: number) => (
     <Link
@@ -230,64 +246,58 @@ export default function CategoriesGridSection({
         </div>
       )}
 
-      {/* Grid vs Slider Layout */}
-      {!isSlider ? (
-        // Standard Grid for 4 or fewer categories
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {categories.map((cat, idx) => renderCategoryCard(cat, idx))}
-        </div>
-      ) : (
-        // Horizontal Slider for more than 4 categories with flanking side buttons
-        <div className="relative">
-          {/* Left Button on the Left Side of the Grids */}
-          <button
-            onClick={() => scrollByDirection('left')}
-            disabled={!canScrollLeft}
-            className={`absolute -left-3 sm:-left-5 md:-left-6 top-[38%] -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border border-gray-200 shadow-md hover:shadow-xl flex items-center justify-center transition-all ${
-              canScrollLeft
-                ? 'text-gray-800 hover:text-[#005288] hover:border-[#005288] hover:scale-105 cursor-pointer opacity-100'
-                : 'text-gray-300 opacity-0 pointer-events-none cursor-not-allowed'
-            }`}
-            aria-label="Previous categories"
-          >
-            <FontAwesomeIcon icon={faChevronLeft} className="text-xs md:text-sm" />
-          </button>
+      {/* Responsive Slider Layout */}
+      <div className="relative">
+        {/* Left Button on the Left Side of the Grids */}
+        <button
+          onClick={() => scrollByDirection('left')}
+          disabled={!canScrollLeft}
+          className={`absolute -left-3 sm:-left-5 md:-left-6 top-[38%] -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border border-gray-200 shadow-md hover:shadow-xl flex items-center justify-center transition-all ${
+            canScrollLeft
+              ? 'text-gray-800 hover:text-[#005288] hover:border-[#005288] hover:scale-105 cursor-pointer opacity-100'
+              : 'text-gray-300 opacity-0 pointer-events-none cursor-not-allowed'
+          }`}
+          aria-label="Previous categories"
+        >
+          <FontAwesomeIcon icon={faChevronLeft} className="text-xs md:text-sm" />
+        </button>
 
-          {/* Cards container */}
-          <div
-            ref={scrollRef}
-            onScroll={updateScrollState}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUpOrLeave}
-            onMouseLeave={handleMouseUpOrLeave}
-            className="flex overflow-x-auto gap-8 pb-4 scroll-smooth snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing select-none"
-          >
-            {categories.map((cat, idx) => (
-              <div
-                key={idx}
-                className="w-[280px] sm:w-[320px] lg:w-[calc(25%-1.5rem)] flex-shrink-0 snap-start flex flex-col"
-              >
-                {renderCategoryCard(cat, idx)}
-              </div>
-            ))}
-          </div>
-
-          {/* Right Button on the Right Side of the Grids */}
-          <button
-            onClick={() => scrollByDirection('right')}
-            disabled={!canScrollRight}
-            className={`absolute -right-3 sm:-right-5 md:-right-6 top-[38%] -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border border-gray-200 shadow-md hover:shadow-xl flex items-center justify-center transition-all ${
-              canScrollRight
-                ? 'text-gray-800 hover:text-[#005288] hover:border-[#005288] hover:scale-105 cursor-pointer opacity-100'
-                : 'text-gray-300 opacity-0 pointer-events-none cursor-not-allowed'
-            }`}
-            aria-label="Next categories"
-          >
-            <FontAwesomeIcon icon={faChevronRight} className="text-xs md:text-sm" />
-          </button>
+        {/* Cards container */}
+        <div
+          ref={scrollRef}
+          onScroll={updateScrollState}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          className={`flex overflow-x-auto gap-8 pb-4 scroll-smooth snap-x snap-mandatory no-scrollbar select-none ${
+            canScrollLeft || canScrollRight ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
+          }`}
+        >
+          {categories.map((cat, idx) => (
+            <div
+              key={idx}
+              className="w-[280px] sm:w-[320px] lg:w-[calc(25%-1.5rem)] flex-shrink-0 snap-start flex flex-col"
+            >
+              {renderCategoryCard(cat, idx)}
+            </div>
+          ))}
         </div>
-      )}
+
+        {/* Right Button on the Right Side of the Grids */}
+        <button
+          onClick={() => scrollByDirection('right')}
+          disabled={!canScrollRight}
+          className={`absolute -right-3 sm:-right-5 md:-right-6 top-[38%] -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border border-gray-200 shadow-md hover:shadow-xl flex items-center justify-center transition-all ${
+            canScrollRight
+              ? 'text-gray-800 hover:text-[#005288] hover:border-[#005288] hover:scale-105 cursor-pointer opacity-100'
+              : 'text-gray-300 opacity-0 pointer-events-none cursor-not-allowed'
+          }`}
+          aria-label="Next categories"
+        >
+          <FontAwesomeIcon icon={faChevronRight} className="text-xs md:text-sm" />
+        </button>
+      </div>
     </section>
   );
 }

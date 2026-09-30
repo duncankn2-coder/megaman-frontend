@@ -235,9 +235,12 @@ const formatIpRating = (ipStr: string): string => {
 
 // Helper to expand lookups with database schema keys dynamically
 const expandSpecNames = (specNames: string[]): string[] => {
-  const expanded = [...specNames];
+  const expanded: string[] = [];
   for (const name of specNames) {
     const lower = name.toLowerCase();
+    if (lower.includes('model') || lower.includes('item_no') || lower.includes('art_nr')) {
+      expanded.push('customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'customer_model_no_old', 'modelNo');
+    }
     if (lower.includes('flux') || lower.includes('lumen')) {
       expanded.push(
         'total_luminous_flux_lm',
@@ -269,8 +272,27 @@ const expandSpecNames = (specNames: string[]): string[] => {
       expanded.push('ra', 'cri', 'colour_rendering_index', 'color_rendering_index', 'cri_lower_80');
     }
     if (lower.includes('gear') || lower.includes('control') || lower.includes('connector')) {
-      expanded.push('type_terminal block', 'cap_type', 'driver_type', 'driver_model', 'dimming_type', 'control_gear');
+      expanded.push('control_gear', 'driver_type', 'driver_model', 'dimming_type', 'type_terminal block');
     }
+    if (lower.includes('volt')) {
+      expanded.push('rated_voltage_v', 'voltage', 'input_voltage', 'operating_voltage');
+    }
+    if (lower.includes('beam')) {
+      expanded.push('beam_angle', 'beam', 'beamAngle', 'dls_beam_angle');
+    }
+    if (lower.includes('base') || lower.includes('cap')) {
+      expanded.push('cap_type', 'lamp_holder_type', 'lamp_source', 'lampBase', 'lamp_base');
+    }
+    if (lower.includes('housing') || lower.includes('material')) {
+      expanded.push('housing_material', 'housingMaterial');
+    }
+    if (lower.includes('diffuser') || lower.includes('cover')) {
+      expanded.push('diffuser_material', 'cover_material', 'coverMaterial');
+    }
+    if (lower.includes('dimen') || lower.includes('size')) {
+      expanded.push('dimensions_mm', 'dimensions', 'height_mm', 'width_mm', 'length_mm');
+    }
+    expanded.push(name);
   }
   return Array.from(new Set(expanded));
 };
@@ -328,15 +350,45 @@ const parseDescriptionSpecs = (desc: string): Record<string, string> => {
 };
 
 // Extraction utility for technical parameters inside product specifications JSON (RZB Style)
+// Prioritizes General Data specifications first for all parameters
 const getRawProductSpec = (productObj: any, specNames: string[], defaultValue = '—'): string => {
   if (!productObj) return defaultValue;
 
   const targetProduct = productObj.product && typeof productObj.product === 'object' ? productObj.product : productObj;
   const expandedNames = expandSpecNames(specNames);
 
-  // 1. Try direct entry attributes on targetProduct / productObj first if filled
+  // 1. MM Code check: if looking specifically for MM code
   for (const name of expandedNames) {
-    if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
+    if (name === 'mm_code' || name === 'sku_name' || name === 'yk_product_code') {
+      if (isFieldFilled(productObj.name) && /^MM/i.test(String(productObj.name))) return String(productObj.name).trim();
+      if (isFieldFilled(targetProduct.name) && /^MM/i.test(String(targetProduct.name))) return String(targetProduct.name).trim();
+    }
+  }
+
+  // 2. ALL PARAMETERS COME FROM GENERAL DATA FIRST:
+  const specs = (targetProduct.specifications || productObj.specifications) as Record<string, unknown> | undefined;
+  if (specs) {
+    for (const name of expandedNames) {
+      if (isFieldFilled(specs[name])) {
+        return String(specs[name]).trim();
+      }
+    }
+  }
+
+  // 3. Parsed description specifications from General Data description
+  const generalDesc = (specs?.description as string) || targetProduct.description || productObj.description || '';
+  if (generalDesc) {
+    const descSpecs = parseDescriptionSpecs(generalDesc);
+    for (const name of expandedNames) {
+      if (isFieldFilled(descSpecs[name])) {
+        return descSpecs[name];
+      }
+    }
+  }
+
+  // 4. Fallback to direct entry attributes on targetProduct / productObj only if not found in General Data
+  for (const name of expandedNames) {
+    if (name === 'customer_model_no_new' || name === 'model_number' || name === 'modelNo' || name === 'model_identifier' || name === 'customer_model_no_old') {
       if (isFieldFilled(targetProduct.name)) return String(targetProduct.name).trim();
       if (isFieldFilled(productObj.name)) return String(productObj.name).trim();
       if (isFieldFilled(productObj.modelNumber)) return String(productObj.modelNumber).trim();
@@ -363,27 +415,6 @@ const getRawProductSpec = (productObj: any, specNames: string[], defaultValue = 
     }
   }
 
-  // 2. Otherwise fetch from general data specifications JSON (on targetProduct or productObj)
-  const specs = (targetProduct.specifications || productObj.specifications) as Record<string, unknown> | undefined;
-  if (specs) {
-    for (const name of expandedNames) {
-      if (isFieldFilled(specs[name])) {
-        return String(specs[name]).trim();
-      }
-    }
-  }
-
-  // 3. Fallback to parsed description specifications
-  const desc = targetProduct.description || productObj.description || '';
-  if (desc) {
-    const descSpecs = parseDescriptionSpecs(desc);
-    for (const name of expandedNames) {
-      if (isFieldFilled(descSpecs[name])) {
-        return descSpecs[name];
-      }
-    }
-  }
-
   return defaultValue;
 };
 
@@ -398,79 +429,79 @@ const getRawSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string
   const parent = sku.product && typeof sku.product === 'object' ? sku.product : null;
   const expandedNames = expandSpecNames(specNames);
 
-  // 1. Check entry fields on SKU first:
-  // If Colour, Power, and Colour Temperature (or other entry fields) were filled, use the data in the entry field!
+  // 1. MM Code check: MM code is the ONLY parameter that comes from the SKU document
   for (const name of expandedNames) {
-    if (name === 'yk_product_code' || name === 'model_identifier' || name === 'customer_model_no_old' || name === 'mm_code') {
+    if (name === 'mm_code' || name === 'sku_name' || name === 'yk_product_code') {
+      if (isFieldFilled(sku.name)) return String(sku.name).trim();
+    }
+  }
+
+  // 2. ALL PARAMETERS COME FROM GENERAL DATA FIRST (specifications JSON):
+  // A) Check SKU specifications JSON (holds General Data spreadsheet row linked to this SKU)
+  const skuSpecs = sku.specifications as Record<string, unknown> | undefined;
+  if (skuSpecs) {
+    for (const name of expandedNames) {
+      if (isFieldFilled(skuSpecs[name])) {
+        return String(skuSpecs[name]).trim();
+      }
+    }
+  }
+
+  // B) Check Parent Product specifications JSON (holds General Data spreadsheet row of parent base model)
+  const parentSpecs = parent?.specifications as Record<string, unknown> | undefined;
+  if (parentSpecs) {
+    for (const name of expandedNames) {
+      if (isFieldFilled(parentSpecs[name])) {
+        return String(parentSpecs[name]).trim();
+      }
+    }
+  }
+
+  // C) Check parsed description specifications from General Data description
+  const generalDesc = (skuSpecs?.description as string) || (parentSpecs?.description as string) || parent?.description || sku.description || '';
+  if (generalDesc) {
+    const descSpecs = parseDescriptionSpecs(generalDesc);
+    for (const name of expandedNames) {
+      if (isFieldFilled(descSpecs[name])) {
+        return descSpecs[name];
+      }
+    }
+  }
+
+  // 3. Fallback: Only if not found in General Data, check SKU or Parent Product direct entry fields
+  for (const name of expandedNames) {
+    if (name === 'customer_model_no_new' || name === 'model_number' || name === 'modelNo' || name === 'model_identifier' || name === 'customer_model_no_old') {
+      if (isFieldFilled(parent?.name)) return String(parent.name).trim();
+      if (isFieldFilled(sku.modelNumber)) return String(sku.modelNumber).trim();
       if (isFieldFilled(sku.name)) return String(sku.name).trim();
     }
     if (name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour' || name === 'luminaires_color') {
-      const col = sku.colour || sku.color;
+      const col = sku.colour || sku.color || parent?.colour || parent?.color;
       if (isFieldFilled(col) && !/^\d{4}/.test(String(col).trim())) return String(col).trim();
     }
     if (name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w' || name === 'light_source_on_mode_power_w') {
-      if (isFieldFilled(sku.wattage || sku.power)) return String(sku.wattage || sku.power).trim();
+      const pwr = sku.wattage || sku.power || parent?.power || parent?.wattage;
+      if (isFieldFilled(pwr)) return String(pwr).trim();
     }
     if (name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k' || name === 'colour_temp' || name === 'colortemp') {
-      if (isFieldFilled(sku.colourTemperature || sku.colorTemperature)) return String(sku.colourTemperature || sku.colorTemperature).trim();
+      const ct = sku.colourTemperature || sku.colorTemperature || parent?.colourTemperature || parent?.colorTemperature;
+      if (isFieldFilled(ct)) return String(ct).trim();
     }
     if (name === 'ipRating' || name === 'IP rating' || name === 'IP Rating' || name === 'ip' || name === 'ip_rating') {
-      if (isFieldFilled(sku.ip)) return String(sku.ip).trim();
+      const ipVal = sku.ip || parent?.ip;
+      if (isFieldFilled(ipVal)) return String(ipVal).trim();
     }
     if (name === 'controlGear' || name === 'control_gear' || name === 'Control gear' || name === 'type_terminal block' || name === 'cap_type' || name === 'connector') {
-      if (isFieldFilled(sku.connector)) return String(sku.connector).trim();
+      const gear = sku.connector || parent?.connector;
+      if (isFieldFilled(gear)) return String(gear).trim();
     }
     if (name === 'voltage' || name === 'Voltage' || name === 'rated_voltage_v') {
-      if (isFieldFilled(sku.voltage)) return String(sku.voltage).trim();
+      const volt = sku.voltage || parent?.inputVoltage;
+      if (isFieldFilled(volt)) return String(volt).trim();
     }
     if (name === 'lampBase' || name === 'lamp base' || name === 'cap_type' || name === 'base') {
-      if (isFieldFilled(sku.lampBase)) return String(sku.lampBase).trim();
-    }
-  }
-
-  // 2. If Colour, Power, Colour Temperature (or any other spec) was skipped in the entry field:
-  // Fetch from General Data!
-  // A) Try SKU specifications JSON (holds General Data spreadsheet row linked to this SKU)
-  if (sku.specifications) {
-    for (const name of expandedNames) {
-      if (isFieldFilled(sku.specifications[name])) {
-        return String(sku.specifications[name]).trim();
-      }
-    }
-  }
-
-  // B) Try Parent Product specifications JSON (holds General Data spreadsheet row of parent base model)
-  if (parent?.specifications) {
-    for (const name of expandedNames) {
-      if (isFieldFilled(parent.specifications[name])) {
-        return String(parent.specifications[name]).trim();
-      }
-    }
-  }
-
-  // C) Try parsed description specifications (from parent or SKU description string)
-  const descSpecs = parseDescriptionSpecs(parent?.description || sku.description || '');
-  for (const name of expandedNames) {
-    if (isFieldFilled(descSpecs[name])) {
-      return descSpecs[name];
-    }
-  }
-
-  // D) Fallback to direct attributes on Parent Product
-  if (parent) {
-    for (const name of expandedNames) {
-      if ((name === 'power' || name === 'System power' || name === 'wattage' || name === 'on_mode_power_w') && isFieldFilled(parent.power || parent.wattage)) {
-        return String(parent.power || parent.wattage).trim();
-      }
-      if ((name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') && isFieldFilled(parent.colourTemperature || parent.colorTemperature)) {
-        return String(parent.colourTemperature || parent.colorTemperature).trim();
-      }
-      if ((name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour') && isFieldFilled(parent.colour || parent.color)) {
-        return String(parent.colour || parent.color).trim();
-      }
-      if (name === 'customer_model_no_new' && isFieldFilled(parent.name)) {
-        return String(parent.name).trim();
-      }
+      const base = sku.lampBase;
+      if (isFieldFilled(base)) return String(base).trim();
     }
   }
 
@@ -1633,7 +1664,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   {filteredSkus.map((sku, modelIndex) => {
                     const parent = typeof sku.product === 'object' && sku.product !== null ? sku.product : null;
                     const mmCode = sku.name;
-                    const modelNo = parent?.name || sku.modelNumber || '—';
+                    const modelNo = getSkuSpec(sku, ['customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'modelNo'], parent?.name || sku.modelNumber || '—');
                     // Call back symbols according to the model no. of the product
                     const productSymbols = getSymbolsForProduct(sku);
 
@@ -1641,13 +1672,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const modelBgClass = isEvenModel ? 'bg-white' : 'bg-[#f4f8fc]';
                     const modelHoverClass = isEvenModel ? 'hover:bg-blue-50/50' : 'hover:bg-blue-100/40';
 
-                    const color = getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color', 'fitting_colour'], '—');
-                    const power = getSkuSpec(sku, ['power', 'System power', 'wattage', 'on_mode_power_w'], '—');
-                    const flux = getSkuSpec(sku, ['luminousFlux', 'Luminous flux', 'flux', 'lumens', 'total_luminous_flux_lm', 'useful_luminous_flux_lm'], '—');
-                    const cct = getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k'], '—');
-                    const cri = getSkuSpec(sku, ['cri', 'CRI', 'Colour rendering index', 'ra'], '—');
-                    const ip = formatIpRating(getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip'], '—'));
-                    const control = getSkuSpec(sku, ['controlGear', 'control_gear', 'Control gear', 'connector', 'type_terminal block', 'cap_type'], '—');
+                    const color = getSkuSpec(sku, ['fitting_colour', 'colour', 'color', 'luminaires_color'], '—');
+                    const power = getSkuSpec(sku, ['on_mode_power_w', 'power', 'System power', 'wattage'], '—');
+                    const flux = getSkuSpec(sku, ['total_luminous_flux_lm', 'useful_luminous_flux_lm', 'luminousFlux', 'Luminous flux', 'flux', 'lumens'], '—');
+                    const cct = getSkuSpec(sku, ['cct_k', 'colourTemperature', 'Color Temperature', 'CCT'], '—');
+                    const cri = getSkuSpec(sku, ['ra', 'cri', 'CRI', 'Colour rendering index'], '—');
+                    const ip = formatIpRating(getSkuSpec(sku, ['ip', 'ipRating', 'IP rating', 'IP Rating', 'ip_rating'], '—'));
+                    const control = getSkuSpec(sku, ['control_gear', 'driver_type', 'driver_model', 'dimming_type', 'type_terminal block', 'controlGear', 'connector'], '—');
 
                     const allCcts = parseCcts(cct);
                     const cctsToRender = allCcts.filter(part => {
@@ -1754,12 +1785,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               )}
                               {activeParams.includes('lampBase') && isFirst && (
                                 <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
-                                  {getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type'], '—')}
+                                  {getSkuSpec(sku, ['cap_type', 'lamp_holder_type', 'lamp_source', 'lampBase'], '—')}
                                 </td>
                               )}
                               {activeParams.includes('voltage') && isFirst && (
                                 <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
-                                  {getSkuSpec(sku, ['voltage', 'Voltage', 'rated_voltage_v'], '—')}
+                                  {getSkuSpec(sku, ['rated_voltage_v', 'voltage', 'Voltage'], '—')}
                                 </td>
                               )}
                               {showSymbolsColumn && isFirst && (
