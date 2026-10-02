@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 import { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 import FamilyPrintController from './FamilyPrintController';
-import { formatSpecValue, roundToTwoDecimals } from '../../../../utils/formatDecimals';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -87,6 +85,356 @@ const getImageUrl = (image: any): string => {
     return `${baseUrl}${image.url.startsWith('/') ? '' : '/'}${image.url}`;
   }
   return '/placeholder.png';
+};
+
+// Helper to resolve custom width, height, alignment, and row layout for images
+const resolveImageStyles = (node: any) => {
+  const fields = node.fields || {};
+  const widthVal = (fields.width !== 'custom' && fields.width) || fields.customWidth || node.width || '';
+  const heightVal = (fields.maxHeight !== 'custom' && fields.maxHeight) || fields.customHeight || node.height || '';
+  const alignment = fields.alignment || node.format || 'center';
+
+  let containerWidthClass = 'w-full';
+  const inlineContainerStyle: React.CSSProperties = {};
+
+  if (widthVal === '50%' || widthVal === 'half') {
+    containerWidthClass = 'w-[calc(50%-0.375rem)] print:w-[calc(50%-0.25rem)] inline-flex';
+  } else if (widthVal === '33%' || widthVal === '33.3%' || widthVal === 'third') {
+    containerWidthClass = 'w-[calc(33.333%-0.5rem)] print:w-[calc(33.333%-0.25rem)] inline-flex';
+  } else if (widthVal === '25%' || widthVal === 'quarter') {
+    containerWidthClass = 'w-[calc(25%-0.5rem)] print:w-[calc(25%-0.25rem)] inline-flex';
+  } else if (widthVal === '100px') {
+    containerWidthClass = 'w-[100px] inline-flex';
+  } else if (widthVal === '150px') {
+    containerWidthClass = 'w-[150px] inline-flex';
+  } else if (widthVal === '220px') {
+    containerWidthClass = 'w-[220px] inline-flex';
+  } else if (widthVal === '300px') {
+    containerWidthClass = 'w-[300px] inline-flex';
+  } else if (widthVal === '100%' || widthVal === 'full') {
+    containerWidthClass = 'w-full flex';
+  } else if (widthVal && widthVal !== 'auto') {
+    const isPercent = typeof widthVal === 'string' && widthVal.endsWith('%');
+    if (isPercent) {
+      inlineContainerStyle.width = widthVal;
+      containerWidthClass = 'inline-flex';
+    } else {
+      inlineContainerStyle.width = typeof widthVal === 'number' ? `${widthVal}px` : widthVal;
+      containerWidthClass = 'inline-flex';
+    }
+  } else {
+    containerWidthClass = 'inline-flex max-w-full';
+  }
+
+  let imgHeightClass = 'max-h-60 print:max-h-40';
+  const inlineImgStyle: React.CSSProperties = {};
+
+  if (heightVal === '90px') {
+    imgHeightClass = 'max-h-[90px] print:max-h-[70px]';
+  } else if (heightVal === '140px') {
+    imgHeightClass = 'max-h-[140px] print:max-h-[105px]';
+  } else if (heightVal === '180px') {
+    imgHeightClass = 'max-h-[180px] print:max-h-[135px]';
+  } else if (heightVal === '240px') {
+    imgHeightClass = 'max-h-[240px] print:max-h-[175px]';
+  } else if (heightVal === 'none') {
+    imgHeightClass = 'max-h-none';
+  } else if (heightVal && heightVal !== 'auto') {
+    imgHeightClass = '';
+    inlineImgStyle.maxHeight = typeof heightVal === 'number' ? `${heightVal}px` : heightVal;
+  }
+
+  let alignClass = 'items-center text-center mx-auto';
+  if (alignment === 'left') {
+    alignClass = 'items-start text-left mr-auto';
+  } else if (alignment === 'right') {
+    alignClass = 'items-end text-right ml-auto';
+  }
+
+  return {
+    containerWidthClass,
+    inlineContainerStyle,
+    imgHeightClass,
+    inlineImgStyle,
+    alignClass,
+    caption: fields.caption,
+  };
+};
+
+// Render Lexical AST directly when HTML is not pre-rendered
+const renderLexicalNode = (node: any, key: string | number): React.ReactNode => {
+  if (!node) return null;
+
+  switch (node.type) {
+    case 'text': {
+      let content: React.ReactNode = node.text || '';
+      const format = node.format || 0;
+      if (format & 1) content = <strong>{content}</strong>;
+      if (format & 2) content = <em>{content}</em>;
+      if (format & 4) content = <s>{content}</s>;
+      if (format & 8) content = <u>{content}</u>;
+      if (format & 16) content = <code className="bg-gray-100 px-1 py-0.5 rounded text-[10px] font-mono">{content}</code>;
+      if (format & 32) content = <sub>{content}</sub>;
+      if (format & 64) content = <sup>{content}</sup>;
+      return <span key={key}>{content}</span>;
+    }
+
+    case 'paragraph': {
+      const alignClass = node.format === 'center' ? 'text-center' : node.format === 'right' ? 'text-right' : node.format === 'justify' ? 'text-justify' : 'text-left';
+      const hasImages = node.children?.some((child: any) => child.type === 'upload' || child.type === 'image');
+      if (hasImages) {
+        return (
+          <div key={key} className={`my-2 print:my-1 flex flex-wrap items-start gap-2.5 print:gap-1.5 w-full ${alignClass === 'text-center' ? 'justify-center' : alignClass === 'text-right' ? 'justify-end' : 'justify-start'}`}>
+            {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+          </div>
+        );
+      }
+      return (
+        <p key={key} className={`mb-2 print:mb-1 last:mb-0 ${alignClass}`}>
+          {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+        </p>
+      );
+    }
+
+    case 'heading': {
+      const tag = node.tag || 'h2';
+      const alignClass = node.format === 'center' ? 'text-center' : node.format === 'right' ? 'text-right' : 'text-left';
+      const className = `text-sm print:text-xs font-bold uppercase tracking-wider text-[#005288] mt-3 mb-1.5 print:mt-1.5 print:mb-1 ${alignClass}`;
+      const children = node.children?.map((child: any, i: number) => renderLexicalNode(child, i));
+      if (tag === 'h1') return <h1 key={key} className={className}>{children}</h1>;
+      if (tag === 'h3') return <h3 key={key} className={className}>{children}</h3>;
+      if (tag === 'h4') return <h4 key={key} className={className}>{children}</h4>;
+      if (tag === 'h5') return <h5 key={key} className={className}>{children}</h5>;
+      if (tag === 'h6') return <h6 key={key} className={className}>{children}</h6>;
+      return <h2 key={key} className={className}>{children}</h2>;
+    }
+
+    case 'link': {
+      const href = node.fields?.url || node.url || '#';
+      return (
+        <a key={key} href={href} target={node.fields?.newTab ? '_blank' : undefined} rel="noreferrer" className="text-[#005288] underline font-medium">
+          {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+        </a>
+      );
+    }
+
+    case 'list': {
+      const isOrdered = node.listType === 'number';
+      const ListTag = isOrdered ? 'ol' : 'ul';
+      return (
+        <ListTag key={key} className={`my-2 print:my-1 pl-5 ${isOrdered ? 'list-decimal' : 'list-disc'} text-gray-700 text-xs print:text-[9.5px] space-y-0.5`}>
+          {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+        </ListTag>
+      );
+    }
+
+    case 'listitem': {
+      return (
+        <li key={key}>
+          {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+        </li>
+      );
+    }
+
+    case 'table': {
+      return (
+        <div key={key} className="overflow-x-auto my-3 print:my-1.5 border border-gray-200">
+          <table className="w-full text-left text-xs print:text-[9.5px] font-mono border-collapse">
+            <tbody>
+              {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    case 'tablerow': {
+      return (
+        <tr key={key} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/20 transition-colors">
+          {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+        </tr>
+      );
+    }
+
+    case 'tablecell':
+    case 'tableheadercell': {
+      const isHeader = (node.headerState && node.headerState > 0) || node.type === 'tableheadercell';
+      if (isHeader) {
+        return (
+          <th
+            key={key}
+            colSpan={node.colSpan || 1}
+            rowSpan={node.rowSpan || 1}
+            className="py-2 px-3 print:py-0.5 print:px-2 border-r border-gray-200 last:border-r-0 font-semibold text-gray-700 bg-gray-50/80 uppercase text-[11px] print:text-[9px] tracking-wide align-top"
+          >
+            {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+          </th>
+        );
+      }
+      return (
+        <td
+          key={key}
+          colSpan={node.colSpan || 1}
+          rowSpan={node.rowSpan || 1}
+          className="py-2 px-3 print:py-0.5 print:px-2 border-r border-gray-200 last:border-r-0 text-gray-900 font-mono text-xs print:text-[9.5px] align-top"
+        >
+          {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+        </td>
+      );
+    }
+
+    case 'upload': {
+      const mediaUrl = getImageUrl(node.value);
+      const {
+        containerWidthClass,
+        inlineContainerStyle,
+        imgHeightClass,
+        inlineImgStyle,
+        alignClass,
+        caption,
+      } = resolveImageStyles(node);
+
+      return (
+        <div
+          key={key}
+          className={`my-1.5 print:my-0.5 flex flex-col align-top box-border ${containerWidthClass} ${alignClass}`}
+          style={inlineContainerStyle}
+        >
+          {mediaUrl && (
+            <img
+              src={mediaUrl}
+              alt={node.value?.alt || node.value?.filename || 'Custom illustration'}
+              className={`w-auto max-w-full object-contain border border-gray-200 p-1 bg-white ${imgHeightClass}`}
+              style={inlineImgStyle}
+            />
+          )}
+          {caption && (
+            <p className="text-[10px] text-gray-400 mt-1 font-mono text-center w-full">{caption}</p>
+          )}
+        </div>
+      );
+    }
+
+    case 'image': {
+      const imgSrc = node.src || getImageUrl(node.image);
+      const {
+        containerWidthClass,
+        inlineContainerStyle,
+        imgHeightClass,
+        inlineImgStyle,
+        alignClass,
+        caption,
+      } = resolveImageStyles(node);
+
+      return (
+        <div
+          key={key}
+          className={`my-1.5 print:my-0.5 flex flex-col align-top box-border ${containerWidthClass} ${alignClass}`}
+          style={inlineContainerStyle}
+        >
+          {imgSrc && (
+            <img
+              src={imgSrc}
+              alt={node.altText || caption || 'Pasted diagram'}
+              className={`w-auto max-w-full object-contain border border-gray-200 p-1 bg-white ${imgHeightClass}`}
+              style={inlineImgStyle}
+            />
+          )}
+          {caption && (
+            <p className="text-[10px] text-gray-400 mt-1 font-mono text-center w-full">{caption}</p>
+          )}
+        </div>
+      );
+    }
+
+    case 'horizontalrule':
+      return <hr key={key} className="my-4 print:my-2 border-gray-200" />;
+
+    case 'quote':
+      return (
+        <blockquote key={key} className="border-l-4 border-[#005288] pl-3 py-1 italic text-gray-600 my-2 print:my-1 text-xs print:text-[9.5px]">
+          {node.children?.map((child: any, i: number) => renderLexicalNode(child, i))}
+        </blockquote>
+      );
+
+    default:
+      if (node.children && Array.isArray(node.children)) {
+        return (
+          <div key={key}>
+            {node.children.map((child: any, i: number) => renderLexicalNode(child, i))}
+          </div>
+        );
+      }
+      return null;
+  }
+};
+
+const CustomContentRenderer = ({ blk }: { blk: any }) => {
+  const root = blk.content?.root;
+
+  // Prioritize rich AST renderer whenever available so user dimensions and row layouts are honored
+  if (root && root.children && Array.isArray(root.children) && root.children.length > 0) {
+    const groupedNodes: React.ReactNode[] = [];
+    let currentImageGroup: any[] = [];
+
+    const flushImageGroup = (groupKey: string) => {
+      if (currentImageGroup.length === 0) return;
+      if (currentImageGroup.length === 1 && currentImageGroup[0].fields?.width === '100%') {
+        groupedNodes.push(renderLexicalNode(currentImageGroup[0], `img-${groupKey}`));
+      } else {
+        groupedNodes.push(
+          <div
+            key={`img-group-${groupKey}`}
+            className="flex flex-wrap items-start gap-2.5 print:gap-1.5 w-full my-1.5 print:my-0.5"
+          >
+            {currentImageGroup.map((imgNode, idx) => renderLexicalNode(imgNode, `grouped-img-${groupKey}-${idx}`))}
+          </div>
+        );
+      }
+      currentImageGroup = [];
+    };
+
+    root.children.forEach((child: any, idx: number) => {
+      if (child.type === 'upload' || child.type === 'image') {
+        const isFull = child.fields?.width === '100%' || child.fields?.width === 'full';
+        if (isFull) {
+          flushImageGroup(`${idx}-before`);
+          groupedNodes.push(renderLexicalNode(child, idx));
+        } else {
+          currentImageGroup.push(child);
+        }
+      } else {
+        flushImageGroup(`${idx}`);
+        groupedNodes.push(renderLexicalNode(child, idx));
+      }
+    });
+    flushImageGroup('end');
+
+    return (
+      <div className="datasheet-custom-rich-text text-xs print:text-[9.5px] text-gray-800 leading-relaxed font-sans flex flex-col gap-2 print:gap-1">
+        {groupedNodes}
+      </div>
+    );
+  }
+
+  if (blk.content_html) {
+    return (
+      <div
+        className="datasheet-custom-rich-text text-xs print:text-[9.5px] text-gray-800 leading-relaxed font-sans"
+        dangerouslySetInnerHTML={{ __html: blk.content_html }}
+      />
+    );
+  }
+
+  if (typeof blk.content === 'string') {
+    return (
+      <p className="text-xs print:text-[9.5px] text-gray-700 leading-relaxed font-light whitespace-pre-line">
+        {blk.content}
+      </p>
+    );
+  }
+
+  return null;
 };
 
 const parseCCT = (cctStr: string): string[] => {
@@ -432,8 +780,8 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
   const seriesSubtitle = datasheet.subtitle || family.description || '';
 
   return (
-    <div className="min-h-screen bg-neutral-100 py-6 print:py-0 print:bg-white text-gray-900 font-sans print:m-0 print:p-0">
-      {/* Inline Print Styles ensuring exact A4 sizing & clean PDF output */}
+    <div className="min-h-screen print:min-h-0 bg-neutral-100 py-6 print:py-0 print:bg-white text-gray-900 font-sans print:m-0 print:p-0">
+      {/* Inline Print Styles ensuring exact A4 sizing & repeated header/footer on every page */}
       <style>{`
         @media print {
           @page {
@@ -451,6 +799,52 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
             width: 100% !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+          }
+          .datasheet-a4-page {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            height: 275mm !important;
+            min-height: 275mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+          }
+          .datasheet-a4-page:last-child {
+            break-after: auto !important;
+            page-break-after: auto !important;
+          }
+          .datasheet-custom-rich-text table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 0.25rem !important;
+            margin-bottom: 0.25rem !important;
+            font-size: 9.5px !important;
+          }
+          .datasheet-custom-rich-text th,
+          .datasheet-custom-rich-text td {
+            border: 1px solid #e5e7eb !important;
+            padding: 2px 6px !important;
+            vertical-align: top !important;
+          }
+          .datasheet-custom-rich-text th {
+            background-color: #f3f4f6 !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            color: #374151 !important;
+            font-size: 9px !important;
+            letter-spacing: 0.05em !important;
+          }
+          .datasheet-custom-rich-text img {
+            max-width: 100% !important;
+            max-height: 45mm !important;
+            object-fit: contain !important;
+            margin: 2px auto !important;
+            display: inline-block !important;
+            vertical-align: top !important;
           }
           tr {
             break-inside: avoid !important;
@@ -474,26 +868,31 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
             return (
               <div
                 key={`page-${pageIdx}`}
-                className="datasheet-a4-page bg-white p-8 md:p-12 print:p-0 shadow-sm border border-gray-200 print:border-none print:shadow-none min-h-[1050px] print:min-h-[275mm] flex flex-col justify-between print:justify-between mb-8 print:mb-0"
+                className="datasheet-a4-page bg-white p-8 md:p-12 print:p-0 shadow-sm border border-gray-200 print:border-none print:shadow-none min-h-[1050px] flex flex-col justify-between mb-8 print:mb-0"
+                style={{
+                  breakAfter: pageIdx < pages.length - 1 ? 'page' : 'auto',
+                  pageBreakAfter: pageIdx < pages.length - 1 ? 'always' : 'auto',
+                }}
               >
-                <div>
+                {/* Upper Section: Page Header and Content */}
+                <div className="flex-1 flex flex-col">
                   {/* Page Header */}
-                  <div className="flex justify-between items-start pb-6 border-b-2 border-[#005288] mb-8">
+                  <div className="flex justify-between items-start pb-6 print:pb-3 border-b-2 border-[#005288] mb-8 print:mb-4">
                     <div>
                       <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#005288] mb-1">
                         Product Family Datasheet
                       </div>
-                      <h1 className="text-2xl md:text-3xl font-light uppercase tracking-widest text-gray-900">
+                      <h1 className="text-2xl md:text-3xl print:text-xl font-light uppercase tracking-widest text-gray-900">
                         {seriesTitle}
                       </h1>
                       {seriesSubtitle && (
-                        <p className="text-xs text-gray-500 mt-1 max-w-xl font-light leading-relaxed">
+                        <p className="text-xs print:text-[10px] text-gray-500 mt-1 max-w-xl font-light leading-relaxed">
                           {seriesSubtitle}
                         </p>
                       )}
                     </div>
                     <div className="text-right flex flex-col items-end">
-                      <div className="text-xl font-bold tracking-wider text-[#005288]">MEGAMAN®</div>
+                      <div className="text-xl print:text-lg font-bold tracking-wider text-[#005288]">MEGAMAN®</div>
                       <div className="text-[10px] font-mono text-gray-400 mt-1">
                         PAGE {pageNum} OF {pages.length}
                       </div>
@@ -508,7 +907,7 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                     const isVertical = table.tableType === 'vertical';
 
                     // Prepare rows for Type 1 (Vertical Table: Parameter header in 1st column, single value column next to it)
-                    const verticalRows: { label: string; value: string }[] = [];
+                    const verticalRows: { label: string; value: string; pKey?: string }[] = [];
                     if (isVertical) {
                       const selectedParams: string[] = table.selectedParameters || [
                         'voltage',
@@ -640,14 +1039,14 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                     };
 
                     return (
-                      <div key={`table-${tIdx}`} className="mb-8">
+                      <div key={`table-${tIdx}`} className="mb-8 print:mb-3">
                         {/* Table Heading */}
-                        <div className="mb-3">
-                          <h2 className="text-sm font-bold uppercase tracking-wider text-[#005288]">
+                        <div className="mb-3 print:mb-1">
+                          <h2 className="text-sm print:text-xs font-bold uppercase tracking-wider text-[#005288]">
                             {tableName}
                           </h2>
                           {tableDesc && (
-                            <p className="text-xs text-gray-500 font-light mt-0.5">
+                            <p className="text-xs print:text-[10px] text-gray-500 font-light mt-0.5">
                               {tableDesc}
                             </p>
                           )}
@@ -657,13 +1056,13 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                         {isVertical ? (
                           /* Type 1: Vertical Table (Parameter header is in the first column, single value column next to it) */
                           <div className="overflow-x-auto border border-gray-200">
-                            <table className="w-full text-left text-xs font-mono border-collapse">
+                            <table className="w-full text-left text-xs print:text-[9.5px] font-mono border-collapse">
                               <thead>
-                                <tr className="bg-gray-100 border-b border-gray-300 text-[11px] font-bold text-gray-700 uppercase tracking-wider">
-                                  <th className="py-2.5 px-4 border-r border-gray-200 w-2/5 md:w-1/3">
+                                <tr className="bg-gray-100 border-b border-gray-300 text-[11px] print:text-[9px] font-bold text-gray-700 uppercase tracking-wider">
+                                  <th className="py-2.5 px-4 print:py-0.5 print:px-2 border-r border-gray-200 w-2/5 md:w-1/3">
                                     Parameter
                                   </th>
-                                  <th className="py-2.5 px-4">
+                                  <th className="py-2.5 px-4 print:py-0.5 print:px-2">
                                     Value
                                   </th>
                                 </tr>
@@ -671,7 +1070,7 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                               <tbody className="divide-y divide-gray-200">
                                 {verticalRows.length === 0 ? (
                                   <tr>
-                                    <td colSpan={2} className="text-center py-6 text-gray-400">
+                                    <td colSpan={2} className="text-center py-6 print:py-2 text-gray-400">
                                       No parameters configured for this table.
                                     </td>
                                   </tr>
@@ -682,11 +1081,11 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                                       <tr key={rIdx} className={`${rowBg} hover:bg-blue-50/30 transition-colors`}>
                                         <th
                                           scope="row"
-                                          className="py-2.5 px-4 border-r border-gray-200 font-semibold text-gray-700 bg-gray-50/80 uppercase text-[11px] tracking-wide text-left align-middle w-2/5 md:w-1/3"
+                                          className="py-2.5 px-4 print:py-0.5 print:px-2 border-r border-gray-200 font-semibold text-gray-700 bg-gray-50/80 uppercase text-[11px] print:text-[9px] tracking-wide text-left align-middle w-2/5 md:w-1/3"
                                         >
                                           {row.label}
                                         </th>
-                                        <td className="py-2.5 px-4 text-gray-900 font-mono text-xs align-middle">
+                                        <td className="py-2.5 px-4 print:py-0.5 print:px-2 text-gray-900 font-mono text-xs print:text-[9.5px] align-middle">
                                           {renderVerticalCellValue(row)}
                                         </td>
                                       </tr>
@@ -699,11 +1098,11 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                         ) : (
                           /* Type 2: Horizontal Table (Parameter header is on the first row, models in rows below) */
                           <div className="overflow-x-auto border border-gray-200">
-                            <table className="w-full text-left text-xs font-mono border-collapse">
+                            <table className="w-full text-left text-xs print:text-[9.5px] font-mono border-collapse">
                               <thead>
-                                <tr className="bg-gray-100 border-b border-gray-300 text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                                <tr className="bg-gray-100 border-b border-gray-300 text-[11px] print:text-[9px] font-bold text-gray-700 uppercase tracking-wider">
                                   {horizontalParams.map((pKey) => (
-                                    <th key={pKey} className="py-2.5 px-3 border-r border-gray-200 last:border-r-0 whitespace-nowrap align-bottom">
+                                    <th key={pKey} className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-gray-200 last:border-r-0 whitespace-nowrap align-bottom">
                                       {renderParamHeader(PARAM_LABELS[pKey] || pKey, false)}
                                     </th>
                                   ))}
@@ -712,7 +1111,7 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                               <tbody className="divide-y divide-gray-200">
                                 {skus.length === 0 ? (
                                   <tr>
-                                    <td colSpan={horizontalParams.length} className="text-center py-6 text-gray-400">
+                                    <td colSpan={horizontalParams.length} className="text-center py-6 print:py-2 text-gray-400">
                                       No models found for this family.
                                     </td>
                                   </tr>
@@ -722,7 +1121,7 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                                     return (
                                       <tr key={sku.id || sIdx} className={`${rowBg} hover:bg-blue-50/30 transition-colors`}>
                                         {horizontalParams.map((pKey) => (
-                                          <td key={pKey} className="py-2 px-3 border-r border-gray-200 last:border-r-0 whitespace-nowrap text-gray-800 align-middle">
+                                          <td key={pKey} className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-gray-200 last:border-r-0 whitespace-nowrap text-gray-800 align-middle">
                                             {renderSkuCell(sku, pKey)}
                                           </td>
                                         ))}
@@ -746,12 +1145,24 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
 
                   {/* Additional Content Blocks on this Page */}
                   {contents.length > 0 && (
-                    <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col gap-6">
+                    <div className="mt-8 print:mt-3 pt-6 print:pt-3 border-t border-gray-200 flex flex-col gap-6 print:gap-3">
                       {contents.map((blk: any, bIdx: number) => {
                         switch (blk.blockType) {
+                          case 'datasheetCustomContent':
+                          case 'datasheetRichText':
+                            return (
+                              <div key={bIdx} className="p-4 print:p-2.5 border border-gray-200 bg-white">
+                                {blk.title && (
+                                  <h3 className="text-xs print:text-[11px] font-bold uppercase tracking-wider text-[#005288] mb-2 border-b border-gray-200 pb-1.5">
+                                    {blk.title}
+                                  </h3>
+                                )}
+                                <CustomContentRenderer blk={blk} />
+                              </div>
+                            );
                           case 'datasheetText':
                             return (
-                              <div key={bIdx} className="bg-gray-50 p-4 border border-gray-200">
+                              <div key={bIdx} className="bg-gray-50 p-4 print:p-2.5 border border-gray-200">
                                 {blk.title && (
                                   <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 mb-2">
                                     {blk.title}
@@ -857,8 +1268,8 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                   )}
                 </div>
 
-                {/* Page Footer */}
-                <div className="pt-6 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400 font-mono">
+                {/* Page Footer - Always stuck to bottom */}
+                <div className="pt-6 print:pt-2 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400 font-mono mt-8 print:mt-auto">
                   <div>
                     {datasheet.notes || 'Specifications are subject to change without prior notice. MEGAMAN® is a registered trademark.'}
                   </div>
