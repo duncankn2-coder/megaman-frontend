@@ -899,373 +899,444 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                     </div>
                   </div>
 
-                  {/* Specification Tables for this Page */}
-                  {tables.map((table: any, tIdx: number) => {
-                    const tableName = table.tableName || `Table ${tIdx + 1}`;
-                    const tableDesc = table.tableDescription;
-                    const footnote = table.tableFootnote;
-                    const isVertical = table.tableType === 'vertical';
+                  {/* Dynamic Ordered Sections: Tables & Content Blocks */}
+                  {(() => {
+                    const sectionOrder = page.sectionOrder || 'tablesFirst';
 
-                    // Prepare rows for Type 1 (Vertical Table: Parameter header in 1st column, single value column next to it)
-                    const verticalRows: { label: string; value: string; pKey?: string }[] = [];
-                    if (isVertical) {
-                      const selectedParams: string[] = table.selectedParameters || [
-                        'voltage',
-                        'frequency',
+                    const renderSpecificationTable = (table: any, tIdx: number) => {
+                      const tableName = table.tableName || `Table ${tIdx + 1}`;
+                      const tableDesc = table.tableDescription;
+                      const footnote = table.tableFootnote;
+                      const isVertical = table.tableType === 'vertical';
+
+                      // Prepare rows for Type 1 (Vertical Table: Parameter header in 1st column, single value column next to it)
+                      const verticalRows: { label: string; value: string; pKey?: string }[] = [];
+                      if (isVertical) {
+                        const selectedParams: string[] = table.selectedParameters || [
+                          'voltage',
+                          'frequency',
+                          'ip',
+                          'ik',
+                          'protectionClass',
+                          'housingMaterial',
+                          'operatingTemperature',
+                          'lifetime',
+                        ];
+
+                        // 1. Add selected parameters resolved across SKUs / family
+                        selectedParams.forEach((pKey) => {
+                          verticalRows.push({
+                            pKey,
+                            label: PARAM_LABELS[pKey] || pKey,
+                            value: getFamilySpecValue(skus, family, pKey),
+                          });
+                        });
+
+                        // 2. Add custom parameter-value rows if defined in CMS
+                        if (table.customRows && Array.isArray(table.customRows)) {
+                          table.customRows.forEach((cr: any) => {
+                            if (cr?.parameter) {
+                              verticalRows.push({
+                                label: cr.parameter,
+                                value: cr.value || '—',
+                              });
+                            }
+                          });
+                        }
+                      }
+
+                      // Parameters for Type 2 (Horizontal Table: Parameter headers in 1st row, models in rows below)
+                      const horizontalParams: string[] = table.selectedParameters || [
+                        'mmCode',
+                        'modelNo',
+                        'wattage',
+                        'luminousFlux',
+                        'colourTemperature',
                         'ip',
-                        'ik',
-                        'protectionClass',
-                        'housingMaterial',
-                        'operatingTemperature',
-                        'lifetime',
                       ];
 
-                      // 1. Add selected parameters resolved across SKUs / family
-                      selectedParams.forEach((pKey) => {
-                        verticalRows.push({
-                          pKey,
-                          label: PARAM_LABELS[pKey] || pKey,
-                          value: getFamilySpecValue(skus, family, pKey),
-                        });
-                      });
-
-                      // 2. Add custom parameter-value rows if defined in CMS
-                      if (table.customRows && Array.isArray(table.customRows)) {
-                        table.customRows.forEach((cr: any) => {
-                          if (cr?.parameter) {
-                            verticalRows.push({
-                              label: cr.parameter,
-                              value: cr.value || '—',
-                            });
+                      const renderSkuCell = (sku: any, pKey: string) => {
+                        if (pKey === 'colourTemperature') {
+                          const rawCct = getRawSpecValue(sku, 'colourTemperature');
+                          const ccts = parseCCT(rawCct);
+                          if (ccts.length > 1) {
+                            return (
+                              <div className="flex flex-col">
+                                {ccts.map((c, i) => (
+                                  <div key={i} className="py-1 border-b border-gray-100 last:border-b-0 whitespace-nowrap leading-tight text-center md:text-left">
+                                    {c}
+                                  </div>
+                                ))}
+                              </div>
+                            );
                           }
-                        });
-                      }
-                    }
+                          return <span>{ccts[0] || getSpecValue(sku, 'colourTemperature')}</span>;
+                        }
 
-                    // Parameters for Type 2 (Horizontal Table: Parameter headers in 1st row, models in rows below)
-                    const horizontalParams: string[] = table.selectedParameters || [
-                      'mmCode',
-                      'modelNo',
-                      'wattage',
-                      'luminousFlux',
-                      'colourTemperature',
-                      'ip',
-                    ];
+                        if (pKey === 'luminousFlux') {
+                          const rawCct = getRawSpecValue(sku, 'colourTemperature');
+                          const rawFlux = getRawSpecValue(sku, 'luminousFlux');
+                          const ccts = parseCCT(rawCct);
+                          const fluxes = parseFlux(rawFlux, ccts);
+                          if (ccts.length > 1 || fluxes.length > 1) {
+                            return (
+                              <div className="flex flex-col">
+                                {fluxes.map((f, i) => (
+                                  <div key={i} className="py-1 border-b border-gray-100 last:border-b-0 whitespace-nowrap leading-tight text-center md:text-left">
+                                    {f}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return <span>{fluxes[0] || getSpecValue(sku, 'luminousFlux')}</span>;
+                        }
 
-                    const renderSkuCell = (sku: any, pKey: string) => {
-                      if (pKey === 'colourTemperature') {
-                        const rawCct = getRawSpecValue(sku, 'colourTemperature');
-                        const ccts = parseCCT(rawCct);
-                        if (ccts.length > 1) {
-                          return (
-                            <div className="flex flex-col">
-                              {ccts.map((c, i) => (
-                                <div key={i} className="py-1 border-b border-gray-100 last:border-b-0 whitespace-nowrap leading-tight text-center md:text-left">
-                                  {c}
-                                </div>
-                              ))}
+                        return <span>{getSpecValue(sku, pKey)}</span>;
+                      };
+
+                      const renderVerticalCellValue = (row: { label: string; value: string; pKey?: string }) => {
+                        if (row.pKey === 'colourTemperature' || /cct|colour\s*temp/i.test(row.label)) {
+                          const ccts = parseCCT(row.value);
+                          if (ccts.length > 1) {
+                            return (
+                              <div className="flex flex-col">
+                                {ccts.map((c, i) => (
+                                  <div key={i} className="py-1 border-b border-gray-100 last:border-b-0 leading-tight">
+                                    {c}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return <span>{ccts[0] || row.value}</span>;
+                        }
+
+                        if (row.pKey === 'luminousFlux' || /luminous\s*flux|flux/i.test(row.label)) {
+                          const fluxes = parseFlux(row.value, []);
+                          if (fluxes.length > 1) {
+                            return (
+                              <div className="flex flex-col">
+                                {fluxes.map((f, i) => (
+                                  <div key={i} className="py-1 border-b border-gray-100 last:border-b-0 leading-tight">
+                                    {f}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return <span>{fluxes[0] || row.value}</span>;
+                        }
+
+                        const { unit } = splitParamAndUnit(row.label);
+                        let val = row.value;
+                        if (unit && val && val !== '—') {
+                          const cleanUnit = unit.replace(/[()[\]]/g, '').trim();
+                          if (cleanUnit) {
+                            const regex = new RegExp(`\\s*${cleanUnit.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                            val = val.replace(regex, '').trim();
+                          }
+                        }
+
+                        return <span>{val}</span>;
+                      };
+
+                      return (
+                        <div key={`table-${tIdx}`} className="w-full">
+                          {/* Table Heading */}
+                          <div className="mb-3 print:mb-1">
+                            <h2 className="text-sm print:text-xs font-bold uppercase tracking-wider text-[#005288]">
+                              {tableName}
+                            </h2>
+                            {tableDesc && (
+                              <p className="text-xs print:text-[10px] text-gray-500 font-light mt-0.5">
+                                {tableDesc}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Render Table based on Type */}
+                          {isVertical ? (
+                            /* Type 1: Vertical Table */
+                            <div className="overflow-x-auto border border-gray-200">
+                              <table className="w-full text-left text-xs print:text-[9.5px] font-mono border-collapse">
+                                <thead>
+                                  <tr className="bg-gray-100 border-b border-gray-300 text-[11px] print:text-[9px] font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="py-2.5 px-4 print:py-0.5 print:px-2 border-r border-gray-200 w-2/5 md:w-1/3">
+                                      Parameter
+                                    </th>
+                                    <th className="py-2.5 px-4 print:py-0.5 print:px-2">
+                                      Value
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                  {verticalRows.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={2} className="text-center py-6 print:py-2 text-gray-400">
+                                        No parameters configured for this table.
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    verticalRows.map((row, rIdx) => {
+                                      const rowBg = rIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50';
+                                      return (
+                                        <tr key={rIdx} className={`${rowBg} hover:bg-blue-50/30 transition-colors`}>
+                                          <th
+                                            scope="row"
+                                            className="py-2.5 px-4 print:py-0.5 print:px-2 border-r border-gray-200 font-semibold text-gray-700 bg-gray-50/80 uppercase text-[11px] print:text-[9px] tracking-wide text-left align-middle w-2/5 md:w-1/3"
+                                          >
+                                            {row.label}
+                                          </th>
+                                          <td className="py-2.5 px-4 print:py-0.5 print:px-2 text-gray-900 font-mono text-xs print:text-[9.5px] align-middle">
+                                            {renderVerticalCellValue(row)}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
-                          );
-                        }
-                        return <span>{ccts[0] || getSpecValue(sku, 'colourTemperature')}</span>;
-                      }
-
-                      if (pKey === 'luminousFlux') {
-                        const rawCct = getRawSpecValue(sku, 'colourTemperature');
-                        const rawFlux = getRawSpecValue(sku, 'luminousFlux');
-                        const ccts = parseCCT(rawCct);
-                        const fluxes = parseFlux(rawFlux, ccts);
-                        if (ccts.length > 1 || fluxes.length > 1) {
-                          return (
-                            <div className="flex flex-col">
-                              {fluxes.map((f, i) => (
-                                <div key={i} className="py-1 border-b border-gray-100 last:border-b-0 whitespace-nowrap leading-tight text-center md:text-left">
-                                  {f}
-                                </div>
-                              ))}
+                          ) : (
+                            /* Type 2: Horizontal Table */
+                            <div className="overflow-x-auto border border-gray-200">
+                              <table className="w-full text-left text-xs print:text-[9.5px] font-mono border-collapse">
+                                <thead>
+                                  <tr className="bg-gray-100 border-b border-gray-300 text-[11px] print:text-[9px] font-bold text-gray-700 uppercase tracking-wider">
+                                    {horizontalParams.map((pKey) => (
+                                      <th key={pKey} className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-gray-200 last:border-r-0 whitespace-nowrap align-bottom">
+                                        {renderParamHeader(PARAM_LABELS[pKey] || pKey, false)}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                  {skus.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={horizontalParams.length} className="text-center py-6 print:py-2 text-gray-400">
+                                        No models found for this family.
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    skus.map((sku: any, sIdx: number) => {
+                                      const rowBg = sIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/60';
+                                      return (
+                                        <tr key={sku.id || sIdx} className={`${rowBg} hover:bg-blue-50/30 transition-colors`}>
+                                          {horizontalParams.map((pKey) => (
+                                            <td key={pKey} className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-gray-200 last:border-r-0 whitespace-nowrap text-gray-800 align-middle">
+                                              {renderSkuCell(sku, pKey)}
+                                            </td>
+                                          ))}
+                                        </tr>
+                                      );
+                                    })
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
-                          );
-                        }
-                        return <span>{fluxes[0] || getSpecValue(sku, 'luminousFlux')}</span>;
-                      }
+                          )}
 
-                      return <span>{getSpecValue(sku, pKey)}</span>;
-                    };
-
-                    const renderVerticalCellValue = (row: { label: string; value: string; pKey?: string }) => {
-                      if (row.pKey === 'colourTemperature' || /cct|colour\s*temp/i.test(row.label)) {
-                        const ccts = parseCCT(row.value);
-                        if (ccts.length > 1) {
-                          return (
-                            <div className="flex flex-col">
-                              {ccts.map((c, i) => (
-                                <div key={i} className="py-1 border-b border-gray-100 last:border-b-0 leading-tight">
-                                  {c}
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        }
-                        return <span>{ccts[0] || row.value}</span>;
-                      }
-
-                      if (row.pKey === 'luminousFlux' || /luminous\s*flux|flux/i.test(row.label)) {
-                        const fluxes = parseFlux(row.value, []);
-                        if (fluxes.length > 1) {
-                          return (
-                            <div className="flex flex-col">
-                              {fluxes.map((f, i) => (
-                                <div key={i} className="py-1 border-b border-gray-100 last:border-b-0 leading-tight">
-                                  {f}
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        }
-                        return <span>{fluxes[0] || row.value}</span>;
-                      }
-
-                      const { unit } = splitParamAndUnit(row.label);
-                      let val = row.value;
-                      if (unit && val && val !== '—') {
-                        const cleanUnit = unit.replace(/[()[\]]/g, '').trim();
-                        if (cleanUnit) {
-                          const regex = new RegExp(`\\s*${cleanUnit.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-                          val = val.replace(regex, '').trim();
-                        }
-                      }
-
-                      return <span>{val}</span>;
-                    };
-
-                    return (
-                      <div key={`table-${tIdx}`} className="mb-8 print:mb-3">
-                        {/* Table Heading */}
-                        <div className="mb-3 print:mb-1">
-                          <h2 className="text-sm print:text-xs font-bold uppercase tracking-wider text-[#005288]">
-                            {tableName}
-                          </h2>
-                          {tableDesc && (
-                            <p className="text-xs print:text-[10px] text-gray-500 font-light mt-0.5">
-                              {tableDesc}
+                          {footnote && (
+                            <p className="text-[10px] text-gray-400 mt-1.5 italic font-mono">
+                              {footnote}
                             </p>
                           )}
                         </div>
+                      );
+                    };
 
-                        {/* Render Table based on Type */}
-                        {isVertical ? (
-                          /* Type 1: Vertical Table (Parameter header is in the first column, single value column next to it) */
-                          <div className="overflow-x-auto border border-gray-200">
-                            <table className="w-full text-left text-xs print:text-[9.5px] font-mono border-collapse">
-                              <thead>
-                                <tr className="bg-gray-100 border-b border-gray-300 text-[11px] print:text-[9px] font-bold text-gray-700 uppercase tracking-wider">
-                                  <th className="py-2.5 px-4 print:py-0.5 print:px-2 border-r border-gray-200 w-2/5 md:w-1/3">
-                                    Parameter
-                                  </th>
-                                  <th className="py-2.5 px-4 print:py-0.5 print:px-2">
-                                    Value
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-200">
-                                {verticalRows.length === 0 ? (
-                                  <tr>
-                                    <td colSpan={2} className="text-center py-6 print:py-2 text-gray-400">
-                                      No parameters configured for this table.
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  verticalRows.map((row, rIdx) => {
-                                    const rowBg = rIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50';
-                                    return (
-                                      <tr key={rIdx} className={`${rowBg} hover:bg-blue-50/30 transition-colors`}>
-                                        <th
-                                          scope="row"
-                                          className="py-2.5 px-4 print:py-0.5 print:px-2 border-r border-gray-200 font-semibold text-gray-700 bg-gray-50/80 uppercase text-[11px] print:text-[9px] tracking-wide text-left align-middle w-2/5 md:w-1/3"
-                                        >
-                                          {row.label}
-                                        </th>
-                                        <td className="py-2.5 px-4 print:py-0.5 print:px-2 text-gray-900 font-mono text-xs print:text-[9.5px] align-middle">
-                                          {renderVerticalCellValue(row)}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-                        ) : (
-                          /* Type 2: Horizontal Table (Parameter header is on the first row, models in rows below) */
-                          <div className="overflow-x-auto border border-gray-200">
-                            <table className="w-full text-left text-xs print:text-[9.5px] font-mono border-collapse">
-                              <thead>
-                                <tr className="bg-gray-100 border-b border-gray-300 text-[11px] print:text-[9px] font-bold text-gray-700 uppercase tracking-wider">
-                                  {horizontalParams.map((pKey) => (
-                                    <th key={pKey} className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-gray-200 last:border-r-0 whitespace-nowrap align-bottom">
-                                      {renderParamHeader(PARAM_LABELS[pKey] || pKey, false)}
-                                    </th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-200">
-                                {skus.length === 0 ? (
-                                  <tr>
-                                    <td colSpan={horizontalParams.length} className="text-center py-6 print:py-2 text-gray-400">
-                                      No models found for this family.
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  skus.map((sku: any, sIdx: number) => {
-                                    const rowBg = sIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/60';
-                                    return (
-                                      <tr key={sku.id || sIdx} className={`${rowBg} hover:bg-blue-50/30 transition-colors`}>
-                                        {horizontalParams.map((pKey) => (
-                                          <td key={pKey} className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-gray-200 last:border-r-0 whitespace-nowrap text-gray-800 align-middle">
-                                            {renderSkuCell(sku, pKey)}
-                                          </td>
-                                        ))}
-                                      </tr>
-                                    );
-                                  })
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
+                    const renderContentBlock = (blk: any, bIdx: number) => {
+                      switch (blk.blockType) {
+                        case 'datasheetCustomContent':
+                        case 'datasheetRichText':
+                          return (
+                            <div key={`blk-${bIdx}`} className="p-4 print:p-2.5 border border-gray-200 bg-white w-full">
+                              {blk.title && (
+                                <h3 className="text-xs print:text-[11px] font-bold uppercase tracking-wider text-[#005288] mb-2 border-b border-gray-200 pb-1.5">
+                                  {blk.title}
+                                </h3>
+                              )}
+                              <CustomContentRenderer blk={blk} />
+                            </div>
+                          );
+                        case 'datasheetText':
+                          return (
+                            <div key={`blk-${bIdx}`} className="bg-gray-50 p-4 print:p-2.5 border border-gray-200 w-full">
+                              {blk.title && (
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 mb-2">
+                                  {blk.title}
+                                </h3>
+                              )}
+                              <p className="text-xs text-gray-600 leading-relaxed font-light whitespace-pre-line">
+                                {blk.content}
+                              </p>
+                            </div>
+                          );
+                        case 'datasheetDrawing':
+                          return (
+                            <div key={`blk-${bIdx}`} className="flex flex-col items-center p-4 border border-gray-200 bg-white w-full">
+                              {blk.title && (
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-[#005288] mb-3 self-start">
+                                  {blk.title}
+                                </h3>
+                              )}
+                              <div className="relative w-full max-w-md h-56">
+                                <Image
+                                  src={getImageUrl(blk.image)}
+                                  alt={blk.caption || 'Dimensional Drawing'}
+                                  fill
+                                  className="object-contain"
+                                  unoptimized
+                                />
+                              </div>
+                              {blk.caption && (
+                                <p className="text-[11px] text-gray-500 mt-2 text-center font-mono">
+                                  {blk.caption}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        case 'datasheetPhotometry':
+                          return (
+                            <div key={`blk-${bIdx}`} className="flex flex-col items-center p-4 border border-gray-200 bg-white w-full">
+                              {blk.title && (
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-[#005288] mb-3 self-start">
+                                  {blk.title}
+                                </h3>
+                              )}
+                              <div className="relative w-full max-w-sm h-48">
+                                <Image
+                                  src={getImageUrl(blk.image)}
+                                  alt={blk.caption || 'Photometrics Diagram'}
+                                  fill
+                                  className="object-contain"
+                                  unoptimized
+                                />
+                              </div>
+                              {blk.caption && (
+                                <p className="text-[11px] text-gray-500 mt-2 text-center font-mono">
+                                  {blk.caption}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        case 'datasheetFeatures':
+                          return (
+                            <div key={`blk-${bIdx}`} className="p-4 border border-gray-200 bg-white w-full">
+                              {blk.title && (
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 mb-2">
+                                  {blk.title}
+                                </h3>
+                              )}
+                              <ul className="list-disc list-inside text-xs text-gray-600 space-y-1 font-light">
+                                {(blk.items || []).map((item: any, iIdx: number) => (
+                                  <li key={iIdx}>{item.feature}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        case 'datasheetSymbols':
+                          return (
+                            <div key={`blk-${bIdx}`} className="p-4 border border-gray-200 bg-white w-full">
+                              {blk.title && (
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 mb-3">
+                                  {blk.title}
+                                </h3>
+                              )}
+                              <div className="flex flex-wrap gap-3 items-center">
+                                {(blk.symbols || []).map((sym: any, sIdx: number) => {
+                                  const symName = typeof sym === 'object' ? sym.name : sym;
+                                  const iconUrl = typeof sym === 'object' && sym.icon ? getImageUrl(sym.icon) : '';
+                                  return (
+                                    <div key={sIdx} className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-mono">
+                                      {iconUrl && iconUrl !== '/placeholder.png' && (
+                                        <img src={iconUrl} alt={symName} className="h-4 w-4 object-contain" />
+                                      )}
+                                      <span>{symName}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        default:
+                          return null;
+                      }
+                    };
 
-                        {footnote && (
-                          <p className="text-[10px] text-gray-400 mt-1.5 italic font-mono">
-                            {footnote}
-                          </p>
-                        )}
+                    // Assemble unified sections list with priorities
+                    type SectionEntry = {
+                      id: string;
+                      priority: number;
+                      render: () => React.ReactNode;
+                    };
+                    const sectionList: SectionEntry[] = [];
+
+                    // 1. Process Tables
+                    tables.forEach((table: any, tIdx: number) => {
+                      let defaultPriority = 100 + tIdx;
+                      if (sectionOrder === 'tablesFirst') {
+                        defaultPriority = 10 + tIdx;
+                      } else if (sectionOrder === 'customContentFirst') {
+                        defaultPriority = 200 + tIdx;
+                      }
+
+                      const priority = typeof table.displayPriority === 'number'
+                        ? table.displayPriority
+                        : defaultPriority;
+
+                      sectionList.push({
+                        id: `table-${tIdx}`,
+                        priority,
+                        render: () => renderSpecificationTable(table, tIdx),
+                      });
+                    });
+
+                    // 2. Process Content Blocks
+                    contents.forEach((blk: any, bIdx: number) => {
+                      let defaultPriority = 200 + bIdx;
+                      if (sectionOrder === 'customContentFirst') {
+                        defaultPriority = 10 + bIdx;
+                      } else if (sectionOrder === 'tablesFirst') {
+                        defaultPriority = 200 + bIdx;
+                      }
+
+                      // Check explicit placement setting on the block
+                      if (blk.placement === 'top') {
+                        defaultPriority = 1 + bIdx;
+                      } else if (blk.placement === 'bottom') {
+                        defaultPriority = 500 + bIdx;
+                      }
+
+                      const priority = typeof blk.displayPriority === 'number'
+                        ? blk.displayPriority
+                        : defaultPriority;
+
+                      sectionList.push({
+                        id: `block-${bIdx}`,
+                        priority,
+                        render: () => renderContentBlock(blk, bIdx),
+                      });
+                    });
+
+                    // Sort by priority (lowest number first)
+                    sectionList.sort((a, b) => a.priority - b.priority);
+
+                    if (sectionList.length === 0) {
+                      return null;
+                    }
+
+                    return (
+                      <div className="flex flex-col gap-6 print:gap-3">
+                        {sectionList.map((sec) => (
+                          <div key={sec.id}>
+                            {sec.render()}
+                          </div>
+                        ))}
                       </div>
                     );
-                  })}
-
-                  {/* Additional Content Blocks on this Page */}
-                  {contents.length > 0 && (
-                    <div className="mt-8 print:mt-3 pt-6 print:pt-3 border-t border-gray-200 flex flex-col gap-6 print:gap-3">
-                      {contents.map((blk: any, bIdx: number) => {
-                        switch (blk.blockType) {
-                          case 'datasheetCustomContent':
-                          case 'datasheetRichText':
-                            return (
-                              <div key={bIdx} className="p-4 print:p-2.5 border border-gray-200 bg-white">
-                                {blk.title && (
-                                  <h3 className="text-xs print:text-[11px] font-bold uppercase tracking-wider text-[#005288] mb-2 border-b border-gray-200 pb-1.5">
-                                    {blk.title}
-                                  </h3>
-                                )}
-                                <CustomContentRenderer blk={blk} />
-                              </div>
-                            );
-                          case 'datasheetText':
-                            return (
-                              <div key={bIdx} className="bg-gray-50 p-4 print:p-2.5 border border-gray-200">
-                                {blk.title && (
-                                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 mb-2">
-                                    {blk.title}
-                                  </h3>
-                                )}
-                                <p className="text-xs text-gray-600 leading-relaxed font-light whitespace-pre-line">
-                                  {blk.content}
-                                </p>
-                              </div>
-                            );
-                          case 'datasheetDrawing':
-                            return (
-                              <div key={bIdx} className="flex flex-col items-center p-4 border border-gray-200 bg-white">
-                                {blk.title && (
-                                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#005288] mb-3 self-start">
-                                    {blk.title}
-                                  </h3>
-                                )}
-                                <div className="relative w-full max-w-md h-56">
-                                  <Image
-                                    src={getImageUrl(blk.image)}
-                                    alt={blk.caption || 'Dimensional Drawing'}
-                                    fill
-                                    className="object-contain"
-                                    unoptimized
-                                  />
-                                </div>
-                                {blk.caption && (
-                                  <p className="text-[11px] text-gray-500 mt-2 text-center font-mono">
-                                    {blk.caption}
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          case 'datasheetPhotometry':
-                            return (
-                              <div key={bIdx} className="flex flex-col items-center p-4 border border-gray-200 bg-white">
-                                {blk.title && (
-                                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#005288] mb-3 self-start">
-                                    {blk.title}
-                                  </h3>
-                                )}
-                                <div className="relative w-full max-w-sm h-48">
-                                  <Image
-                                    src={getImageUrl(blk.image)}
-                                    alt={blk.caption || 'Photometrics Diagram'}
-                                    fill
-                                    className="object-contain"
-                                    unoptimized
-                                  />
-                                </div>
-                                {blk.caption && (
-                                  <p className="text-[11px] text-gray-500 mt-2 text-center font-mono">
-                                    {blk.caption}
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          case 'datasheetFeatures':
-                            return (
-                              <div key={bIdx} className="p-4 border border-gray-200 bg-white">
-                                {blk.title && (
-                                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 mb-2">
-                                    {blk.title}
-                                  </h3>
-                                )}
-                                <ul className="list-disc list-inside text-xs text-gray-600 space-y-1 font-light">
-                                  {(blk.items || []).map((item: any, iIdx: number) => (
-                                    <li key={iIdx}>{item.feature}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            );
-                          case 'datasheetSymbols':
-                            return (
-                              <div key={bIdx} className="p-4 border border-gray-200 bg-white">
-                                {blk.title && (
-                                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800 mb-3">
-                                    {blk.title}
-                                  </h3>
-                                )}
-                                <div className="flex flex-wrap gap-3 items-center">
-                                  {(blk.symbols || []).map((sym: any, sIdx: number) => {
-                                    const symName = typeof sym === 'object' ? sym.name : sym;
-                                    const iconUrl = typeof sym === 'object' && sym.icon ? getImageUrl(sym.icon) : '';
-                                    return (
-                                      <div key={sIdx} className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-2.5 py-1 text-xs font-mono">
-                                        {iconUrl && iconUrl !== '/placeholder.png' && (
-                                          <img src={iconUrl} alt={symName} className="h-4 w-4 object-contain" />
-                                        )}
-                                        <span>{symName}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            );
-                          default:
-                            return null;
-                        }
-                      })}
-                    </div>
-                  )}
+                  })()}
                 </div>
 
                 {/* Page Footer - Always stuck to bottom */}
