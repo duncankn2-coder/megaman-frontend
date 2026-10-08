@@ -1646,7 +1646,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   onChange={(e) => setVoltageFilter(e.target.value)}
                   className="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-2.5 focus:outline-none focus:border-[#005288] transition-all cursor-pointer font-mono shadow-sm"
                 >
-                  <option value="All">All Voltages</option>
+                  <option value="All">All Voltages (V)</option>
                   {filtersData.voltages.map(voltVal => (
                     <option key={voltVal} value={voltVal}>{voltVal}</option>
                   ))}
@@ -1683,24 +1683,24 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {activeParams.includes('mmCode') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">MM Code</th>}
                     {activeParams.includes('modelNo') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">Model No.</th>}
                     {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">Finish / Colour</th>}
-                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Power</th>}
-                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Luminous Flux</th>}
+                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Power (W)</th>}
+                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Luminous Flux (lm)</th>}
                     {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">CCT (K)</th>}
-                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">CRI</th>}
-                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Efficacy</th>}
+                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">CRI (Ra)</th>}
+                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Efficacy (lm/W)</th>}
                     {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">IP</th>}
                     {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Control Gear</th>}
                     {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Lamp Base</th>}
-                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Voltage</th>}
-                    {activeParams.includes('inrushCurrent') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Inrush Current</th>}
-                    {activeParams.includes('inrushDuration') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Inrush Duration</th>}
+                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Voltage (V)</th>}
+                    {activeParams.includes('inrushCurrent') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Inrush Current (A)</th>}
+                    {activeParams.includes('inrushDuration') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Inrush Duration (µs)</th>}
                     {activeParams.includes('maxNoOfLuminaire') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Max. Luminaires on MCB</th>}
                     {activeParams.includes('mcbB10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB B10</th>}
                     {activeParams.includes('mcbB16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB B16</th>}
                     {activeParams.includes('mcbC10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB C10</th>}
                     {activeParams.includes('mcbC16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB C16</th>}
-                    {activeParams.includes('thd') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">THD</th>}
-                    {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Symbols</th>}
+                    {activeParams.includes('thd') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">THD (%)</th>}
+                    {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Features</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200/70 text-gray-700">
@@ -2128,7 +2128,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   return (
                                     <div className="pt-4 border-t border-gray-200 space-y-2">
                                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] font-sans">
-                                        Certifications & Symbols
+                                        Certifications & Features
                                       </h4>
                                       <div className="flex flex-wrap gap-3 items-center">
                                         {drawerSymbols.map((symbol) => {
@@ -2245,7 +2245,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           return (
                             <div className="space-y-2">
                               <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
-                                Symbols & Certifications
+                                Features & Certifications
                               </h4>
                               <div className="py-2 flex flex-wrap items-center gap-3">
                                 {drawerSymbols.map(symbol => {

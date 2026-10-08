@@ -62,7 +62,7 @@ const PARAM_LABELS: Record<string, string> = {
   glowWire: 'Glow Wire (°C)',
   operatingTemperature: 'Operating Temp (°C)',
   standards: 'Standards Compliance',
-  symbols: 'Symbols',
+  symbols: 'Features',
   emergencyPower: 'Emergency Power (W)',
   emergencyDuration: 'Emergency Duration (h)',
   emergencyBattery: 'Emergency Battery Type',
