@@ -1677,6 +1677,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Control Gear</th>}
                     {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Lamp Base</th>}
                     {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Voltage</th>}
+                    {activeParams.includes('inrushCurrent') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Inrush Current</th>}
+                    {activeParams.includes('inrushDuration') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Inrush Duration</th>}
+                    {activeParams.includes('maxNoOfLuminaire') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Max. Luminaires on MCB</th>}
+                    {activeParams.includes('mcbB10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB B10</th>}
+                    {activeParams.includes('mcbB16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB B16</th>}
+                    {activeParams.includes('mcbC10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB C10</th>}
+                    {activeParams.includes('mcbC16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB C16</th>}
+                    {activeParams.includes('thd') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">THD</th>}
                     {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Symbols</th>}
                   </tr>
                 </thead>
@@ -1811,6 +1819,46 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               {activeParams.includes('voltage') && isFirst && (
                                 <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['rated_voltage_v', 'voltage', 'Voltage'], '—')}
+                                </td>
+                              )}
+                              {activeParams.includes('inrushCurrent') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getRawSkuSpec(sku, ['inrush_current_a', 'inrushCurrent']) ? `${getRawSkuSpec(sku, ['inrush_current_a', 'inrushCurrent'])} A` : '—'}
+                                </td>
+                              )}
+                              {activeParams.includes('inrushDuration') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getRawSkuSpec(sku, ['inrush_current_duration_uS', 'inrushDuration']) ? `${getRawSkuSpec(sku, ['inrush_current_duration_uS', 'inrushDuration'])} μs` : '—'}
+                                </td>
+                              )}
+                              {activeParams.includes('maxNoOfLuminaire') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getRawSkuSpec(sku, ['max_no_lum', 'maxNoOfLuminaire']) || '—'}
+                                </td>
+                              )}
+                              {activeParams.includes('mcbB10') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getRawSkuSpec(sku, ['mcb_b10', 'mcbB10']) || '—'}
+                                </td>
+                              )}
+                              {activeParams.includes('mcbB16') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getRawSkuSpec(sku, ['mcb_b16', 'mcbB16']) || '—'}
+                                </td>
+                              )}
+                              {activeParams.includes('mcbC10') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getRawSkuSpec(sku, ['mcb_c10', 'mcbC10']) || '—'}
+                                </td>
+                              )}
+                              {activeParams.includes('mcbC16') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getRawSkuSpec(sku, ['mcb_c16', 'mcbC16']) || '—'}
+                                </td>
+                              )}
+                              {activeParams.includes('thd') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getRawSkuSpec(sku, ['thd']) ? (getRawSkuSpec(sku, ['thd']).includes('%') ? getRawSkuSpec(sku, ['thd']) : `${getRawSkuSpec(sku, ['thd'])}%`) : '—'}
                                 </td>
                               )}
                               {showSymbolsColumn && isFirst && (

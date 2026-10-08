@@ -28,19 +28,45 @@ const PARAM_LABELS: Record<string, string> = {
   frequency: 'Frequency (Hz)',
   inputCurrent: 'Input Current (mA)',
   powerFactor: 'Power Factor',
+  displacementFactor: 'Displacement Factor',
+  thd: 'THD (%)',
+  inrushCurrent: 'Inrush Current (A)',
+  inrushDuration: 'Inrush Duration (µs)',
+  maxNoOfLuminaire: 'Max. No. of Luminaire connection on MCB',
+  mcbB10: 'Max. Luminaires on MCB Type B10',
+  mcbB16: 'Max. Luminaires on MCB Type B16',
+  mcbC10: 'Max. Luminaires on MCB Type C10',
+  mcbC16: 'Max. Luminaires on MCB Type C16',
+  surgeProtection: 'Surge Protection (V)',
+  outputVoltage: 'Output Voltage (V)',
+  outputCurrent: 'Output Current (mA)',
+  colourConsistency: 'Colour Consistency (SDCM)',
+  ugr: 'UGR',
+  maxIntensity: 'Max. Intensity (cd)',
+  cutoffAngle: 'Cut-off Angle (°)',
+  flickerMetric: 'Flicker Metric (Pst LM)',
+  svm: 'SVM',
+  photobiologicalRisk: 'Photobiological Safety',
   lampBase: 'Lamp Base',
   dimensions: 'Dimensions (mm)',
   recessedCutOut: 'Cut-out (mm)',
   weight: 'Weight (g)',
+  shape: 'Shape',
+  housingMaterial: 'Housing Material',
+  diffuserMaterial: 'Optics Material',
+  mounting: 'Mounting / Installation',
   lifetime: 'Lifetime (h)',
   switchingCycles: 'Switching Cycles',
   energyClass: 'Energy Class',
   protectionClass: 'Protection Class',
   glowWire: 'Glow Wire (°C)',
-  housingMaterial: 'Housing Material',
-  diffuserMaterial: 'Optics Material',
   operatingTemperature: 'Operating Temp (°C)',
+  standards: 'Standards Compliance',
   symbols: 'Symbols',
+  emergencyPower: 'Emergency Power (W)',
+  emergencyDuration: 'Emergency Duration (h)',
+  emergencyBattery: 'Emergency Battery Type',
+  emergencyLumen: 'Emergency Luminous Flux (lm)',
 };
 
 const splitParamAndUnit = (label: string): { name: string; unit?: string } => {
@@ -517,6 +543,12 @@ const getRawSpecValue = (sku: any, paramKey: string): string => {
       return findVal(['colourTemperature', 'cct_k', 'CCT']);
     case 'luminousFlux':
       return findVal(['total_luminous_flux_lm', 'useful_luminous_flux_lm', 'luminousFlux', 'flux']);
+    case 'inrushCurrent':
+      return findVal(['inrush_current_a', 'inrushCurrent', 'inrush_current', 'Inrush Current (A)', 'Inrush current']);
+    case 'inrushDuration':
+      return findVal(['inrush_current_duration_uS', 'inrush_current_duration_us', 'inrushDuration', 'inrush_duration', 'Inrush Duration (µs)']);
+    case 'maxNoOfLuminaire':
+      return findVal(['max_no_lum', 'maxNoOfLuminaire', 'max_no_luminaire', 'Max. No. of Luminaire connection on MCB', 'max_no_of_luminaire']);
     default:
       return findVal([paramKey]);
   }
@@ -600,6 +632,79 @@ const getSpecValue = (sku: any, paramKey: string): string => {
       const pf = findVal(['power_factor']);
       return pf !== '—' ? pf : '—';
     }
+    case 'displacementFactor':
+      return findVal(['displacement_factor', 'displacementFactor']);
+    case 'thd': {
+      const t = findVal(['thd', 'THD']);
+      if (t !== '—') {
+        const num = Number(t);
+        if (!isNaN(num) && num > 0 && num < 1) {
+          return `${Math.round(num * 100)}%`;
+        }
+        return t.includes('%') ? t : `${t}%`;
+      }
+      return '—';
+    }
+    case 'inrushCurrent': {
+      const ic = findVal(['inrush_current_a', 'inrushCurrent', 'inrush_current', 'Inrush Current (A)', 'Inrush current']);
+      return ic !== '—' ? ic.replace(/\s*a\b/gi, '').trim() : '—';
+    }
+    case 'inrushDuration': {
+      const id = findVal(['inrush_current_duration_uS', 'inrush_current_duration_us', 'inrushDuration', 'inrush_duration', 'Inrush Duration (µs)']);
+      return id !== '—' ? id.replace(/\s*(?:μs|us|µs)\b/gi, '').trim() : '—';
+    }
+    case 'maxNoOfLuminaire':
+      return findVal(['max_no_lum', 'maxNoOfLuminaire', 'max_no_luminaire', 'Max. No. of Luminaire connection on MCB', 'max_no_of_luminaire']);
+    case 'mcbB10': {
+      const b10 = findVal(['mcb_b10', 'mcbB10', 'B10']);
+      if (b10 !== '—' && !isNaN(Number(b10))) return String(Math.round(Number(b10)));
+      return b10;
+    }
+    case 'mcbB16': {
+      const b16 = findVal(['mcb_b16', 'mcbB16', 'B16']);
+      if (b16 !== '—' && !isNaN(Number(b16))) return String(Math.round(Number(b16)));
+      return b16;
+    }
+    case 'mcbC10': {
+      const c10 = findVal(['mcb_c10', 'mcbC10', 'C10']);
+      if (c10 !== '—' && !isNaN(Number(c10))) return String(Math.round(Number(c10)));
+      return c10;
+    }
+    case 'mcbC16': {
+      const c16 = findVal(['mcb_c16', 'mcbC16', 'C16']);
+      if (c16 !== '—' && !isNaN(Number(c16))) return String(Math.round(Number(c16)));
+      return c16;
+    }
+    case 'surgeProtection': {
+      const sp = findVal(['surge_voltage_l_n_v', 'surgeProtection', 'surge_voltage']);
+      return sp !== '—' ? sp.replace(/\s*v\b/gi, '').trim() : '—';
+    }
+    case 'outputVoltage': {
+      const ov = findVal(['output_votage_fixture_v', 'output_voltage_fixture_v', 'outputVoltage', 'output_voltage']);
+      return ov !== '—' ? ov.replace(/\s*v\b/gi, '').trim() : '—';
+    }
+    case 'outputCurrent': {
+      const oc = findVal(['output_current_fixture_ma', 'outputCurrent', 'output_current']);
+      return oc !== '—' ? oc.replace(/\s*ma\b/gi, '').trim() : '—';
+    }
+    case 'colourConsistency':
+      return findVal(['colour_consistency', 'color_consistency', 'sdcm', 'colourConsistency']);
+    case 'ugr':
+      return findVal(['ugr', 'UGR']);
+    case 'maxIntensity': {
+      const mi = findVal(['maximum_intensity_cd', 'dls_peak_luminous_intensity_cd', 'maxIntensity']);
+      return mi !== '—' ? mi.replace(/\s*cd\b/gi, '').trim() : '—';
+    }
+    case 'cutoffAngle': {
+      const ca = findVal(['cutoff_angle', 'cutoffAngle']);
+      return ca !== '—' ? ca.replace(/°|\s*deg\b/gi, '').trim() : '—';
+    }
+    case 'flickerMetric':
+      return findVal(['flicker_metric', 'flickering', 'flickerMetric']);
+    case 'svm':
+      return findVal(['svm', 'SVM']);
+    case 'photobiologicalRisk':
+      return findVal(['photobiological_risk_group', 'photobiologicalRisk']);
     case 'lampBase':
       return findVal(['lamp_base', 'lampBase']);
     case 'dimensions': {
@@ -614,6 +719,14 @@ const getSpecValue = (sku: any, paramKey: string): string => {
       const wt = findVal(['net_weight_g', 'weight']);
       return wt !== '—' ? wt.replace(/\s*g\b/gi, '').trim() : '—';
     }
+    case 'shape':
+      return findVal(['shape']);
+    case 'housingMaterial':
+      return findVal(['housing_material']);
+    case 'diffuserMaterial':
+      return findVal(['diffuser_material']);
+    case 'mounting':
+      return findVal(['mounting', 'installation']);
     case 'lifetime': {
       const lt = findVal(['norminal_life_h', 'lifetime']);
       return lt !== '—' ? lt.replace(/\s*(?:h|hrs|hours)\b/gi, '').trim() : '—';
@@ -628,19 +741,31 @@ const getSpecValue = (sku: any, paramKey: string): string => {
       const gw = findVal(['glow_wire']);
       return gw !== '—' ? gw.replace(/°c|°|\s*degc\b/gi, '').trim() : '—';
     }
-    case 'housingMaterial':
-      return findVal(['housing_material']);
-    case 'diffuserMaterial':
-      return findVal(['diffuser_material']);
     case 'operatingTemperature': {
       const ot = findVal(['operating_temperature']);
       return ot !== '—' ? ot.replace(/°c/gi, '').trim() : '—';
     }
+    case 'standards':
+      return findVal(['standards', 'scg_standards_compliance']);
     case 'symbols': {
       if (sku.symbols && Array.isArray(sku.symbols)) {
         return sku.symbols.map((s: any) => (typeof s === 'object' ? s.name : s)).filter(Boolean).join(', ') || '—';
       }
       return '—';
+    }
+    case 'emergencyPower': {
+      const ep = findVal(['emergency_power', 'emergencyPower']);
+      return ep !== '—' ? ep.replace(/\s*w\b/gi, '').trim() : '—';
+    }
+    case 'emergencyDuration': {
+      const ed = findVal(['emergency_duration_discharge', 'emergencyDuration']);
+      return ed !== '—' ? ed.replace(/\s*(?:h|hrs|hours)\b/gi, '').trim() : '—';
+    }
+    case 'emergencyBattery':
+      return findVal(['emergency_battery_type', 'emergencyBattery', 'emergency_battery_capacity']);
+    case 'emergencyLumen': {
+      const el = findVal(['lumen_output_emergency_mode', 'emergencyLumen']);
+      return el !== '—' ? el.replace(/\s*lm\b/gi, '').trim() : '—';
     }
     default:
       return findVal([paramKey]);
@@ -750,31 +875,61 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
 
   const datasheet = family.datasheet || {};
   const isEnabled = datasheet.enabled !== false;
-  const pages: any[] = isEnabled && datasheet.pages && datasheet.pages.length > 0
-    ? datasheet.pages
-    : [
-        {
-          pageNumber: 1,
-          tables: [
-            {
-              tableType: 'horizontal',
-              tableName: `${family.name} Technical Specifications`,
-              selectedParameters: family.selectedParameters || [
-                'mmCode',
-                'modelNo',
-                'colour',
-                'wattage',
-                'luminousFlux',
-                'colourTemperature',
-                'cri',
-                'efficacy',
-                'ip',
-                'controlGear',
-              ],
-            },
-          ],
-        },
-      ];
+
+  let pages: any[] = [];
+
+  if (isEnabled && datasheet.sections && Array.isArray(datasheet.sections) && datasheet.sections.length > 0) {
+    // New simplified structure: Group sections by datasheetPageBreak blocks
+    const pageList: { pageNumber: number; sections: any[] }[] = [];
+    let currentSections: any[] = [];
+    let pNum = 1;
+
+    for (const sec of datasheet.sections) {
+      if (sec.blockType === 'datasheetPageBreak') {
+        if (currentSections.length > 0) {
+          pageList.push({ pageNumber: pNum++, sections: currentSections });
+          currentSections = [];
+        }
+      } else {
+        currentSections.push(sec);
+      }
+    }
+
+    if (currentSections.length > 0 || pageList.length === 0) {
+      pageList.push({ pageNumber: pNum++, sections: currentSections });
+    }
+
+    pages = pageList;
+  } else if (isEnabled && datasheet.pages && Array.isArray(datasheet.pages) && datasheet.pages.length > 0) {
+    // Legacy multi-page fallback
+    pages = datasheet.pages;
+  } else {
+    // Default fallback: 1 standard technical specification table
+    pages = [
+      {
+        pageNumber: 1,
+        sections: [
+          {
+            blockType: 'datasheetTable',
+            tableName: `${family.name} Technical Specifications`,
+            tableType: 'horizontal',
+            selectedParameters: family.selectedParameters || [
+              'mmCode',
+              'modelNo',
+              'colour',
+              'wattage',
+              'luminousFlux',
+              'colourTemperature',
+              'cri',
+              'efficacy',
+              'ip',
+              'controlGear',
+            ],
+          },
+        ],
+      },
+    ];
+  }
 
   const seriesTitle = datasheet.title || family.name;
   const seriesSubtitle = datasheet.subtitle || family.description || '';
@@ -1271,6 +1426,28 @@ export default async function FamilyDatasheetPage({ params }: PageProps) {
                       priority: number;
                       render: () => React.ReactNode;
                     };
+                    // If this page uses the new simplified unified sections
+                    if (page.sections && Array.isArray(page.sections)) {
+                      return (
+                        <div className="flex flex-col gap-6 print:gap-3">
+                          {page.sections.map((sec: any, sIdx: number) => {
+                            if (sec.blockType === 'datasheetTable') {
+                              return (
+                                <div key={`sec-table-${sIdx}`}>
+                                  {renderSpecificationTable(sec, sIdx)}
+                                </div>
+                              );
+                            }
+                            return (
+                              <div key={`sec-blk-${sIdx}`}>
+                                {renderContentBlock(sec, sIdx)}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+
                     const sectionList: SectionEntry[] = [];
 
                     // 1. Process Tables
