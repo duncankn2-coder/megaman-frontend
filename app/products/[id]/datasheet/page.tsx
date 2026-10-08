@@ -4,7 +4,7 @@ import Image from 'next/image';
 import PrintController from './PrintController';
 import DismantleInstructionPages from '../eprel-light-source/DismantleInstructionPages';
 import { renderWithSup } from '../../../utils/text';
-import { formatSpecValue, roundToTwoDecimals } from '../../../utils/formatDecimals';
+import { formatSpecValue, roundToTwoDecimals, roundEfficacyToWholeNumber } from '../../../utils/formatDecimals';
 
 interface Product {
   id: string;
@@ -279,7 +279,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
       if (isFilled(val)) return val;
     }
     if ((specName === 'power' || specName === 'wattage' || specName === 'on_mode_power_w') && product.power && isFilled(product.power)) return product.power;
-    if ((specName === 'colourTemperature' || specName === 'cct_k' || specName === 'colourTemp') && product.colourTemperature && isFilled(product.colourTemperature)) return product.colourTemperature;
+    if ((specName === 'colourTemperature' || specName === 'cct_k' || specName === 'colourTemp' || specName === 'correlated_colour_temperature' || specName === 'colour_temperature') && product.colourTemperature && isFilled(product.colourTemperature)) return product.colourTemperature;
     if ((specName === 'colour' || specName === 'fitting_colour') && product.colour && isFilled(product.colour)) return product.colour;
     return defaultValue;
   };
@@ -347,7 +347,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   } else {
     efficacyVal = '—';
   }
-  efficacyVal = roundToTwoDecimals(efficacyVal);
+  efficacyVal = roundEfficacyToWholeNumber(efficacyVal);
 
   // Compute dynamic spec summary string for right header
   const specSummaryParts = [];
@@ -361,7 +361,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   
   if (totalFlux !== '—') specSummaryParts.push(`${totalFlux}lm`);
   
-  const cctVal = getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']);
+  const cctVal = getMultiSpec(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'Color Temperature', 'CCT']);
   if (cctVal) specSummaryParts.push(cctVal.includes('K') ? cctVal : `${cctVal}K`);
   
   const criVal = getMultiSpec(['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index']);
@@ -412,8 +412,8 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
 
   const luminairePhotometricalSpecs = filterSpecs([
     { label: 'Luminous Flux', value: getSpec('useful_luminous_flux_lm') ? `${getSpec('useful_luminous_flux_lm')} lm` : (getSpec('total_luminous_flux_lm') ? `${getSpec('total_luminous_flux_lm')} lm` : '') },
-    { label: 'Luminous Efficacy', value: getSpec('total_mains_efficacy_lmw') ? `${getSpec('total_mains_efficacy_lmw')} lm/W` : '' },
-    { label: 'Colour Temp', value: getSpec('cct_k') ? `${getSpec('cct_k')} K` : '' },
+    { label: 'Luminous Efficacy', value: getMultiSpec(['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy']) ? `${roundEfficacyToWholeNumber(getMultiSpec(['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy']))} lm/W` : '' },
+    { label: 'Colour Temp', value: getMultiSpec(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'Color Temperature', 'CCT']) ? `${getMultiSpec(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'Color Temperature', 'CCT'])} K` : '' },
     { label: 'CRI', value: getSpec('ra') ? `Ra${getSpec('ra')}` : '' },
     { label: 'Beam Angle', value: getSpec('beam_angle') ? `${getSpec('beam_angle')}°` : '' },
     { label: 'Colour Consistency', value: getSpec('colour_consistency') },
@@ -506,7 +506,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   const lightSourcePhotometricalSpecs = filterSpecs([
     { label: 'Luminous Flux', value: getMultiSpec(['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm']) ? `${getMultiSpec(['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm'])} lm` : '' },
     { label: 'Luminous Efficacy', value: efficacyVal },
-    { label: 'Colour Temperature', value: getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']) ? (getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']).includes('K') ? getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']) : `${getMultiSpec(['colourTemperature', 'Color Temperature', 'CCT', 'cct_k'])} K`) : '' },
+    { label: 'Colour Temperature', value: getMultiSpec(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'Color Temperature', 'CCT']) ? (getMultiSpec(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'Color Temperature', 'CCT']).includes('K') ? getMultiSpec(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'Color Temperature', 'CCT']) : `${getMultiSpec(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'Color Temperature', 'CCT'])} K`) : '' },
     { label: 'Colour Consistency', value: getMultiSpec(['colour_consistency', 'color_consistency', 'sdcm']) },
     { label: 'CRI', value: getMultiSpec(['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index']) ? `Ra${getMultiSpec(['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index'])}` : '' },
     { label: 'SVM', value: getMultiSpec(['svm', 'stroboscopic_effect_metric_svm']) },

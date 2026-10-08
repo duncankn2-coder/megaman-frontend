@@ -466,17 +466,23 @@ const CustomContentRenderer = ({ blk }: { blk: any }) => {
 const parseCCT = (cctStr: string): string[] => {
   if (!cctStr || cctStr === '—') return [];
   const cleaned = String(cctStr).replace(/\bDUAL\b/i, '').trim();
+  const filterValidCct = (s: string) => {
+    const num = parseInt(s.replace(/[^\d]/g, ''));
+    if (!isNaN(num) && num < 1000) return '';
+    return s;
+  };
   if (cleaned.includes('-') && !cleaned.includes('/')) {
-    return [cleaned.replace(/[kK\s]/g, '').trim()];
+    const val = cleaned.replace(/[kK\s]/g, '').trim();
+    return filterValidCct(val) ? [val] : [];
   }
   if (/[\/,;]/.test(cleaned)) {
     return cleaned
       .split(/[\/,;]+/)
       .map(s => s.replace(/[kK\s]/g, '').trim())
-      .filter(Boolean);
+      .filter(s => Boolean(filterValidCct(s)));
   }
   const single = cleaned.replace(/[kK\s]/g, '').trim();
-  return single ? [single] : [];
+  return single && filterValidCct(single) ? [single] : [];
 };
 
 const parseFlux = (fluxStr: string, ccts: string[]): string[] => {
@@ -540,7 +546,7 @@ const getRawSpecValue = (sku: any, paramKey: string): string => {
 
   switch (paramKey) {
     case 'colourTemperature':
-      return findVal(['colourTemperature', 'cct_k', 'CCT']);
+      return findVal(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'CCT', 'colour_temp', 'colortemp']);
     case 'luminousFlux':
       return findVal(['total_luminous_flux_lm', 'useful_luminous_flux_lm', 'luminousFlux', 'flux']);
     case 'inrushCurrent':
@@ -587,7 +593,7 @@ const getSpecValue = (sku: any, paramKey: string): string => {
       return f !== '—' ? f.replace(/\s*lm\b/gi, '').trim() : '—';
     }
     case 'colourTemperature': {
-      const c = findVal(['colourTemperature', 'cct_k', 'CCT']);
+      const c = findVal(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'CCT', 'colour_temp', 'colortemp']);
       return c !== '—' ? c.replace(/[kK\s]/g, '').trim() : '—';
     }
     case 'cri': {
@@ -596,7 +602,13 @@ const getSpecValue = (sku: any, paramKey: string): string => {
     }
     case 'efficacy': {
       const e = findVal(['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy']);
-      return e !== '—' ? e.replace(/\s*(?:lm\/w|lmw)\b/gi, '').trim() : '—';
+      if (e === '—') return '—';
+      const cleanE = e.replace(/\s*(?:lm\/w|lmw)\b/gi, '').trim();
+      return cleanE.replace(/(^|[^a-zA-Z0-9.])(\d+\.\d+)(?![0-9.])/g, (match, prefix, numStr) => {
+        const num = parseFloat(numStr);
+        if (isNaN(num)) return match;
+        return prefix + Math.round(num).toString();
+      });
     }
     case 'beamAngle': {
       const b = findVal(['beam_angle', 'beamAngle', 'beam_angle_deg']);

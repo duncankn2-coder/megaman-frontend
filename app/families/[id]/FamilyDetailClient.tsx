@@ -12,7 +12,7 @@ import {
   resolveSubtitleColor,
   resolveSubtitleSize
 } from '../../utils/typography';
-import { formatSpecValue, roundToTwoDecimals } from '../../utils/formatDecimals';
+import { formatSpecValue, roundToTwoDecimals, roundEfficacyToWholeNumber } from '../../utils/formatDecimals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faDownload,
@@ -262,7 +262,18 @@ const expandSpecNames = (specNames: string[]): string[] => {
       );
     }
     if (lower.includes('cct') || lower.includes('temp')) {
-      expanded.push('cct_k', 'cct', 'colourtemperature', 'colortemperature', 'colour_temp', 'colortemp');
+      expanded.push(
+        'correlated_colour_temperature',
+        'cct_k',
+        'cct',
+        'colourtemperature',
+        'colortemperature',
+        'colour_temperature',
+        'color_temperature',
+        'colour_temp',
+        'colortemp',
+        'correlated_color_temperature'
+      );
     }
     if ((lower.includes('colour') || lower.includes('color')) && !lower.includes('temp') && !lower.includes('cct') && !lower.includes('rendering') && !lower.includes('consistency')) {
       expanded.push('fitting_colour', 'colour', 'color', 'luminaires_color');
@@ -276,7 +287,7 @@ const expandSpecNames = (specNames: string[]): string[] => {
     if (lower.includes('ip')) {
       expanded.push('ip', 'ip_rating', 'iprating');
     }
-    if (lower.includes('cri') || lower.includes('ra') || lower.includes('rendering')) {
+    if (lower.includes('cri') || /(^|[^a-z])ra([^a-z]|$)/i.test(lower) || lower.includes('rendering')) {
       expanded.push('ra', 'cri', 'colour_rendering_index', 'color_rendering_index', 'cri_lower_80');
     }
     if (lower.includes('gear') || lower.includes('control') || lower.includes('connector')) {
@@ -405,7 +416,7 @@ const getRawProductSpec = (productObj: any, specNames: string[], defaultValue = 
       const pwr = targetProduct.power || targetProduct.wattage || productObj.wattage || productObj.power;
       if (isFieldFilled(pwr)) return String(pwr).trim();
     }
-    if (name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k') {
+    if (name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k' || name === 'correlated_colour_temperature' || name === 'colour_temperature') {
       const ct = targetProduct.colourTemperature || targetProduct.colorTemperature || productObj.colourTemperature;
       if (isFieldFilled(ct)) return String(ct).trim();
     }
@@ -491,7 +502,7 @@ const getRawSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string
       const pwr = sku.wattage || sku.power || parent?.power || parent?.wattage;
       if (isFieldFilled(pwr)) return String(pwr).trim();
     }
-    if (name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k' || name === 'colour_temp' || name === 'colortemp') {
+    if (name === 'colourTemperature' || name === 'Color Temperature' || name === 'CCT' || name === 'cct_k' || name === 'colour_temp' || name === 'colortemp' || name === 'correlated_colour_temperature' || name === 'colour_temperature') {
       const ct = sku.colourTemperature || sku.colorTemperature || parent?.colourTemperature || parent?.colorTemperature;
       if (isFieldFilled(ct)) return String(ct).trim();
     }
@@ -539,13 +550,17 @@ const parseCcts = (cctStr: any): string[] => {
   const splitParts = clean.split(/[\/,;+]/).map(p => p.trim()).filter(Boolean);
   return splitParts.map(p => {
     let part = p;
+    const num = parseInt(part);
+    if (!isNaN(num) && num < 1000) {
+      return ''; // Guard against invalid non-CCT numbers (e.g. CRI 80)
+    }
     if (/^\d+$/.test(part)) {
       part += 'K';
     } else if (/^\d+k$/i.test(part)) {
       part = part.toUpperCase();
     }
     return part;
-  });
+  }).filter(Boolean);
 };
 
 const parseFluxMap = (fluxStr: any): Record<string, string> => {
@@ -852,7 +867,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       name: '—',
       colour: p.colour || getProductSpec(p, ['colour', 'color', 'Colour', 'Color', 'fitting_colour']),
       wattage: p.power || (p as any).wattage || getProductSpec(p, ['power', 'System power', 'wattage', 'on_mode_power_w']),
-      colourTemperature: p.colourTemperature || (p as any).colorTemperature || getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']),
+      colourTemperature: p.colourTemperature || (p as any).colorTemperature || getProductSpec(p, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature']),
       isFallbackProduct: true,
       product: p,
       modelNumber: p.name,
@@ -865,7 +880,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
     combinedSkus.forEach(item => {
       const pwr = getSkuSpec(item, ['power', 'System power', 'wattage', 'on_mode_power_w']);
-      const ct = getSkuSpec(item, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']);
+      const ct = getSkuSpec(item, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature']);
       const col = getSkuSpec(item, ['colour', 'color', 'Colour', 'Color', 'fitting_colour']);
       const ipVal = formatIpRating(getSkuSpec(item, ['ipRating', 'IP rating', 'IP Rating', 'ip']));
       const baseVal = getSkuSpec(item, ['lampBase', 'lamp base', 'cap_type']);
@@ -930,7 +945,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       name: '—',
       colour: p.colour || getProductSpec(p, ['colour', 'color', 'Colour', 'Color', 'fitting_colour']),
       wattage: p.power || (p as any).wattage || getProductSpec(p, ['power', 'System power', 'wattage', 'on_mode_power_w']),
-      colourTemperature: p.colourTemperature || (p as any).colorTemperature || getProductSpec(p, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']),
+      colourTemperature: p.colourTemperature || (p as any).colorTemperature || getProductSpec(p, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature']),
       ip: getProductSpec(p, ['ipRating', 'IP rating', 'IP Rating', 'ip']),
       connector: getProductSpec(p, ['controlGear', 'control_gear', 'Control gear', 'type_terminal block']),
       isFallbackProduct: true,
@@ -944,7 +959,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
     return combinedSkus.filter(sku => {
       const pwr = getSkuSpec(sku, ['power', 'System power', 'wattage', 'on_mode_power_w']);
-      const ct = getSkuSpec(sku, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k']);
+      const ct = getSkuSpec(sku, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature']);
       const col = getSkuSpec(sku, ['colour', 'color', 'Colour', 'Color', 'fitting_colour']);
       const ipVal = formatIpRating(getSkuSpec(sku, ['ipRating', 'IP rating', 'IP Rating', 'ip']));
       const baseVal = getSkuSpec(sku, ['lampBase', 'lamp base', 'cap_type']);
@@ -1703,7 +1718,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     const color = getSkuSpec(sku, ['fitting_colour', 'colour', 'color', 'luminaires_color'], '—');
                     const power = getSkuSpec(sku, ['on_mode_power_w', 'power', 'System power', 'wattage'], '—');
                     const flux = getSkuSpec(sku, ['total_luminous_flux_lm', 'useful_luminous_flux_lm', 'luminousFlux', 'Luminous flux', 'flux', 'lumens'], '—');
-                    const cct = getSkuSpec(sku, ['cct_k', 'colourTemperature', 'Color Temperature', 'CCT'], '—');
+                    const cct = getSkuSpec(sku, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature'], '—');
                     const cri = getSkuSpec(sku, ['ra', 'cri', 'CRI', 'Colour rendering index'], '—');
                     const ip = formatIpRating(getSkuSpec(sku, ['ip', 'ipRating', 'IP rating', 'IP Rating', 'ip_rating'], '—'));
                     const control = getSkuSpec(sku, ['control_gear', 'driver_type', 'driver_model', 'dimming_type', 'type_terminal block', 'controlGear', 'connector'], '—');
@@ -1751,7 +1766,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           if (efficacy !== '—' && !efficacy.toLowerCase().includes('lm/w') && !isNaN(parseFloat(efficacy))) {
                             efficacy = `${efficacy} lm/W`;
                           }
-                          efficacy = roundToTwoDecimals(efficacy);
+                          efficacy = roundEfficacyToWholeNumber(efficacy);
 
                           const isFirst = i === 0;
 
@@ -2204,7 +2219,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   { label: 'Lamp Base', value: getSkuSpec(activeDrawerProduct, ['lampBase', 'lamp_base', 'cap_type', 'cap_base', 'base', 'lamp_holder_type'], '—') },
                                   { label: 'Product Wattage (W)', value: getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w', 'light_source_on_mode_power_w'], '—') },
                                   { label: 'Equivalent Wattage (W)', value: getSkuSpec(activeDrawerProduct, ['equivalent_power_w', 'equivalent_power', 'equivalent_wattage'], '—') },
-                                  { label: 'Colour Temperature (K)', value: getSkuSpec(activeDrawerProduct, ['colourTemperature', 'Color Temperature', 'CCT', 'cct_k'], '—') },
+                                  { label: 'Colour Temperature (K)', value: getSkuSpec(activeDrawerProduct, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature'], '—') },
                                   { label: 'Colour Render Index (Ra)', value: getSkuSpec(activeDrawerProduct, ['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index'], '—') },
                                   { label: 'Colour Consistency (SDCM)', value: getSkuSpec(activeDrawerProduct, ['colour_consistency', 'color_consistency', 'sdcm'], '—') },
                                   { label: 'Dimmable', value: getSkuSpec(activeDrawerProduct, ['dimmable', 'light_source_dimmable'], '—') },
@@ -2276,6 +2291,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     } else {
                                       efficacyVal = '—';
                                     }
+                                  } else {
+                                    efficacyVal = efficacyVal.toLowerCase().includes('lm/w') ? efficacyVal : `${efficacyVal} lm/W`;
+                                    efficacyVal = roundEfficacyToWholeNumber(efficacyVal);
                                   }
 
                                   return [

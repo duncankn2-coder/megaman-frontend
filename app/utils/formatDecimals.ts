@@ -35,8 +35,28 @@ export function roundToTwoDecimals(val: unknown, isChromaticity = false): string
   });
 }
 
+export function roundEfficacyToWholeNumber(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  const s = String(val).trim();
+  if (!s || s === '—' || s === 'N/A' || s === '-' || s === 'undefined' || s === 'null') {
+    return s;
+  }
+
+  // Round any decimal number to the nearest integer/whole number
+  // e.g. '85.454545 lm/W' -> '85 lm/W', '94.2' -> '94', '94.6/93.2 lm/W' -> '95/93 lm/W'
+  return s.replace(/(^|[^a-zA-Z0-9.])(\d+\.\d+)(?![0-9.])/g, (match, prefix, numStr) => {
+    const num = parseFloat(numStr);
+    if (isNaN(num)) return match;
+    return prefix + Math.round(num).toString();
+  });
+}
+
 export function formatSpecValue(val: unknown, specNames: string | string[] = []): string {
   if (val === null || val === undefined) return '';
+  const names = Array.isArray(specNames) ? specNames : [specNames];
+  if (names.some(n => n.toLowerCase().includes('efficacy'))) {
+    return roundEfficacyToWholeNumber(val);
+  }
   const isChrom = isChromaticitySpec(specNames);
   return roundToTwoDecimals(val, isChrom);
 }
