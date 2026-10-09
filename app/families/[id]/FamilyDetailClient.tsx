@@ -601,6 +601,33 @@ const getFluxForCct = (fluxStr: any, targetCct: string, cctIndex: number, totalC
   return clean;
 };
 
+const splitParamAndUnit = (label: string): { name: string; unit?: string } => {
+  if (!label) return { name: '' };
+  const match = label.match(/^(.*?)\s*([([][^)\]]+[)\]])$/);
+  if (match) {
+    return {
+      name: match[1].trim(),
+      unit: match[2].trim(),
+    };
+  }
+  return { name: label };
+};
+
+const renderParamHeader = (label: string, isCenter = false) => {
+  const { name, unit } = splitParamAndUnit(label);
+  if (!unit) {
+    return <span>{name}</span>;
+  }
+  return (
+    <span className={`flex flex-col leading-tight ${isCenter ? 'items-center text-center' : 'items-start text-left'}`}>
+      <span>{name}</span>
+      <span className="text-[10px] font-normal text-gray-500 mt-0.5 normal-case tracking-normal">
+        {unit}
+      </span>
+    </span>
+  );
+};
+
 export default function FamilyDetailClient({ family }: FamilyDetailClientProps) {
   const activeParams = family.selectedParameters || [
     'mmCode',
@@ -1680,27 +1707,27 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               <table className="w-full text-left border-collapse font-mono">
                 <thead className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 shadow-md">
                   <tr className="border-b border-gray-300 bg-gray-100 text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    {activeParams.includes('mmCode') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">MM Code</th>}
-                    {activeParams.includes('modelNo') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">Model No.</th>}
-                    {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap">Finish / Colour</th>}
-                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Power (W)</th>}
-                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Luminous Flux (lm)</th>}
-                    {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">CCT (K)</th>}
-                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">CRI (Ra)</th>}
-                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Efficacy (lm/W)</th>}
-                    {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">IP</th>}
-                    {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Control Gear</th>}
-                    {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Lamp Base</th>}
-                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Voltage (V)</th>}
-                    {activeParams.includes('inrushCurrent') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Inrush Current (A)</th>}
-                    {activeParams.includes('inrushDuration') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Inrush Duration (µs)</th>}
-                    {activeParams.includes('maxNoOfLuminaire') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Max. Luminaires on MCB</th>}
-                    {activeParams.includes('mcbB10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB B10</th>}
-                    {activeParams.includes('mcbB16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB B16</th>}
-                    {activeParams.includes('mcbC10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB C10</th>}
-                    {activeParams.includes('mcbC16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">MCB C16</th>}
-                    {activeParams.includes('thd') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">THD (%)</th>}
-                    {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap">Features</th>}
+                    {activeParams.includes('mmCode') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MM Code')}</th>}
+                    {activeParams.includes('modelNo') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Model No.')}</th>}
+                    {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Finish / Colour')}</th>}
+                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Power (W)', true)}</th>}
+                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Luminous Flux (lm)', true)}</th>}
+                    {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('CCT (K)', true)}</th>}
+                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('CRI (Ra)', true)}</th>}
+                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Efficacy (lm/W)', true)}</th>}
+                    {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('IP', true)}</th>}
+                    {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Control Gear', true)}</th>}
+                    {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Lamp Base', true)}</th>}
+                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Voltage (V)', true)}</th>}
+                    {activeParams.includes('inrushCurrent') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Inrush Current (A)', true)}</th>}
+                    {activeParams.includes('inrushDuration') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Inrush Duration (µs)', true)}</th>}
+                    {activeParams.includes('maxNoOfLuminaire') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Max. Luminaires on MCB', true)}</th>}
+                    {activeParams.includes('mcbB10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MCB B10', true)}</th>}
+                    {activeParams.includes('mcbB16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MCB B16', true)}</th>}
+                    {activeParams.includes('mcbC10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MCB C10', true)}</th>}
+                    {activeParams.includes('mcbC16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MCB C16', true)}</th>}
+                    {activeParams.includes('thd') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('THD (%)', true)}</th>}
+                    {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Features', true)}</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200/70 text-gray-700">
