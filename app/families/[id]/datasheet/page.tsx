@@ -48,6 +48,10 @@ const PARAM_LABELS: Record<string, string> = {
   svm: 'SVM',
   photobiologicalRisk: 'Photobiological Safety',
   lampBase: 'Lamp Base',
+  length: 'Length (mm)',
+  width: 'Width (mm)',
+  height: 'Height (mm)',
+  diameter: 'Diameter (mm)',
   dimensions: 'Dimensions (mm)',
   recessedCutOut: 'Cut-out (mm)',
   weight: 'Weight (g)',
@@ -719,6 +723,22 @@ const getSpecValue = (sku: any, paramKey: string): string => {
       return findVal(['photobiological_risk_group', 'photobiologicalRisk']);
     case 'lampBase':
       return findVal(['lamp_base', 'lampBase']);
+    case 'length': {
+      const l = findVal(['length_mm', 'length']);
+      return l !== '—' ? l.replace(/\s*\(?mm\)?\b/gi, '').trim() : '—';
+    }
+    case 'width': {
+      const w = findVal(['width_mm', 'width', 'width_w', 'light_source_outer_dimensions_width_mm']);
+      return w !== '—' ? w.replace(/\s*\(?mm\)?\b/gi, '').trim() : '—';
+    }
+    case 'height': {
+      const h = findVal(['height_mm', 'height', 'height_h', 'depth_mm', 'depth_d', 'light_source_outer_dimensions_high_mm']);
+      return h !== '—' ? h.replace(/\s*\(?mm\)?\b/gi, '').trim() : '—';
+    }
+    case 'diameter': {
+      const d = findVal(['diameter_mm', 'diameter']);
+      return d !== '—' ? d.replace(/\s*\(?mm\)?\b/gi, '').trim() : '—';
+    }
     case 'dimensions': {
       const dm = findVal(['dimensions', 'dimension_mm', 'diameter_mm']);
       return dm !== '—' ? dm.replace(/\s*\(?mm\)?\b/gi, '').trim() : '—';

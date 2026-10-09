@@ -1716,7 +1716,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('CCT (K)', true)}</th>}
                     {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('CRI (Ra)', true)}</th>}
                     {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Efficacy (lm/W)', true)}</th>}
+                    {activeParams.includes('beamAngle') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Beam Angle (°)', true)}</th>}
                     {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('IP', true)}</th>}
+                    {activeParams.includes('ik') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('IK Rating', true)}</th>}
+                    {activeParams.includes('length') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Length (mm)', true)}</th>}
+                    {activeParams.includes('width') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Width (mm)', true)}</th>}
+                    {activeParams.includes('height') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Height (mm)', true)}</th>}
+                    {activeParams.includes('diameter') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Diameter (mm)', true)}</th>}
+                    {activeParams.includes('dimensions') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Dimensions (mm)', true)}</th>}
+                    {activeParams.includes('recessedCutOut') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Cut-out (mm)', true)}</th>}
+                    {activeParams.includes('weight') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Weight (g)', true)}</th>}
                     {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Control Gear', true)}</th>}
                     {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Lamp Base', true)}</th>}
                     {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Voltage (V)', true)}</th>}
@@ -1844,9 +1853,54 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   {efficacy}
                                 </td>
                               )}
+                              {activeParams.includes('beamAngle') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['beam_angle', 'beamAngle', 'beam_angle_deg'], '—')}
+                                </td>
+                              )}
                               {activeParams.includes('ip') && isFirst && (
                                 <td rowSpan={N} className={`py-2.5 px-4 text-center font-bold align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {ip}
+                                </td>
+                              )}
+                              {activeParams.includes('ik') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['ik', 'ikRating', 'ik_rating'], '—')}
+                                </td>
+                              )}
+                              {activeParams.includes('length') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['length_mm', 'length'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
+                                </td>
+                              )}
+                              {activeParams.includes('width') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['width_mm', 'width', 'width_w', 'light_source_outer_dimensions_width_mm'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
+                                </td>
+                              )}
+                              {activeParams.includes('height') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['height_mm', 'height', 'height_h', 'depth_mm', 'depth_d', 'light_source_outer_dimensions_high_mm'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
+                                </td>
+                              )}
+                              {activeParams.includes('diameter') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['diameter_mm', 'diameter'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
+                                </td>
+                              )}
+                              {activeParams.includes('dimensions') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['dimensions', 'dimension_mm'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
+                                </td>
+                              )}
+                              {activeParams.includes('recessedCutOut') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['recessed_cut_out_mm', 'recessed_cut_out', 'cut_out_mm'], '—').replace(/\s*mm\b/gi, '').trim()}
+                                </td>
+                              )}
+                              {activeParams.includes('weight') && isFirst && (
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                  {getSkuSpec(sku, ['net_weight_g', 'weight'], '—').replace(/\s*g\b/gi, '').trim()}
                                 </td>
                               )}
                               {activeParams.includes('connector') && isFirst && (
