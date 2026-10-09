@@ -1785,13 +1785,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             }).filter(val => val !== null) as number[];
 
                             if (efficacies.length > 1) {
-                              efficacy = `${efficacies.join('/')} lm/W`;
+                              efficacy = efficacies.join('/');
                             } else if (efficacies.length === 1) {
-                              efficacy = `${efficacies[0]} lm/W`;
+                              efficacy = `${efficacies[0]}`;
                             }
                           }
-                          if (efficacy !== '—' && !efficacy.toLowerCase().includes('lm/w') && !isNaN(parseFloat(efficacy))) {
-                            efficacy = `${efficacy} lm/W`;
+                          if (efficacy !== '—') {
+                            efficacy = efficacy.replace(/\s*(?:lm\/w|lmw)\b/gi, '').trim();
                           }
                           efficacy = roundEfficacyToWholeNumber(efficacy);
 
@@ -2314,12 +2314,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     const numFlux = parseInt(totalFlux);
                                     const numPower = parseFloat(rawPower);
                                     if (!isNaN(numFlux) && !isNaN(numPower) && numPower > 0) {
-                                      efficacyVal = `${Math.round(numFlux / numPower)} lm/W`;
+                                      efficacyVal = `${Math.round(numFlux / numPower)}`;
                                     } else {
                                       efficacyVal = '—';
                                     }
                                   } else {
-                                    efficacyVal = efficacyVal.toLowerCase().includes('lm/w') ? efficacyVal : `${efficacyVal} lm/W`;
+                                    efficacyVal = efficacyVal.replace(/\s*(?:lm\/w|lmw)\b/gi, '').trim();
                                     efficacyVal = roundEfficacyToWholeNumber(efficacyVal);
                                   }
 
