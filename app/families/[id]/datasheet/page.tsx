@@ -824,10 +824,21 @@ const getFamilySpecValue = (skus: any[], family: any, paramKey: string): string 
   return '—';
 };
 
-async function getFamily(id: string): Promise<any> {
+async function getFamily(idOrSlug: string): Promise<any> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/families/${id}?depth=3`, {
+    // 1. Try finding by readable slug first
+    const slugRes = await fetch(`${payloadUrl}/api/families?where[slug][equals]=${encodeURIComponent(idOrSlug)}&depth=3`, {
+      cache: 'no-store',
+    });
+    if (slugRes.ok) {
+      const data = await slugRes.json();
+      if (data.docs && data.docs.length > 0) {
+        return data.docs[0];
+      }
+    }
+    // 2. Fallback to direct ID fetch
+    const response = await fetch(`${payloadUrl}/api/families/${idOrSlug}?depth=3`, {
       cache: 'no-store',
     });
     if (!response.ok) return null;

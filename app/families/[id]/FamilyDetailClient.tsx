@@ -101,6 +101,7 @@ interface Block {
 interface Family {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   media: MediaItem[];
   products: Product[];
@@ -1249,7 +1250,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   </a>
                   {Boolean(family.datasheet?.enabled) && (
                     <Link
-                      href={`/families/${family.id}/datasheet`}
+                      href={`/families/${family.slug || family.id}/datasheet`}
                       target="_blank"
                       className="bg-white border border-[#005288] text-[#005288] hover:bg-[#005288] hover:text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition-all duration-300 shadow-sm inline-flex items-center justify-center gap-2 text-center"
                     >
@@ -1497,7 +1498,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   {products.map((p, idx) => {
                     const imageItem = p.images;
                     const imageUrl = getImageUrl(imageItem);
-                    const familyId = p.families?.id || p.families;
+                    const familyId = p.families?.slug || p.families?.id || p.families;
 
                     return (
                       <div

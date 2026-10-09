@@ -495,7 +495,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                     {products.map((p, idx) => {
                       const imageItem = p.images;
                       const imageUrl = getImageUrl(imageItem);
-                      const familyId = p.families?.id || p.families;
+                      const familyId = p.families?.slug || p.families?.id || p.families;
 
                       return (
                         <div 

@@ -25,6 +25,7 @@ interface MediaItem {
 interface Family {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   priority?: number;
   media: MediaItem[];
@@ -673,7 +674,7 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                         return (
                           <Link
                             key={family.id}
-                            href={`/families/${family.id}`}
+                            href={`/families/${family.slug || family.id}`}
                             className="group flex flex-col bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100/50"
                           >
                             {/* Aspect Square Image Canvas with margin/padding around product */}

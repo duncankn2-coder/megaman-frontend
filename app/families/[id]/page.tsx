@@ -35,6 +35,7 @@ interface SymbolItem {
 interface Family {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   media: MediaItem[];
   products: Product[];
@@ -45,10 +46,21 @@ interface Family {
   datasheet?: any;
 }
 
-async function getFamily(id: string): Promise<Family | null> {
+async function getFamily(idOrSlug: string): Promise<Family | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/families/${id}?depth=3`, {
+    // 1. Try finding by readable slug first
+    const slugRes = await fetch(`${payloadUrl}/api/families?where[slug][equals]=${encodeURIComponent(idOrSlug)}&depth=3`, {
+      next: { revalidate: 60 },
+    });
+    if (slugRes.ok) {
+      const data = await slugRes.json();
+      if (data.docs && data.docs.length > 0) {
+        return data.docs[0];
+      }
+    }
+    // 2. Fallback to direct ID fetch for backward compatibility
+    const response = await fetch(`${payloadUrl}/api/families/${idOrSlug}?depth=3`, {
       next: { revalidate: 60 },
     });
     if (!response.ok) {
