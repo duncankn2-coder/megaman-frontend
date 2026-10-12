@@ -2022,6 +2022,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               </table>
             </div>
           )}
+
+          {/* Table disclaimer / footnote */}
+          <p className="mt-4 text-xs text-gray-500 font-sans">
+            Rated values are based on average performance, individual products will vary.
+          </p>
         </div>
       </section>
 
