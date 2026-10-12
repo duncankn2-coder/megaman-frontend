@@ -1740,7 +1740,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Features', true)}</th>}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200/70 text-gray-700">
+                <tbody className="divide-y divide-gray-200/70 text-black font-normal">
                   {filteredSkus.map((sku, modelIndex) => {
                     const parent = typeof sku.product === 'object' && sku.product !== null ? sku.product : null;
                     const mmCode = sku.name;
@@ -1811,155 +1811,155 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             <tr
                               key={`${sku.id}-sub-${subCct}`}
                               onClick={() => handleOpenProduct(sku)}
-                              className={`text-xs md:text-sm ${modelBgClass} ${modelHoverClass} hover:text-gray-900 cursor-pointer transition-all duration-150 border-b border-gray-200/70`}
+                              className={`text-xs md:text-sm font-normal text-black ${modelBgClass} ${modelHoverClass} cursor-pointer transition-all duration-150 border-b border-gray-200/70`}
                             >
                               {activeParams.includes('mmCode') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 font-bold text-[#005288] align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 font-normal text-black align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {mmCode}
                                 </td>
                               )}
                               {activeParams.includes('modelNo') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 font-sans font-medium text-gray-900 align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 font-sans font-normal text-black align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {modelNo}
                                 </td>
                               )}
                               {activeParams.includes('colour') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-gray-600 align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 font-normal text-black align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {color}
                                 </td>
                               )}
                               {activeParams.includes('wattage') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-bold text-gray-900 align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {power}
                                 </td>
                               )}
                               {activeParams.includes('luminousFlux') && (
-                                <td className="py-2.5 px-4 text-center whitespace-nowrap">
+                                <td className="py-2.5 px-4 text-center font-normal text-black whitespace-nowrap">
                                   {subFlux}
                                 </td>
                               )}
                               {activeParams.includes('colourTemperature') && (
-                                <td className="py-2.5 px-4 text-center font-bold text-gray-800 whitespace-nowrap">
+                                <td className="py-2.5 px-4 text-center font-normal text-black whitespace-nowrap">
                                   {subCct}
                                 </td>
                               )}
                               {activeParams.includes('cri') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {cri}
                                 </td>
                               )}
                               {activeParams.includes('efficacy') && (
-                                <td className="py-2.5 px-4 text-center text-[#005288] font-bold whitespace-nowrap">
+                                <td className="py-2.5 px-4 text-center font-normal text-black whitespace-nowrap">
                                   {efficacy}
                                 </td>
                               )}
                               {activeParams.includes('beamAngle') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['beam_angle', 'beamAngle', 'beam_angle_deg'], '—')}
                                 </td>
                               )}
                               {activeParams.includes('ip') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-bold align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {ip}
                                 </td>
                               )}
                               {activeParams.includes('ik') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['ik', 'ikRating', 'ik_rating'], '—')}
                                 </td>
                               )}
                               {activeParams.includes('length') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['length_mm', 'length'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
                                 </td>
                               )}
                               {activeParams.includes('width') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['width_mm', 'width', 'width_w', 'light_source_outer_dimensions_width_mm'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
                                 </td>
                               )}
                               {activeParams.includes('height') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['height_mm', 'height', 'height_h', 'depth_mm', 'depth_d', 'light_source_outer_dimensions_high_mm'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
                                 </td>
                               )}
                               {activeParams.includes('diameter') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['diameter_mm', 'diameter'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
                                 </td>
                               )}
                               {activeParams.includes('dimensions') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['dimensions', 'dimension_mm'], '—').replace(/\s*\(?mm\)?\b/gi, '').trim()}
                                 </td>
                               )}
                               {activeParams.includes('recessedCutOut') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['recessed_cut_out_mm', 'recessed_cut_out', 'cut_out_mm'], '—').replace(/\s*mm\b/gi, '').trim()}
                                 </td>
                               )}
                               {activeParams.includes('weight') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-700 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['net_weight_g', 'weight'], '—').replace(/\s*g\b/gi, '').trim()}
                                 </td>
                               )}
                               {activeParams.includes('connector') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {control}
                                 </td>
                               )}
                               {activeParams.includes('lampBase') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['cap_type', 'lamp_holder_type', 'lamp_source', 'lampBase'], '—')}
                                 </td>
                               )}
                               {activeParams.includes('voltage') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getSkuSpec(sku, ['rated_voltage_v', 'voltage', 'Voltage'], '—')}
                                 </td>
                               )}
                               {activeParams.includes('inrushCurrent') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getRawSkuSpec(sku, ['inrush_current_a', 'inrushCurrent']) ? `${getRawSkuSpec(sku, ['inrush_current_a', 'inrushCurrent'])} A` : '—'}
                                 </td>
                               )}
                               {activeParams.includes('inrushDuration') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getRawSkuSpec(sku, ['inrush_current_duration_uS', 'inrushDuration']) ? `${getRawSkuSpec(sku, ['inrush_current_duration_uS', 'inrushDuration'])} μs` : '—'}
                                 </td>
                               )}
                               {activeParams.includes('maxNoOfLuminaire') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getRawSkuSpec(sku, ['max_no_lum', 'maxNoOfLuminaire']) || '—'}
                                 </td>
                               )}
                               {activeParams.includes('mcbB10') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getRawSkuSpec(sku, ['mcb_b10', 'mcbB10']) || '—'}
                                 </td>
                               )}
                               {activeParams.includes('mcbB16') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getRawSkuSpec(sku, ['mcb_b16', 'mcbB16']) || '—'}
                                 </td>
                               )}
                               {activeParams.includes('mcbC10') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getRawSkuSpec(sku, ['mcb_c10', 'mcbC10']) || '—'}
                                 </td>
                               )}
                               {activeParams.includes('mcbC16') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getRawSkuSpec(sku, ['mcb_c16', 'mcbC16']) || '—'}
                                 </td>
                               )}
                               {activeParams.includes('thd') && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center text-gray-600 font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
                                   {getRawSkuSpec(sku, ['thd']) ? (getRawSkuSpec(sku, ['thd']).includes('%') ? getRawSkuSpec(sku, ['thd']) : `${getRawSkuSpec(sku, ['thd'])}%`) : '—'}
                                 </td>
                               )}
                               {showSymbolsColumn && isFirst && (
-                                <td rowSpan={N} className={`py-2.5 px-4 text-center align-middle ${modelBgClass}`}>
+                                <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black align-middle ${modelBgClass}`}>
                                   {productSymbols && productSymbols.length > 0 ? (
                                     <div className="flex flex-wrap items-center justify-center gap-1.5 min-w-[70px]">
                                       {productSymbols.map((symbol) => {
@@ -1986,9 +1986,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                         return (
                                           <span
                                             key={symbol.id}
-                                            className={`border px-1.5 py-0.5 text-[9px] font-mono leading-tight whitespace-nowrap rounded ${symbol.isHighlighted
-                                              ? 'border-[#005288]/30 text-[#005288] bg-[#005288]/5 font-bold'
-                                              : 'border-gray-200 bg-gray-50 text-gray-600'
+                                            className={`border px-1.5 py-0.5 text-[9px] font-mono leading-tight whitespace-nowrap rounded font-normal text-black ${symbol.isHighlighted
+                                              ? 'border-[#005288]/30 bg-[#005288]/5'
+                                              : 'border-gray-200 bg-gray-50'
                                               }`}
                                             title={symbol.name}
                                           >
@@ -1998,7 +1998,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       })}
                                     </div>
                                   ) : (
-                                    <span className="text-gray-400">—</span>
+                                    <span className="text-black font-normal">—</span>
                                   )}
                                 </td>
                               )}
