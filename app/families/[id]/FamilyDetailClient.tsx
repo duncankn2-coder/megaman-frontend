@@ -242,6 +242,16 @@ const formatIpRating = (ipStr: string): string => {
   return unique.join('/');
 };
 
+// Helper to format beam angle values and safely display legacy compound angles (e.g. "2436" -> "24/36")
+const formatBeamAngle = (angleStr: unknown): string => {
+  if (angleStr === null || angleStr === undefined || angleStr === '' || angleStr === '—' || angleStr === 'undefined' || angleStr === 'null') return '—';
+  const clean = String(angleStr).trim();
+  if (/^(2436|2445|2545)$/.test(clean)) {
+    return `${clean.slice(0, 2)}/${clean.slice(2)}`;
+  }
+  return clean;
+};
+
 // Helper to expand lookups with database schema keys dynamically
 const expandSpecNames = (specNames: string[]): string[] => {
   const expanded: string[] = [];
@@ -1855,7 +1865,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               )}
                               {activeParams.includes('beamAngle') && isFirst && (
                                 <td rowSpan={N} className={`py-2.5 px-4 text-center font-normal text-black font-sans align-middle ${modelBgClass} whitespace-nowrap`}>
-                                  {getSkuSpec(sku, ['beam_angle', 'beamAngle', 'beam_angle_deg'], '—')}
+                                  {formatBeamAngle(getSkuSpec(sku, ['beam_angle', 'beamAngle', 'beam_angle_deg'], '—'))}
                                 </td>
                               )}
                               {activeParams.includes('ip') && isFirst && (
