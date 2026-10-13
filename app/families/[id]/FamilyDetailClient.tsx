@@ -288,7 +288,7 @@ const expandSpecNames = (specNames: string[]): string[] => {
         'lumens'
       );
     }
-    if (lower.includes('cct') || lower.includes('temp')) {
+    if ((lower.includes('cct') || lower.includes('temp')) && !lower.includes('operat') && !lower.includes('ambient')) {
       expanded.push(
         'correlated_colour_temperature',
         'cct_k',
@@ -301,6 +301,9 @@ const expandSpecNames = (specNames: string[]): string[] => {
         'colortemp',
         'correlated_color_temperature'
       );
+    }
+    if (lower.includes('operat') || lower.includes('ambient')) {
+      expanded.push('operating_temperature', 'temperature_of_ambient');
     }
     if ((lower.includes('colour') || lower.includes('color')) && !lower.includes('temp') && !lower.includes('cct') && !lower.includes('rendering') && !lower.includes('consistency')) {
       expanded.push('fitting_colour', 'colour', 'color', 'luminaires_color');
@@ -680,6 +683,10 @@ const formatOperatingTemp = (val: any): string => {
   if (!val || val === '—' || val === 'null' || val === 'undefined') return '—';
   let s = String(val).trim();
   s = s.replace(/℃/g, '°C');
+  const num = parseInt(s);
+  if (!isNaN(num) && (num >= 500 || num <= -100)) {
+    return '—';
+  }
   if (/^-?\d+$/.test(s)) {
     return `-20°C to +${s}°C`;
   }
