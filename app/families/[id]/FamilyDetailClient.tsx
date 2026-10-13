@@ -676,6 +676,34 @@ const getRatedLife = (sku: any): string => {
   return '—';
 };
 
+const formatOperatingTemp = (val: any): string => {
+  if (!val || val === '—' || val === 'null' || val === 'undefined') return '—';
+  let s = String(val).trim();
+  s = s.replace(/℃/g, '°C');
+  if (/^-?\d+$/.test(s)) {
+    return `-20°C to +${s}°C`;
+  }
+  if (/^[-+]?\d+\s*to\s*[-+]?\d+$/i.test(s)) {
+    const parts = s.split(/\s*to\s*/i);
+    const from = parts[0].includes('°C') ? parts[0] : `${parts[0]}°C`;
+    const to = parts[1].includes('°C') ? parts[1] : `${parts[1]}°C`;
+    return `${from} to ${to}`;
+  }
+  return s;
+};
+
+const formatSwitchingCycles = (val: any): string => {
+  if (!val || val === '—' || val === 'null' || val === 'undefined' || val === '') {
+    return '100,000';
+  }
+  const clean = String(val).trim().replace(/[^\d]/g, '');
+  const num = parseInt(clean);
+  if (!isNaN(num)) {
+    return num.toLocaleString();
+  }
+  return String(val).trim();
+};
+
 const splitParamAndUnit = (label: string): { name: string; unit?: string } => {
   if (!label) return { name: '' };
   const match = label.match(/^(.*?)\s*([([][^)\]]+[)\]])$/);
@@ -2660,8 +2688,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                         { label: 'IK Rating', value: getSkuSpec(activeDrawerProduct, ['ik', 'ikRating', 'ik_rating'], '—') },
                                         { label: 'Control Gear', value: getSkuSpec(activeDrawerProduct, ['control_gear', 'driver_type', 'driver_model', 'dimming_type', 'type_terminal block', 'controlGear', 'connector'], '—') },
                                         { label: 'Dimmable', value: getSkuSpec(activeDrawerProduct, ['dimmable', 'light_source_dimmable'], '—') },
-                                        { label: 'Operating Temperature', value: getSkuSpec(activeDrawerProduct, ['operating_temperature', 'temperature_of_ambient'], '—') },
-                                        { label: 'Switching Cycles (times)', value: getSkuSpec(activeDrawerProduct, ['switching_cycles', 'switching_Cycles'], '—') },
+                                        { label: 'Operating Temperature (°C)', value: formatOperatingTemp(getSkuSpec(activeDrawerProduct, ['operating_temperature', 'temperature_of_ambient'], '—')) },
+                                        { label: 'Switching Cycles (times)', value: formatSwitchingCycles(getSkuSpec(activeDrawerProduct, ['switching_cycles', 'switching_Cycles'], '')) },
                                         { label: 'Weight (g)', value: getSkuSpec(activeDrawerProduct, ['net_weight_g', 'net_weight', 'weight'], '—') },
                                         { label: 'Application', value: getSkuSpec(activeDrawerProduct, ['application', 'intended_use'], '—') }
                                       ].map((row, index) => (
