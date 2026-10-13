@@ -620,12 +620,60 @@ const getFluxForCct = (fluxStr: any, targetCct: string, cctIndex: number, totalC
     return fluxMap[targetCct];
   }
 
+  // If the string is formatted with '@' CCT conditions (e.g. "125 @4000K 110 @5700K"),
+  // but targetCct was not matched, return '—' so fallback calculation can compute it dynamically
+  // instead of leaking the raw multi-CCT string into the table cell
+  if (clean.includes('@')) {
+    return '—';
+  }
+
   const fluxParts = clean.split(/[\/+]/).map(s => s.trim()).filter(Boolean);
   if (fluxParts.length === totalCcts && cctIndex < fluxParts.length) {
     return fluxParts[cctIndex];
   }
 
   return clean;
+};
+
+const formatCctDisplay = (rawCct: any): string => {
+  if (!rawCct || rawCct === '—') return '—';
+  const parsed = parseCcts(rawCct);
+  if (parsed.length > 0) return parsed.join(' / ');
+  return String(rawCct).trim();
+};
+
+const formatCurrent = (rawCurrent: any, powerStr: any): string => {
+  if (!rawCurrent || rawCurrent === '—') return '—';
+  const clean = String(rawCurrent).trim();
+  if (clean.includes('/')) return clean;
+  const powerParts = String(powerStr || '').split(/[\/+]/).filter(Boolean);
+  if (powerParts.length > 1 && /^\d+$/.test(clean) && clean.length % powerParts.length === 0) {
+    const chunkLen = clean.length / powerParts.length;
+    const parts: string[] = [];
+    for (let i = 0; i < clean.length; i += chunkLen) {
+      parts.push(clean.substring(i, i + chunkLen));
+    }
+    return parts.join(' / ');
+  }
+  return clean;
+};
+
+const formatMultiCondition = (str: any): string => {
+  if (!str || str === '—') return '—';
+  const clean = String(str).trim();
+  if (!clean.includes('@')) return clean;
+  return clean.replace(/\s+(?=\d+(?:\/\d+)*\s*@)/g, ' | ');
+};
+
+const getRatedLife = (sku: any): string => {
+  const directLife = getSkuSpec(sku, ['norminal_life_h', 'nominal_life_h', 'rated_life_h', 'rated_life', 'norminal_life_l70b50_h'], '');
+  if (directLife && directLife !== '—' && directLife !== 'null') return directLife;
+  const desc = String(sku?.specifications?.description || sku?.description || '');
+  const match = desc.match(/(\d{1,3}(?:,\d{3})+|\d{4,6})\s*hrs?(?:\s*([A-Za-z0-9@℃°C]+))?/i);
+  if (match) {
+    return match[2] ? `${match[1]} (${match[2]})` : match[1];
+  }
+  return '—';
 };
 
 const splitParamAndUnit = (label: string): { name: string; unit?: string } => {
@@ -1875,7 +1923,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             }).filter(val => val !== null) as number[];
 
                             if (efficacies.length > 1) {
-                              efficacy = efficacies.join('/');
+                              const uniqueEff = Array.from(new Set(efficacies));
+                              efficacy = uniqueEff.length === 1 ? `${uniqueEff[0]}` : efficacies.join('/');
                             } else if (efficacies.length === 1) {
                               efficacy = `${efficacies[0]}`;
                             }
@@ -2264,11 +2313,27 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                   {/* Header */}
                   <div className="px-8 py-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-transparent">
-                    <div>
-                      <h3 className="text-xl uppercase tracking-widest font-light text-gray-900 mt-1.5 font-sans">
-                        MM CODE: {activeDrawerProduct.name}
-                      </h3>
-                    </div>
+                    {(() => {
+                      const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                      const isMmCode = /^MM\d+/i.test(activeDrawerProduct.name);
+                      const mmCode = isMmCode ? activeDrawerProduct.name : (activeDrawerProduct.isFallbackProduct ? '—' : (activeDrawerProduct.mmCode || '—'));
+                      const modelNo = getSkuSpec(activeDrawerProduct, ['customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'modelNo'], parent?.name || activeDrawerProduct.modelNumber || (!isMmCode ? activeDrawerProduct.name : '—'));
+
+                      return (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            {mmCode && mmCode !== '—' && (
+                              <span className="text-[10px] font-mono font-bold bg-[#005288]/10 text-[#005288] px-2 py-0.5 rounded tracking-wider uppercase">
+                                MM CODE: {mmCode}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-xl uppercase tracking-widest font-light text-gray-900 font-sans">
+                            {modelNo && modelNo !== '—' ? modelNo : activeDrawerProduct.name}
+                          </h3>
+                        </div>
+                      );
+                    })()}
 
                     <button
                       onClick={() => setSelectedProduct(null)}
@@ -2491,162 +2556,196 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {/* TAB 2: TECHNICAL DATA (Detailed parameters) */}
                     {activeModalTab === 'technical' && (
                       <div className="space-y-6 animate-fade-in font-mono text-[11px] text-gray-700">
-
-                        {/* Table 1: Electrical Data */}
-                        <div className="space-y-2">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
-                            Electrical Data
-                          </h4>
-                          <div className="border border-gray-250 overflow-hidden shadow-sm">
-                            <table className="w-full text-left border-collapse">
-                              <tbody className="divide-y divide-gray-150 bg-white">
-                                {[
-                                  { label: 'Voltage (V)', value: getSkuSpec(activeDrawerProduct, ['rated_voltage_v', 'light_source_rated_voltage_v', 'voltage', 'Input Voltage'], '—') },
-                                  { label: 'Frequency (Hz)', value: getSkuSpec(activeDrawerProduct, ['frequency_hz', 'frequency', 'mains_frequency_hz'], '—') },
-                                  { label: 'Current (mA)', value: getSkuSpec(activeDrawerProduct, ['input_current_ma', 'input_current', 'light_source_input_current_ma'], '—') },
-                                  { label: 'Power Factor (λ)', value: getSkuSpec(activeDrawerProduct, ['power_factor', 'displacement_factor'], '—') },
-                                  { label: 'Starting Time (sec)', value: getSkuSpec(activeDrawerProduct, ['starting_time_sec', 'starting_time', 'start_time'], '—') },
-                                  { label: 'Warm-up Time Up to 60% of the Full Light Output (sec)', value: getSkuSpec(activeDrawerProduct, ['warm_up_time_sec', 'warm_up_time', 'warmup_time', 'warm_up_time_up_to_60_of_the_full_light_output_sec'], '—') }
-                                ].map((row, index) => (
-                                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
-                                    <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
-                                    <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        {/* Table 2: Product Data */}
-                        <div className="space-y-2">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
-                            Product Data
-                          </h4>
-                          <div className="border border-gray-250 overflow-hidden shadow-sm">
-                            <table className="w-full text-left border-collapse">
-                              <tbody className="divide-y divide-gray-150 bg-white">
-                                {[
-                                  { label: 'Lamp Base', value: getSkuSpec(activeDrawerProduct, ['lampBase', 'lamp_base', 'cap_type', 'cap_base', 'base', 'lamp_holder_type'], '—') },
-                                  { label: 'Product Wattage (W)', value: getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w', 'light_source_on_mode_power_w'], '—') },
-                                  { label: 'Equivalent Wattage (W)', value: getSkuSpec(activeDrawerProduct, ['equivalent_power_w', 'equivalent_power', 'equivalent_wattage'], '—') },
-                                  { label: 'Colour Temperature (K)', value: getSkuSpec(activeDrawerProduct, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature'], '—') },
-                                  { label: 'Colour Render Index (Ra)', value: getSkuSpec(activeDrawerProduct, ['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index'], '—') },
-                                  { label: 'Colour Consistency (SDCM)', value: getSkuSpec(activeDrawerProduct, ['colour_consistency', 'color_consistency', 'sdcm'], '—') },
-                                  { label: 'Dimmable', value: getSkuSpec(activeDrawerProduct, ['dimmable', 'light_source_dimmable'], '—') },
-                                  { label: 'Operating Temperature', value: getSkuSpec(activeDrawerProduct, ['operating_temperature', 'temperature_of_ambient'], '—') },
-                                  { label: 'Switching Cycles (times)', value: getSkuSpec(activeDrawerProduct, ['switching_cycles', 'switching_Cycles'], '—') },
-                                  { label: 'Weight (g)', value: getSkuSpec(activeDrawerProduct, ['net_weight_g', 'net_weight', 'weight'], '—') },
-                                  { label: 'Application', value: getSkuSpec(activeDrawerProduct, ['application', 'intended_use', 'zone'], '—') }
-                                ].map((row, index) => (
-                                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
-                                    <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
-                                    <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        {/* Symbols & Certifications */}
                         {(() => {
+                          const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                          const isMmCode = /^MM\d+/i.test(activeDrawerProduct.name);
+                          const mmCode = isMmCode ? activeDrawerProduct.name : (activeDrawerProduct.isFallbackProduct ? '—' : (activeDrawerProduct.mmCode || '—'));
+                          const modelNo = getSkuSpec(activeDrawerProduct, ['customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'modelNo'], parent?.name || activeDrawerProduct.modelNumber || (!isMmCode ? activeDrawerProduct.name : '—'));
+                          const rawPower = getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w', 'light_source_on_mode_power_w'], '—');
+                          const rawCurrent = getSkuSpec(activeDrawerProduct, ['input_current_ma', 'input_current', 'light_source_input_current_ma'], '—');
+                          const formattedCurrent = formatCurrent(rawCurrent, rawPower);
+
+                          const rawCct = getSkuSpec(activeDrawerProduct, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature'], '—');
+                          const formattedCct = formatCctDisplay(rawCct);
+
+                          const rawFlux = getSkuSpec(activeDrawerProduct, ['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm'], '—');
+                          const formattedFlux = formatMultiCondition(rawFlux);
+
+                          const rawEfficacy = getSkuSpec(activeDrawerProduct, ['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy'], '');
+                          let efficacyVal = rawEfficacy;
+                          if (!efficacyVal || efficacyVal === '—') {
+                            const numFlux = parseInt(rawFlux);
+                            const numPower = parseFloat(rawPower);
+                            if (!isNaN(numFlux) && !isNaN(numPower) && numPower > 0) {
+                              efficacyVal = `${Math.round(numFlux / numPower)}`;
+                            } else {
+                              efficacyVal = '—';
+                            }
+                          } else {
+                            efficacyVal = efficacyVal.replace(/\s*(?:lm\/w|lmw)\b/gi, '').trim();
+                            efficacyVal = roundEfficacyToWholeNumber(efficacyVal);
+                            efficacyVal = formatMultiCondition(efficacyVal);
+                          }
+
+                          const diamVal = getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter'], '—');
+                          const widthVal = getSkuSpec(activeDrawerProduct, ['width_mm', 'width'], '—');
+                          const heightVal = getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '—');
+                          const lengthVal = getSkuSpec(activeDrawerProduct, ['length_mm', 'length'], '—');
+                          const cutOutVal = getSkuSpec(activeDrawerProduct, ['recessed_cut_out_mm', 'recessed_cut_out', 'cut_out_mm'], '—');
+
+                          const dimensionRows = [
+                            ...(diamVal !== '—' ? [{ label: 'Diameter (mm)', value: diamVal }] : []),
+                            ...(lengthVal !== '—' ? [{ label: 'Length (mm)', value: lengthVal }] : []),
+                            ...(widthVal !== '—' ? [{ label: 'Width (mm)', value: widthVal }] : []),
+                            ...(heightVal !== '—' ? [{ label: 'Height (mm)', value: heightVal }] : []),
+                            ...(cutOutVal !== '—' ? [{ label: 'Cut-out (mm)', value: cutOutVal }] : [])
+                          ];
+                          if (dimensionRows.length === 0) {
+                            dimensionRows.push(
+                              { label: 'Diameter (mm)', value: diamVal },
+                              { label: 'Width (mm)', value: widthVal },
+                              { label: 'Height (mm)', value: heightVal }
+                            );
+                          }
+
                           const drawerSymbols = getSymbolsForProduct(activeDrawerProduct);
-                          if (!drawerSymbols || drawerSymbols.length === 0) return null;
+
                           return (
-                            <div className="space-y-2">
-                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
-                                Features & Certifications
-                              </h4>
-                              <div className="py-2 flex flex-wrap items-center gap-3">
-                                {drawerSymbols.map(symbol => {
-                                  const iconUrl = symbol.icon ? getImageUrl(symbol.icon) : '';
-                                  const hasValidIcon = !failedImageIds[symbol.id] && iconUrl && iconUrl !== '/placeholder.png';
-                                  if (hasValidIcon) {
-                                    return (
-                                      <div key={symbol.id} className="relative h-9 w-9 md:h-10 md:w-10 flex items-center justify-center transition-transform hover:scale-105" title={symbol.name}>
-                                        <Image src={iconUrl} alt={symbol.name} fill className="object-contain" unoptimized onError={() => setFailedImageIds(prev => ({ ...prev, [symbol.id]: true }))} />
-                                      </div>
-                                    );
-                                  }
-                                  return (
-                                    <span key={symbol.id} className={`px-2.5 py-1 text-xs font-mono uppercase tracking-wider ${symbol.isHighlighted ? 'text-[#005288] bg-[#005288]/10 font-bold' : 'bg-gray-100 text-gray-700 font-medium'}`} title={symbol.name}>
-                                      {symbol.name}
-                                    </span>
-                                  );
-                                })}
+                            <>
+                              {/* Table 1: Electrical Data */}
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                                  Electrical Data
+                                </h4>
+                                <div className="border border-gray-250 overflow-hidden shadow-sm">
+                                  <table className="w-full text-left border-collapse">
+                                    <tbody className="divide-y divide-gray-150 bg-white">
+                                      {[
+                                        { label: 'Voltage (V)', value: getSkuSpec(activeDrawerProduct, ['rated_voltage_v', 'light_source_rated_voltage_v', 'voltage', 'Input Voltage'], '—') },
+                                        { label: 'Frequency (Hz)', value: getSkuSpec(activeDrawerProduct, ['frequency_hz', 'frequency', 'mains_frequency_hz'], '—') },
+                                        { label: 'Current (mA)', value: formattedCurrent },
+                                        { label: 'Power Factor (λ)', value: getSkuSpec(activeDrawerProduct, ['power_factor', 'displacement_factor'], '—') },
+                                        { label: 'Starting Time (sec)', value: getSkuSpec(activeDrawerProduct, ['starting_time_sec', 'starting_time', 'start_time'], '—') },
+                                        { label: 'Warm-up Time Up to 60% of the Full Light Output (sec)', value: getSkuSpec(activeDrawerProduct, ['warm_up_time_sec', 'warm_up_time', 'warmup_time', 'warm_up_time_up_to_60_of_the_full_light_output_sec'], '—') }
+                                      ].map((row, index) => (
+                                        <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                          <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                          <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
                               </div>
-                            </div>
+
+                              {/* Table 2: Product Data */}
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                                  Product Data
+                                </h4>
+                                <div className="border border-gray-250 overflow-hidden shadow-sm">
+                                  <table className="w-full text-left border-collapse">
+                                    <tbody className="divide-y divide-gray-150 bg-white">
+                                      {[
+                                        { label: 'Model No.', value: modelNo },
+                                        { label: 'MM Code', value: mmCode },
+                                        { label: 'Product Wattage (W)', value: rawPower },
+                                        { label: 'Lamp Base / Light Source', value: getSkuSpec(activeDrawerProduct, ['cap_type', 'lamp_holder_type', 'lamp_source', 'lampBase', 'lamp_base', 'luminaire_category', 'base'], '—') },
+                                        { label: 'Equivalent Wattage (W)', value: getSkuSpec(activeDrawerProduct, ['equivalent_power_w', 'equivalent_power', 'equivalent_wattage'], '—') },
+                                        { label: 'Colour Temperature (K)', value: formattedCct },
+                                        { label: 'Colour Render Index (Ra)', value: getSkuSpec(activeDrawerProduct, ['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index'], '—') },
+                                        { label: 'Colour Consistency (SDCM)', value: getSkuSpec(activeDrawerProduct, ['colour_consistency', 'color_consistency', 'sdcm'], '—') },
+                                        { label: 'Beam Angle (°)', value: formatBeamAngle(getSkuSpec(activeDrawerProduct, ['beam_angle', 'beamAngle', 'beam_angle_deg'], '—')) },
+                                        { label: 'IP Rating', value: formatIpRating(getSkuSpec(activeDrawerProduct, ['ip', 'ipRating', 'IP rating', 'IP Rating', 'ip_rating'], '—')) },
+                                        { label: 'IK Rating', value: getSkuSpec(activeDrawerProduct, ['ik', 'ikRating', 'ik_rating'], '—') },
+                                        { label: 'Control Gear', value: getSkuSpec(activeDrawerProduct, ['control_gear', 'driver_type', 'driver_model', 'dimming_type', 'type_terminal block', 'controlGear', 'connector'], '—') },
+                                        { label: 'Dimmable', value: getSkuSpec(activeDrawerProduct, ['dimmable', 'light_source_dimmable'], '—') },
+                                        { label: 'Operating Temperature', value: getSkuSpec(activeDrawerProduct, ['operating_temperature', 'temperature_of_ambient'], '—') },
+                                        { label: 'Switching Cycles (times)', value: getSkuSpec(activeDrawerProduct, ['switching_cycles', 'switching_Cycles'], '—') },
+                                        { label: 'Weight (g)', value: getSkuSpec(activeDrawerProduct, ['net_weight_g', 'net_weight', 'weight'], '—') },
+                                        { label: 'Application', value: getSkuSpec(activeDrawerProduct, ['application', 'intended_use'], '—') }
+                                      ].map((row, index) => (
+                                        <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                          <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                          <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+
+                              {/* Symbols & Certifications */}
+                              {drawerSymbols && drawerSymbols.length > 0 && (
+                                <div className="space-y-2">
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                                    Features & Certifications
+                                  </h4>
+                                  <div className="py-2 flex flex-wrap items-center gap-3">
+                                    {drawerSymbols.map(symbol => {
+                                      const iconUrl = symbol.icon ? getImageUrl(symbol.icon) : '';
+                                      const hasValidIcon = !failedImageIds[symbol.id] && iconUrl && iconUrl !== '/placeholder.png';
+                                      if (hasValidIcon) {
+                                        return (
+                                          <div key={symbol.id} className="relative h-9 w-9 md:h-10 md:w-10 flex items-center justify-center transition-transform hover:scale-105" title={symbol.name}>
+                                            <Image src={iconUrl} alt={symbol.name} fill className="object-contain" unoptimized onError={() => setFailedImageIds(prev => ({ ...prev, [symbol.id]: true }))} />
+                                          </div>
+                                        );
+                                      }
+                                      return (
+                                        <span key={symbol.id} className={`px-2.5 py-1 text-xs font-mono uppercase tracking-wider ${symbol.isHighlighted ? 'text-[#005288] bg-[#005288]/10 font-bold' : 'bg-gray-100 text-gray-700 font-medium'}`} title={symbol.name}>
+                                          {symbol.name}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Table 3: Performance Data */}
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                                  Performance Data
+                                </h4>
+                                <div className="border border-gray-250 overflow-hidden shadow-sm">
+                                  <table className="w-full text-left border-collapse">
+                                    <tbody className="divide-y divide-gray-150 bg-white">
+                                      {[
+                                        { label: 'Total Luminous Flux (lm)', value: formattedFlux },
+                                        { label: 'Luminous Efficacy (lm/W)', value: efficacyVal },
+                                        { label: 'Rated Life (hrs)', value: getRatedLife(activeDrawerProduct) }
+                                      ].map((row, index) => (
+                                        <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                          <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                          <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+
+                              {/* Table 4: Product Dimensions */}
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
+                                  Product Dimensions
+                                </h4>
+                                <div className="border border-gray-250 overflow-hidden shadow-sm">
+                                  <table className="w-full text-left border-collapse">
+                                    <tbody className="divide-y divide-gray-150 bg-white">
+                                      {dimensionRows.map((row, index) => (
+                                        <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
+                                          <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
+                                          <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </>
                           );
                         })()}
-
-                        {/* Table 3: Performance Data */}
-                        <div className="space-y-2">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
-                            Performance Data
-                          </h4>
-                          <div className="border border-gray-250 overflow-hidden shadow-sm">
-                            <table className="w-full text-left border-collapse">
-                              <tbody className="divide-y divide-gray-150 bg-white">
-                                {(() => {
-                                  const totalFlux = getSkuSpec(activeDrawerProduct, ['total_luminous_flux_lm', 'total_luminous_flux', 'useful_luminous_flux_lm', 'useful_luminous_flux', 'flux', 'lumens', 'light_source_useful_luminous_flux_lm'], '—');
-                                  const rawEfficacy = getSkuSpec(activeDrawerProduct, ['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy'], '');
-                                  const rawPower = getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w'], '');
-
-                                  let efficacyVal = rawEfficacy;
-                                  if (!efficacyVal) {
-                                    const numFlux = parseInt(totalFlux);
-                                    const numPower = parseFloat(rawPower);
-                                    if (!isNaN(numFlux) && !isNaN(numPower) && numPower > 0) {
-                                      efficacyVal = `${Math.round(numFlux / numPower)}`;
-                                    } else {
-                                      efficacyVal = '—';
-                                    }
-                                  } else {
-                                    efficacyVal = efficacyVal.replace(/\s*(?:lm\/w|lmw)\b/gi, '').trim();
-                                    efficacyVal = roundEfficacyToWholeNumber(efficacyVal);
-                                  }
-
-                                  return [
-                                    { label: 'Total Luminous Flux (lm)', value: totalFlux },
-                                    { label: 'Luminous Efficacy (lm/W)', value: efficacyVal },
-                                    { label: 'Rated Life (hrs)', value: getSkuSpec(activeDrawerProduct, ['norminal_life_h', 'nominal_life_h', 'rated_life_h', 'rated_life'], '—') }
-                                  ].map((row, index) => (
-                                    <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
-                                      <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
-                                      <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
-                                    </tr>
-                                  ));
-                                })()}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        {/* Table 4: Product Dimensions */}
-                        <div className="space-y-2">
-                          <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] pb-1 border-b border-gray-200 font-sans">
-                            Product Dimensions
-                          </h4>
-                          <div className="border border-gray-250 overflow-hidden shadow-sm">
-                            <table className="w-full text-left border-collapse">
-                              <tbody className="divide-y divide-gray-150 bg-white">
-                                {[
-                                  { label: 'Diameter (mm)', value: getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter'], '—') },
-                                  { label: 'Width (mm)', value: getSkuSpec(activeDrawerProduct, ['width_mm', 'width'], '—') },
-                                  { label: 'Height (mm)', value: getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '—') }
-                                ].map((row, index) => (
-                                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
-                                    <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
-                                    <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-
                       </div>
                     )}
 
