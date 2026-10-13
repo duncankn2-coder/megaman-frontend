@@ -98,6 +98,21 @@ interface Block {
   captions?: any[];
 }
 
+export interface AccessoryItem {
+  id?: string;
+  modelNumber?: string;
+  modelNo?: string;
+  mmCode?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  colour?: string;
+  color?: string;
+  image?: { url: string; alt?: string; filename?: string } | string | null;
+  product?: Product | string | null;
+  specifications?: Record<string, unknown> | null;
+}
+
 interface Family {
   id: string;
   name: string;
@@ -105,6 +120,7 @@ interface Family {
   description?: string;
   media: MediaItem[];
   products: Product[];
+  accessories?: AccessoryItem[];
   features?: { id?: string; feature: string }[];
   symbols?: SymbolItem[];
   layout?: Block[];
@@ -667,6 +683,60 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
   const [skus, setSkus] = useState<any[]>([]);
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
+  const [previewAccessoryImage, setPreviewAccessoryImage] = useState<{ url: string; title: string } | null>(null);
+
+  // Memoized accessory items from family.accessories or fallback extraction from products' specifications
+  const accessoriesList = useMemo<AccessoryItem[]>(() => {
+    // 1. Explicitly configured accessories on family (from CMS)
+    if (Array.isArray(family.accessories) && family.accessories.length > 0) {
+      return family.accessories.filter(item => {
+        if (!item) return false;
+        return Boolean(
+          item.modelNumber ||
+          item.modelNo ||
+          item.mmCode ||
+          item.name ||
+          item.title ||
+          item.description ||
+          item.colour ||
+          item.product ||
+          item.image
+        );
+      });
+    }
+
+    // 2. Secondary fallback: check products for standard_accessories / optional_accessories
+    const extracted: AccessoryItem[] = [];
+    const seen = new Set<string>();
+
+    (family.products || []).forEach((prod: any) => {
+      if (!prod || !prod.specifications) return;
+      const opt = prod.specifications.optional_accessories;
+      const std = prod.specifications.standard_accessories;
+
+      [opt, std].forEach(val => {
+        if (!val || typeof val !== 'string') return;
+        const trimmed = val.trim();
+        if (!trimmed || trimmed.toUpperCase() === 'N/A') return;
+
+        // Split by common delimiters like /, +, comma
+        const tokens = trimmed.split(/[\/,+]/).map(t => t.trim()).filter(Boolean);
+        tokens.forEach(tok => {
+          const key = tok.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            extracted.push({
+              modelNumber: tok,
+              name: tok.startsWith('LA') ? `Accessory (${tok})` : tok,
+              colour: '—',
+            });
+          }
+        });
+      });
+    });
+
+    return extracted;
+  }, [family.accessories, family.products]);
 
   const [allSymbolsMap, setAllSymbolsMap] = useState<Record<string, SymbolItem>>(() => {
     const initialMap: Record<string, SymbolItem> = {};
@@ -2027,6 +2097,150 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
           <p className="mt-4 text-xs text-gray-500 font-sans">
             Rated values are based on average performance, individual products will vary.
           </p>
+
+          {/* ACCESSORIES TABLE (Rendered below technical configurations if accessories exist) */}
+          {accessoriesList.length > 0 && (
+            <div id="accessories" className="mt-12 pt-8 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl uppercase tracking-widest text-gray-900 font-light flex items-center gap-2.5">
+                    ACCESSORIES
+                  </h3>
+                  <p className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider">
+                    Optional and compatible accessories for the {family.name} series.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-200 rounded text-[11px] font-mono text-gray-600 self-start sm:self-auto">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#005288]"></span>
+                  <span>{accessoriesList.length} {accessoriesList.length === 1 ? 'Accessory' : 'Accessories'}</span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto border border-gray-200 shadow-xs bg-white">
+                <table className="w-full text-left border-collapse text-xs font-mono">
+                  <thead>
+                    <tr className="bg-gray-50/90 border-b border-gray-200 text-gray-700 font-sans font-semibold text-[11px] uppercase tracking-wider">
+                      <th className="py-3 px-4 w-20 text-center">Image</th>
+                      <th className="py-3 px-4 min-w-[140px]">Model No.</th>
+                      <th className="py-3 px-4 min-w-[120px]">MM Code</th>
+                      <th className="py-3 px-6 min-w-[240px]">Description</th>
+                      <th className="py-3 px-4 min-w-[100px]">Colour</th>
+                      <th className="py-3 px-4 w-28 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {accessoriesList.map((acc, index) => {
+                      const modelNo = acc.modelNumber || acc.modelNo || (typeof acc.product === 'object' ? acc.product?.name : '') || '—';
+                      const mmCode = acc.mmCode || '—';
+                      const title = acc.name || acc.title || (typeof acc.product === 'object' ? acc.product?.description : '') || '—';
+                      const description = acc.description || '';
+                      const colour = acc.colour || acc.color || (typeof acc.product === 'object' ? acc.product?.colour : '') || '—';
+
+                      const rawImage = acc.image || (typeof acc.product === 'object' ? acc.product?.images : null);
+                      const imgUrl = rawImage ? getImageUrl(rawImage) : '';
+                      const hasValidImg = Boolean(imgUrl && imgUrl !== '/placeholder.png');
+
+                      const linkedProduct = typeof acc.product === 'object' && acc.product ? acc.product : null;
+
+                      return (
+                        <tr
+                          key={acc.id || `acc-${index}-${modelNo}`}
+                          className="hover:bg-blue-50/40 transition-colors duration-150 group"
+                        >
+                          {/* Image Thumbnail */}
+                          <td className="py-3 px-4 text-center align-middle">
+                            {hasValidImg ? (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewAccessoryImage({ url: imgUrl, title: `${modelNo} ${title !== '—' ? `- ${title}` : ''}` })}
+                                className="relative w-12 h-12 mx-auto bg-gray-50 border border-gray-200 rounded p-1 overflow-hidden group-hover:border-[#005288]/40 transition-all hover:scale-105 cursor-zoom-in block"
+                                title="Click to view full image"
+                              >
+                                <Image
+                                  src={imgUrl}
+                                  alt={title || modelNo}
+                                  fill
+                                  sizes="48px"
+                                  className="object-contain p-0.5"
+                                  unoptimized
+                                />
+                              </button>
+                            ) : (
+                              <div className="w-12 h-12 mx-auto bg-gray-50 border border-gray-200 rounded flex items-center justify-center text-gray-400 group-hover:text-[#005288] transition-colors">
+                                <FontAwesomeIcon icon={faCogs} className="text-sm opacity-60" />
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Model No. */}
+                          <td className="py-3 px-4 font-mono font-semibold text-gray-900 align-middle whitespace-nowrap">
+                            <span className="tracking-tight">{modelNo}</span>
+                          </td>
+
+                          {/* MM Code */}
+                          <td className="py-3 px-4 font-mono text-gray-700 align-middle whitespace-nowrap">
+                            {mmCode !== '—' ? (
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded text-[11px] font-mono border border-gray-200/60">
+                                {mmCode}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+
+                          {/* Description */}
+                          <td className="py-3 px-6 font-sans text-gray-800 align-middle">
+                            <div className="font-medium text-[13px] leading-snug">{title}</div>
+                            {description && (
+                              <div className="text-[11px] text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">
+                                {description}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Colour */}
+                          <td className="py-3 px-4 font-sans text-gray-700 align-middle whitespace-nowrap">
+                            {colour !== '—' ? (
+                              <span className="inline-block px-2 py-0.5 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-700">
+                                {colour}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3 px-4 text-center align-middle whitespace-nowrap">
+                            {linkedProduct ? (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenProduct(linkedProduct)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#005288] hover:bg-[#003e66] text-white text-[11px] font-sans font-medium rounded transition-all shadow-xs"
+                              >
+                                <span>Details</span>
+                                <FontAwesomeIcon icon={faChevronRight} className="text-[9px]" />
+                              </button>
+                            ) : hasValidImg ? (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewAccessoryImage({ url: imgUrl, title: `${modelNo} ${title !== '—' ? `- ${title}` : ''}` })}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-gray-50 text-gray-700 text-[11px] font-sans border border-gray-300 rounded transition-all"
+                              >
+                                <FontAwesomeIcon icon={faSearch} className="text-[10px] text-gray-500" />
+                                <span>Preview</span>
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 text-xs">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -2879,6 +3093,42 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
               </>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Accessory Image Lightbox Modal */}
+      {previewAccessoryImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm"
+          onClick={() => setPreviewAccessoryImage(null)}
+        >
+          <div
+            className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full p-6 border border-gray-200 flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between pb-3 mb-4 border-b border-gray-200">
+              <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider font-mono">
+                {previewAccessoryImage.title}
+              </h4>
+              <button
+                type="button"
+                onClick={() => setPreviewAccessoryImage(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              >
+                <FontAwesomeIcon icon={faTimes} className="text-base" />
+              </button>
+            </div>
+            <div className="relative w-full h-80 sm:h-96 bg-gray-50 rounded border border-gray-200 flex items-center justify-center overflow-hidden p-4">
+              <Image
+                src={previewAccessoryImage.url}
+                alt={previewAccessoryImage.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 600px"
+                className="object-contain"
+                unoptimized
+              />
+            </div>
           </div>
         </div>
       )}

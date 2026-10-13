@@ -44,6 +44,7 @@ interface Family {
   layout?: any[];
   selectedParameters?: string[];
   datasheet?: any;
+  accessories?: any[];
 }
 
 async function getFamily(idOrSlug: string): Promise<Family | null> {
