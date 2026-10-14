@@ -2468,12 +2468,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-4xl" />
                                   )}
                                 </div>
-                                {/* Line Drawing / Dimensional Outline Box */}
+                                {/* Line Drawing / Dimensional Outline Box (Hidden if no file uploaded) */}
                                 {(() => {
                                   // Line drawing defaults to the family's default line drawing if not specified on the product
-                                  const lineDrawingFile = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
-                                  const heightVal = getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '');
-                                  const diamVal = getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter', 'width_mm'], '');
+                                  const rawLineDrawing = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
+                                  const lineDrawingFile = (rawLineDrawing && (typeof rawLineDrawing === 'string' ? rawLineDrawing.trim().length > 0 : Boolean(rawLineDrawing.url || rawLineDrawing.filename))) ? rawLineDrawing : null;
+                                  if (!lineDrawingFile) return null;
 
                                   return (
                                     <div className="bg-gray-50 border border-gray-200 p-3 flex flex-col items-center justify-center shadow-sm relative group overflow-hidden">
@@ -2487,52 +2487,22 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       </div>
 
                                       <div className="relative aspect-[4/3] w-full bg-white border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
-                                        {lineDrawingFile ? (
-                                          <img
-                                            src={getImageUrl(lineDrawingFile)}
-                                            alt="Line Drawing"
-                                            className="max-h-full max-w-full object-contain"
-                                          />
-                                        ) : (
-                                          <svg viewBox="0 0 160 140" className="w-full h-full text-gray-600">
-                                            {/* Outer Luminaire Contour */}
-                                            <path d="M 80 18 C 50 18 35 38 35 62 C 35 86 50 102 58 114 L 58 126 L 102 126 L 102 114 C 110 102 125 86 125 62 C 125 38 110 18 80 18 Z" fill="none" stroke="#005288" strokeWidth="1.5" />
-                                            <path d="M 58 126 L 102 126 M 58 129 L 102 129 M 60 132 L 100 132" fill="none" stroke="#005288" strokeWidth="1.2" />
-
-                                            {/* Internal Lens / Reflector outline */}
-                                            <ellipse cx="80" cy="50" rx="32" ry="12" fill="none" stroke="#9ca3af" strokeWidth="0.8" strokeDasharray="2,2" />
-                                            <line x1="80" y1="18" x2="80" y2="126" stroke="#e5e7eb" strokeWidth="0.6" strokeDasharray="3,3" />
-
-                                            {/* Height Dimension line on left */}
-                                            <line x1="18" y1="18" x2="18" y2="132" stroke="#009fe3" strokeWidth="1" />
-                                            <line x1="13" y1="18" x2="23" y2="18" stroke="#009fe3" strokeWidth="1" />
-                                            <line x1="13" y1="132" x2="23" y2="132" stroke="#009fe3" strokeWidth="1" />
-                                            <text x="10" y="78" fill="#009fe3" fontSize="7" fontWeight="bold" textAnchor="middle" transform="rotate(-90 10 78)">
-                                              {heightVal ? `${heightVal}mm` : 'H'}
-                                            </text>
-
-                                            {/* Diameter Dimension line at bottom */}
-                                            <line x1="35" y1="137" x2="125" y2="137" stroke="#009fe3" strokeWidth="1" />
-                                            <line x1="35" y1="133" x2="35" y2="139" stroke="#009fe3" strokeWidth="1" />
-                                            <line x1="125" y1="133" x2="125" y2="139" stroke="#009fe3" strokeWidth="1" />
-                                            <text x="80" y="139" fill="#009fe3" fontSize="6.5" fontWeight="bold" textAnchor="middle">
-                                              {diamVal ? `Ø ${diamVal}mm` : 'D'}
-                                            </text>
-                                          </svg>
-                                        )}
+                                        <img
+                                          src={getImageUrl(lineDrawingFile)}
+                                          alt="Line Drawing"
+                                          className="max-h-full max-w-full object-contain"
+                                        />
                                       </div>
 
                                       <div className="w-full flex items-center justify-between mt-2 text-[8px] font-mono text-gray-400">
-                                        <span>{lineDrawingFile ? (lineDrawingFile.filename || 'Uploaded File') : 'Technical CAD Outline'}</span>
-                                        {lineDrawingFile && (
-                                          <button
-                                            onClick={() => handleDownloadFile(lineDrawingFile, 'Line Drawing')}
-                                            className="inline-flex items-center gap-1 font-bold text-[#005288] hover:underline cursor-pointer"
-                                          >
-                                            <FontAwesomeIcon icon={faDownload} className="text-[8px]" />
-                                            <span>Download</span>
-                                          </button>
-                                        )}
+                                        <span>{lineDrawingFile.filename || 'Uploaded File'}</span>
+                                        <button
+                                          onClick={() => handleDownloadFile(lineDrawingFile, 'Line Drawing')}
+                                          className="inline-flex items-center gap-1 font-bold text-[#005288] hover:underline cursor-pointer"
+                                        >
+                                          <FontAwesomeIcon icon={faDownload} className="text-[8px]" />
+                                          <span>Download</span>
+                                        </button>
                                       </div>
                                     </div>
                                   );
@@ -2818,412 +2788,319 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     {activeModalTab === 'photometrics' && (
                       <div className="space-y-8 animate-fade-in">
 
-                        {/* Section 1: Photometric & Technical Diagrams Grid */}
+                        {/* Section 1 & Section 2: Photometrics, CAD, and Technical Documents */}
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+
+                          // Helper to check for a valid uploaded media file
+                          const isValidFile = (f: any) => Boolean(f && (typeof f === 'string' ? f.trim().length > 0 && f !== '/placeholder.png' : Boolean(f.url || f.filename)));
+
                           // Spectrum graph defaults to family's default spectrum image if not specified on the product
-                          const spectrumFile = activeDrawerProduct.lightSpectrumGraph 
+                          const rawSpectrum = activeDrawerProduct.lightSpectrumGraph 
                             || (activeDrawerProduct as any)?.spectrumImage 
                             || parent?.lightSpectrumGraph 
                             || (parent as any)?.spectrumImage 
                             || family?.lightSpectrumGraph 
                             || (family as any)?.spectrumImage;
-                          const polarFile = activeDrawerProduct.photometricPolarDiagram || parent?.photometricPolarDiagram;
-                          const beamFile = activeDrawerProduct.beamAngleDiagram || parent?.beamAngleDiagram;
+                          const spectrumFile = isValidFile(rawSpectrum) ? rawSpectrum : null;
+
+                          const rawPolar = activeDrawerProduct.photometricPolarDiagram || parent?.photometricPolarDiagram;
+                          const polarFile = isValidFile(rawPolar) ? rawPolar : null;
+
+                          const rawBeam = activeDrawerProduct.beamAngleDiagram || parent?.beamAngleDiagram;
+                          const beamFile = isValidFile(rawBeam) ? rawBeam : null;
+
+                          const hasAnyDiagram = Boolean(spectrumFile || polarFile || beamFile);
+
+                          // CAD / Databases files
+                          const rawLdt = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
+                          const ldtFile = isValidFile(rawLdt) ? rawLdt : null;
+
+                          const rawIes = activeDrawerProduct.photometryIes || parent?.photometryIes;
+                          const iesFile = isValidFile(rawIes) ? rawIes : null;
+
+                          const rawLineDrawing = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
+                          const lineDrawingFile = isValidFile(rawLineDrawing) ? rawLineDrawing : null;
+
+                          const hasCadFiles = Boolean(lineDrawingFile || ldtFile || iesFile);
+
+                          // Technical Documents
+                          const famObj = family || (parent && typeof parent.families === 'object' ? parent.families : null);
+                          const familyDi = famObj?.dismantleInstructionPdf || null;
+
+                          const specs = (activeDrawerProduct.specifications || parent?.specifications || {}) as Record<string, any>;
+
+                          const isValidDriverModel = (val: any) => {
+                            if (val === null || val === undefined) return false;
+                            const str = String(val).trim().toLowerCase();
+                            if (!str) return false;
+                            return !(str === 'undefined' || str === 'null' || str === 'n/a' || str === 'n.a.' || str === 'na' || str === 'none' || str === '-' || str === '—');
+                          };
+
+                          const hasDriverModel = isValidDriverModel(specs.driver_model) || isValidDriverModel(specs.scg_driver_model_no);
+                          const showControlGearDoc = hasDriverModel || Boolean(activeDrawerProduct.techDocControlGear || parent?.techDocControlGear);
+                          const hasContainingProductSpecs = isValidDriverModel(specs.customer_model_no_new) || isValidDriverModel(specs.model_identifier) || isValidDriverModel(specs.replacable_light_source) || isValidDriverModel(specs.replaceble_control_gear);
+                          const showContainingProductDoc = hasContainingProductSpecs || Boolean(activeDrawerProduct.techDocContainingProduct || parent?.techDocContainingProduct) || Boolean(familyDi);
+                          const techDocLightSourceFile = activeDrawerProduct.techDocLightSource || parent?.techDocLightSource;
+                          const showLightSourceDoc = Boolean(techDocLightSourceFile) || Boolean(familyDi) || isValidDriverModel(specs.model_identifier) || Boolean(parent);
+
+                          const hasTechDocs = Boolean(showControlGearDoc || showContainingProductDoc || showLightSourceDoc);
+
+                          const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                            ? activeDrawerProduct.id
+                            : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
+                          const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
+                            ? ''
+                            : `?sku=${activeDrawerProduct.name}`;
+
+                          // If no diagrams, no CAD/LDT/IES files, and no technical documents are available
+                          if (!hasAnyDiagram && !hasCadFiles && !hasTechDocs) {
+                            return (
+                              <div className="py-16 text-center border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3 text-gray-400">
+                                  <FontAwesomeIcon icon={faInfoCircle} className="text-xl" />
+                                </div>
+                                <h5 className="text-xs font-bold uppercase tracking-wider text-gray-600 font-sans">
+                                  No Photometrics or CAD Files Available
+                                </h5>
+                                <p className="text-[11px] text-gray-400 mt-1 max-w-sm mx-auto">
+                                  Photometric diagrams, CAD line drawings, and data files have not been uploaded for this model.
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          const activeDiagramCount = [spectrumFile, polarFile, beamFile].filter(Boolean).length;
 
                           return (
-                            <div className="space-y-4">
-                              <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] font-sans">
-                                  Photometric & Technical Diagrams
-                                </h4>
-                                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
-                                  Optical Specs & Distribution
-                                </span>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                                {/* 1. Light Spectrum Graph */}
-                                <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
-                                  <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
-                                        Light Spectrum Graph
-                                      </span>
-                                      <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
-                                        SPD
-                                      </span>
-                                    </div>
-                                    <p className="text-[9px] text-gray-400 font-mono mb-3">Visible Wavelength Spectrum (380 - 780nm)</p>
-
-                                    <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
-                                      {spectrumFile ? (
-                                        <img
-                                          src={getImageUrl(spectrumFile)}
-                                          alt="Light Spectrum Graph"
-                                          className="max-h-full max-w-full object-contain"
-                                        />
-                                      ) : (
-                                        <svg viewBox="0 0 200 130" className="w-full h-full text-[#005288]">
-                                          <defs>
-                                            <linearGradient id="spectrumRainbow" x1="0%" y1="0%" x2="100%" y2="0%">
-                                              <stop offset="0%" stopColor="#8b00ff" stopOpacity="0.4" />
-                                              <stop offset="20%" stopColor="#0000ff" stopOpacity="0.4" />
-                                              <stop offset="40%" stopColor="#00ff00" stopOpacity="0.4" />
-                                              <stop offset="60%" stopColor="#ffff00" stopOpacity="0.4" />
-                                              <stop offset="80%" stopColor="#ff7f00" stopOpacity="0.4" />
-                                              <stop offset="100%" stopColor="#ff0000" stopOpacity="0.4" />
-                                            </linearGradient>
-                                            <linearGradient id="spectrumFill" x1="0%" y1="0%" x2="0%" y2="100%">
-                                              <stop offset="0%" stopColor="#005288" stopOpacity="0.25" />
-                                              <stop offset="100%" stopColor="#005288" stopOpacity="0.0" />
-                                            </linearGradient>
-                                          </defs>
-
-                                          {/* Grid lines */}
-                                          <line x1="25" y1="20" x2="185" y2="20" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
-                                          <line x1="25" y1="45" x2="185" y2="45" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
-                                          <line x1="25" y1="70" x2="185" y2="70" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
-                                          <line x1="25" y1="95" x2="185" y2="95" stroke="#e5e7eb" strokeWidth="0.5" />
-                                          <line x1="25" y1="10" x2="25" y2="95" stroke="#e5e7eb" strokeWidth="0.5" />
-
-                                          {/* Rainbow band below curve */}
-                                          <rect x="25" y="96" width="160" height="4" fill="url(#spectrumRainbow)" rx="1" />
-
-                                          {/* Spectral Emission Curve */}
-                                          <path
-                                            d="M 25 95 Q 40 93 48 30 T 65 75 T 100 40 T 145 65 T 185 95 Z"
-                                            fill="url(#spectrumFill)"
-                                          />
-                                          <path
-                                            d="M 25 95 Q 40 93 48 30 T 65 75 T 100 40 T 145 65 T 185 95"
-                                            fill="none"
-                                            stroke="#005288"
-                                            strokeWidth="1.8"
-                                            strokeLinecap="round"
-                                          />
-
-                                          {/* Peak marker */}
-                                          <circle cx="48" cy="30" r="2.5" fill="#005288" />
-                                          <text x="48" y="22" fontSize="6" fill="#005288" fontWeight="bold" textAnchor="middle">450nm</text>
-
-                                          {/* Wavelength Ticks */}
-                                          <text x="25" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">380</text>
-                                          <text x="65" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">500</text>
-                                          <text x="115" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">600</text>
-                                          <text x="165" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">700</text>
-                                          <text x="185" y="112" fontSize="6" fill="#9ca3af" textAnchor="middle">780nm</text>
-                                        </svg>
-                                      )}
-                                    </div>
+                            <>
+                              {/* Section 1: Photometric & Technical Diagrams Grid */}
+                              {hasAnyDiagram && (
+                                <div className="space-y-4">
+                                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                                    <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] font-sans">
+                                      Photometric & Technical Diagrams
+                                    </h4>
+                                    <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
+                                      Optical Specs & Distribution
+                                    </span>
                                   </div>
 
-                                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
-                                    <span className="text-[8px] font-mono text-gray-400">
-                                      {spectrumFile ? (spectrumFile.filename || 'Uploaded File') : 'Standard Spectral Power'}
-                                    </span>
-                                    {spectrumFile ? (
-                                      <button
-                                        onClick={() => handleDownloadFile(spectrumFile, 'Light Spectrum Graph')}
-                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
-                                      >
-                                        <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
-                                        <span>Download</span>
-                                      </button>
-                                    ) : (
-                                      <span className="text-[9px] font-mono text-gray-400 italic">Preview Curve</span>
+                                  <div className={`grid grid-cols-1 ${
+                                    activeDiagramCount === 1 
+                                      ? 'max-w-md' 
+                                      : activeDiagramCount === 2 
+                                        ? 'md:grid-cols-2' 
+                                        : 'md:grid-cols-3'
+                                  } gap-4`}>
+
+                                    {/* 1. Light Spectrum Graph */}
+                                    {spectrumFile && (
+                                      <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
+                                        <div>
+                                          <div className="flex items-center justify-between mb-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
+                                              Light Spectrum Graph
+                                            </span>
+                                            <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
+                                              SPD
+                                            </span>
+                                          </div>
+                                          <p className="text-[9px] text-gray-400 font-mono mb-3">Visible Wavelength Spectrum (380 - 780nm)</p>
+
+                                          <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                            <img
+                                              src={getImageUrl(spectrumFile)}
+                                              alt="Light Spectrum Graph"
+                                              className="max-h-full max-w-full object-contain"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                          <span className="text-[8px] font-mono text-gray-400 truncate max-w-[160px]">
+                                            {spectrumFile.filename || 'Uploaded File'}
+                                          </span>
+                                          <button
+                                            onClick={() => handleDownloadFile(spectrumFile, 'Light Spectrum Graph')}
+                                            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline cursor-pointer"
+                                          >
+                                            <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
+                                            <span>Download</span>
+                                          </button>
+                                        </div>
+                                      </div>
                                     )}
+
+                                    {/* 2. Photometric Polar Diagram */}
+                                    {polarFile && (
+                                      <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
+                                        <div>
+                                          <div className="flex items-center justify-between mb-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
+                                              Photometric Polar Diagram
+                                            </span>
+                                            <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
+                                              POLAR
+                                            </span>
+                                          </div>
+                                          <p className="text-[9px] text-gray-400 font-mono mb-3">Luminous Intensity (cd/klm)</p>
+
+                                          <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                            <img
+                                              src={getImageUrl(polarFile)}
+                                              alt="Photometric Polar Diagram"
+                                              className="max-h-full max-w-full object-contain"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                          <span className="text-[8px] font-mono text-gray-400 truncate max-w-[160px]">
+                                            {polarFile.filename || 'Uploaded File'}
+                                          </span>
+                                          <button
+                                            onClick={() => handleDownloadFile(polarFile, 'Photometric Polar Diagram')}
+                                            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline cursor-pointer"
+                                          >
+                                            <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
+                                            <span>Download</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* 3. Beam Angle Diagram */}
+                                    {beamFile && (
+                                      <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
+                                        <div>
+                                          <div className="flex items-center justify-between mb-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
+                                              Beam Angle Diagram
+                                            </span>
+                                            <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
+                                              CONE
+                                            </span>
+                                          </div>
+                                          <p className="text-[9px] text-gray-400 font-mono mb-3">Illuminance Cone & Distance</p>
+
+                                          <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                            <img
+                                              src={getImageUrl(beamFile)}
+                                              alt="Beam Angle Diagram"
+                                              className="max-h-full max-w-full object-contain"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                          <span className="text-[8px] font-mono text-gray-400 truncate max-w-[160px]">
+                                            {beamFile.filename || 'Uploaded File'}
+                                          </span>
+                                          <button
+                                            onClick={() => handleDownloadFile(beamFile, 'Beam Angle Diagram')}
+                                            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline cursor-pointer"
+                                          >
+                                            <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
+                                            <span>Download</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+
                                   </div>
                                 </div>
+                              )}
 
-                                {/* 2. Photometric Polar Diagram */}
-                                <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
-                                  <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
-                                        Photometric Polar Diagram
-                                      </span>
-                                      <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
-                                        POLAR
-                                      </span>
+                              {/* Section 2: CAD & Architectural Databases + Technical Documents */}
+                              {(hasCadFiles || hasTechDocs) && (
+                                <div className={`grid grid-cols-1 ${hasCadFiles && hasTechDocs ? 'md:grid-cols-2' : ''} gap-8 ${hasAnyDiagram ? 'border-t border-gray-200 pt-6' : ''}`}>
+
+                                  {/* CAD & Architectural Databases */}
+                                  {hasCadFiles && (
+                                    <div className="space-y-4">
+                                      <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
+                                        CAD & Architectural Databases
+                                      </h4>
+
+                                      <div className="grid grid-cols-1 gap-2 text-xs">
+                                        {lineDrawingFile && (
+                                          <button
+                                            onClick={() => handleDownloadFile(lineDrawingFile, 'Dimensional Line Drawing')}
+                                            className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                          >
+                                            <span>DIMENSIONAL LINE DRAWING [CAD]</span>
+                                            <FontAwesomeIcon icon={faDownload} />
+                                          </button>
+                                        )}
+                                        {ldtFile && (
+                                          <button
+                                            onClick={() => handleDownloadFile(ldtFile, 'Dialux Photometric (LDT)')}
+                                            className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                          >
+                                            <span>DIALUX PHOTOMETRIC [LDT]</span>
+                                            <FontAwesomeIcon icon={faDownload} />
+                                          </button>
+                                        )}
+                                        {iesFile && (
+                                          <button
+                                            onClick={() => handleDownloadFile(iesFile, 'IES Data Sheet Calculations (IES)')}
+                                            className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                          >
+                                            <span>IES DATA SHEET CALCULATIONS [IES]</span>
+                                            <FontAwesomeIcon icon={faDownload} />
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
-                                    <p className="text-[9px] text-gray-400 font-mono mb-3">Luminous Intensity (cd/klm)</p>
+                                  )}
 
-                                    <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
-                                      {polarFile ? (
-                                        <img
-                                          src={getImageUrl(polarFile)}
-                                          alt="Photometric Polar Diagram"
-                                          className="max-h-full max-w-full object-contain"
-                                        />
-                                      ) : (
-                                        <svg viewBox="0 0 140 130" className="w-full h-full text-[#005288]">
-                                          {/* Polar Grid Circles */}
-                                          <circle cx="70" cy="65" r="50" fill="none" stroke="#e5e7eb" strokeWidth="0.6" />
-                                          <circle cx="70" cy="65" r="35" fill="none" stroke="#e5e7eb" strokeWidth="0.6" strokeDasharray="2,2" />
-                                          <circle cx="70" cy="65" r="20" fill="none" stroke="#e5e7eb" strokeWidth="0.6" strokeDasharray="2,2" />
-                                          <circle cx="70" cy="65" r="2" fill="#005288" />
-
-                                          {/* Radial Axis Lines */}
-                                          <line x1="70" y1="10" x2="70" y2="120" stroke="#d1d5db" strokeWidth="0.6" />
-                                          <line x1="15" y1="65" x2="125" y2="65" stroke="#d1d5db" strokeWidth="0.6" />
-                                          <line x1="30" y1="25" x2="110" y2="105" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
-                                          <line x1="110" y1="25" x2="30" y2="105" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
-
-                                          {/* C0-C180 Luminous Intensity Curve */}
-                                          <path
-                                            d="M 70 65 Q 52 85 45 98 T 32 105 T 52 92 Q 70 65 88 92 T 108 105 T 95 98 Z"
-                                            fill="rgba(0, 82, 136, 0.08)"
-                                            stroke="#005288"
-                                            strokeWidth="1.6"
-                                          />
-
-                                          {/* C90-C270 Luminous Intensity Curve (Dashed) */}
-                                          <path
-                                            d="M 70 65 Q 56 82 50 94 T 38 100 T 56 88 Q 70 65 84 88 T 102 100 T 90 94 Z"
-                                            fill="none"
-                                            stroke="#009fe3"
-                                            strokeWidth="1.2"
-                                            strokeDasharray="3,2"
-                                          />
-
-                                          {/* Angle Ticks Labels */}
-                                          <text x="70" y="8" fill="#9ca3af" fontSize="5" textAnchor="middle">180°</text>
-                                          <text x="70" y="126" fill="#9ca3af" fontSize="5" textAnchor="middle">0°</text>
-                                          <text x="8" y="66" fill="#9ca3af" fontSize="5" textAnchor="middle">90°</text>
-                                          <text x="132" y="66" fill="#9ca3af" fontSize="5" textAnchor="middle">90°</text>
-
-                                          {/* Candela Legend */}
-                                          <text x="72" y="28" fill="#9ca3af" fontSize="4.5">300</text>
-                                          <text x="72" y="43" fill="#9ca3af" fontSize="4.5">150</text>
-                                        </svg>
-                                      )}
+                                  {/* Technical Documents */}
+                                  {hasTechDocs && (
+                                    <div className="space-y-4">
+                                      <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
+                                        Technical Documents
+                                      </h4>
+                                      <div className="grid grid-cols-1 gap-2 text-xs">
+                                        {showLightSourceDoc && (
+                                          <Link
+                                            href={`/products/${parentId}/eprel-light-source${skuQuery}`}
+                                            target="_blank"
+                                            className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                          >
+                                            <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
+                                            <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                          </Link>
+                                        )}
+                                        {showControlGearDoc && (
+                                          <Link
+                                            href={`/products/${parentId}/control-gear${skuQuery}`}
+                                            target="_blank"
+                                            className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                          >
+                                            <span>TECHNICAL DOCUMENT - CONTROL GEAR</span>
+                                            <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                          </Link>
+                                        )}
+                                        {showContainingProductDoc && (
+                                          <Link
+                                            href={`/products/${parentId}/containing-product${skuQuery}`}
+                                            target="_blank"
+                                            className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                          >
+                                            <span>TECHNICAL DOCUMENT - CONTAINING PRODUCT</span>
+                                            <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                          </Link>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
+                                  )}
 
-                                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
-                                    <span className="text-[8px] font-mono text-gray-400">
-                                      {polarFile ? (polarFile.filename || 'Uploaded File') : 'Direct/Indirect Polar Curve'}
-                                    </span>
-                                    {polarFile ? (
-                                      <button
-                                        onClick={() => handleDownloadFile(polarFile, 'Photometric Polar Diagram')}
-                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
-                                      >
-                                        <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
-                                        <span>Download</span>
-                                      </button>
-                                    ) : (
-                                      <span className="text-[9px] font-mono text-gray-400 italic">Preview Curve</span>
-                                    )}
-                                  </div>
                                 </div>
-
-                                {/* 3. Beam Angle Diagram */}
-                                <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
-                                  <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
-                                        Beam Angle Diagram
-                                      </span>
-                                      <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
-                                        CONE
-                                      </span>
-                                    </div>
-                                    <p className="text-[9px] text-gray-400 font-mono mb-3">Illuminance Cone & Distance</p>
-
-                                    <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
-                                      {beamFile ? (
-                                        <img
-                                          src={getImageUrl(beamFile)}
-                                          alt="Beam Angle Diagram"
-                                          className="max-h-full max-w-full object-contain"
-                                        />
-                                      ) : (
-                                        <svg viewBox="0 0 160 130" className="w-full h-full text-[#005288]">
-                                          <defs>
-                                            <linearGradient id="beamConeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                              <stop offset="0%" stopColor="#005288" stopOpacity="0.3" />
-                                              <stop offset="100%" stopColor="#005288" stopOpacity="0.05" />
-                                            </linearGradient>
-                                          </defs>
-
-                                          {/* Luminaire Source Icon */}
-                                          <rect x="70" y="8" width="20" height="6" fill="#005288" rx="1" />
-                                          <line x1="80" y1="14" x2="80" y2="18" stroke="#005288" strokeWidth="1" />
-
-                                          {/* Beam Cone Spread */}
-                                          <polygon points="80,18 20,110 140,110" fill="url(#beamConeGrad)" />
-                                          <line x1="80" y1="18" x2="20" y2="110" stroke="#005288" strokeWidth="1.2" />
-                                          <line x1="80" y1="18" x2="140" y2="110" stroke="#005288" strokeWidth="1.2" />
-                                          <line x1="80" y1="18" x2="80" y2="110" stroke="#005288" strokeWidth="0.8" strokeDasharray="2,2" />
-
-                                          {/* Distance levels (1m, 2m, 3m) */}
-                                          <line x1="45" y1="50" x2="115" y2="50" stroke="#d1d5db" strokeWidth="0.6" strokeDasharray="2,2" />
-                                          <line x1="32" y1="80" x2="128" y2="80" stroke="#d1d5db" strokeWidth="0.6" strokeDasharray="2,2" />
-                                          <line x1="20" y1="110" x2="140" y2="110" stroke="#d1d5db" strokeWidth="0.6" />
-
-                                          {/* Distance & Lux Labels */}
-                                          <text x="14" y="52" fill="#6b7280" fontSize="5" textAnchor="end">1.0m</text>
-                                          <text x="14" y="82" fill="#6b7280" fontSize="5" textAnchor="end">2.0m</text>
-                                          <text x="14" y="112" fill="#6b7280" fontSize="5" textAnchor="end">3.0m</text>
-
-                                          <text x="120" y="52" fill="#005288" fontSize="5" fontWeight="bold">E₀: 1250 lx</text>
-                                          <text x="132" y="82" fill="#005288" fontSize="5" fontWeight="bold">E₀: 312 lx</text>
-                                          <text x="143" y="112" fill="#005288" fontSize="5" fontWeight="bold">E₀: 138 lx</text>
-
-                                          {/* Beam Angle Arc */}
-                                          <path d="M 72,32 A 15,15 0 0 1 88,32" fill="none" stroke="#009fe3" strokeWidth="1" />
-                                          <text x="80" y="29" fill="#009fe3" fontSize="5.5" fontWeight="bold" textAnchor="middle">36°</text>
-                                        </svg>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
-                                    <span className="text-[8px] font-mono text-gray-400">
-                                      {beamFile ? (beamFile.filename || 'Uploaded File') : 'Illuminance Cone Angle'}
-                                    </span>
-                                    {beamFile ? (
-                                      <button
-                                        onClick={() => handleDownloadFile(beamFile, 'Beam Angle Diagram')}
-                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline"
-                                      >
-                                        <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
-                                        <span>Download</span>
-                                      </button>
-                                    ) : (
-                                      <span className="text-[9px] font-mono text-gray-400 italic">Preview Cone</span>
-                                    )}
-                                  </div>
-                                </div>
-
-                              </div>
-                            </div>
+                              )}
+                            </>
                           );
                         })()}
-
-                        {/* Section 2: CAD & Architectural Databases + Technical Documents */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-6">
-
-                          {/* CAD & Architectural Databases */}
-                          <div className="space-y-4">
-                            <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
-                              CAD & Architectural Databases
-                            </h4>
-
-                            {(() => {
-                              const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                              const ldtFile = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
-                              const iesFile = activeDrawerProduct.photometryIes || parent?.photometryIes;
-                              const lineDrawingFile = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
-
-                              return (
-                                <div className="grid grid-cols-1 gap-2 text-xs">
-                                  {lineDrawingFile && (
-                                    <button
-                                      onClick={() => handleDownloadFile(lineDrawingFile, 'Dimensional Line Drawing')}
-                                      className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                    >
-                                      <span>DIMENSIONAL LINE DRAWING [CAD]</span>
-                                      <FontAwesomeIcon icon={faDownload} />
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={() => handleDownloadFile(ldtFile, 'Dialux LDT File is available on request. Please contact Megaman support.')}
-                                    className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                  >
-                                    <span>DIALUX PHOTOMETRIC [LDT]</span>
-                                    <FontAwesomeIcon icon={faDownload} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDownloadFile(iesFile, 'IES lighting calculations are available on request. Please contact Megaman support.')}
-                                    className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                  >
-                                    <span>IES DATA SHEET CALCULATIONS [IES]</span>
-                                    <FontAwesomeIcon icon={faDownload} />
-                                  </button>
-                                </div>
-                              );
-                            })()}
-                          </div>
-
-                          {/* Technical Documents */}
-                          <div className="space-y-4">
-                            {(() => {
-                              const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                              const famObj = family || (parent && typeof parent.families === 'object' ? parent.families : null);
-                              const familyDi = famObj?.dismantleInstructionPdf || null;
-
-                              const specs = (activeDrawerProduct.specifications || parent?.specifications || {}) as Record<string, any>;
-
-                              const isValidDriverModel = (val: any) => {
-                                if (val === null || val === undefined) return false;
-                                const str = String(val).trim().toLowerCase();
-                                if (!str) return false;
-                                return !(str === 'undefined' || str === 'null' || str === 'n/a' || str === 'n.a.' || str === 'na' || str === 'none' || str === '-' || str === '—');
-                              };
-
-                              const hasDriverModel = isValidDriverModel(specs.driver_model) || isValidDriverModel(specs.scg_driver_model_no);
-                              const showControlGearDoc = hasDriverModel || Boolean(activeDrawerProduct.techDocControlGear || parent?.techDocControlGear);
-                              const hasContainingProductSpecs = isValidDriverModel(specs.customer_model_no_new) || isValidDriverModel(specs.model_identifier) || isValidDriverModel(specs.replacable_light_source) || isValidDriverModel(specs.replaceble_control_gear);
-                              const showContainingProductDoc = hasContainingProductSpecs || Boolean(activeDrawerProduct.techDocContainingProduct || parent?.techDocContainingProduct) || Boolean(familyDi);
-                              const techDocLightSourceFile = activeDrawerProduct.techDocLightSource || parent?.techDocLightSource;
-                              const showLightSourceDoc = Boolean(techDocLightSourceFile) || Boolean(familyDi) || isValidDriverModel(specs.model_identifier) || Boolean(parent);
-
-                              const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
-                                ? activeDrawerProduct.id
-                                : (typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product.id : activeDrawerProduct.product);
-                              const skuQuery = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
-                                ? ''
-                                : `?sku=${activeDrawerProduct.name}`;
-
-                              if (!showControlGearDoc && !showContainingProductDoc && !showLightSourceDoc) return null;
-
-                              return (
-                                <div>
-                                  <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans mb-4">
-                                    Technical Documents
-                                  </h4>
-                                  <div className="grid grid-cols-1 gap-2 text-xs">
-                                    {showLightSourceDoc && (
-                                      <Link
-                                        href={`/products/${parentId}/eprel-light-source${skuQuery}`}
-                                        target="_blank"
-                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                      >
-                                        <span>TECHNICAL DOCUMENT - LIGHT SOURCE</span>
-                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                      </Link>
-                                    )}
-                                    {showControlGearDoc && (
-                                      <Link
-                                        href={`/products/${parentId}/control-gear${skuQuery}`}
-                                        target="_blank"
-                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                      >
-                                        <span>TECHNICAL DOCUMENT - CONTROL GEAR</span>
-                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                      </Link>
-                                    )}
-                                    {showContainingProductDoc && (
-                                      <Link
-                                        href={`/products/${parentId}/containing-product${skuQuery}`}
-                                        target="_blank"
-                                        className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
-                                      >
-                                        <span>TECHNICAL DOCUMENT - CONTAINING PRODUCT</span>
-                                        <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                      </Link>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-
-                        </div>
 
                       </div>
                     )}
