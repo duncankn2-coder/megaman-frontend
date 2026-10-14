@@ -1659,8 +1659,20 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   className="flex overflow-x-auto gap-8 pb-6 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent snap-x snap-mandatory scroll-smooth no-scrollbar"
                 >
                   {products.map((p, idx) => {
-                    const imageItem = p.images;
-                    const imageUrl = getImageUrl(imageItem);
+                    const firstFamilyShot = (family.media || []).find((m: any) => {
+                      if (!m) return false;
+                      if (m.type === 'video') return false;
+                      if (m.mimeType && typeof m.mimeType === 'string' && !m.mimeType.startsWith('image/')) return false;
+                      return Boolean(m.url || m.filename || (typeof m === 'string' && m.trim().length > 0));
+                    }) || (family.media && family.media.length > 0 ? family.media[0] : null);
+
+                    const imageItem = p.images || firstFamilyShot;
+                    let imageUrl = getImageUrl(imageItem);
+                    if (!imageUrl || imageUrl === '/placeholder.png') {
+                      if (firstFamilyShot) {
+                        imageUrl = getImageUrl(firstFamilyShot);
+                      }
+                    }
                     const familyId = p.families?.slug || p.families?.id || p.families;
 
                     return (
@@ -1669,7 +1681,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         className="bg-white border border-gray-200 rounded-none overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between flex-shrink-0 w-[290px] md:w-[340px] snap-start"
                       >
                         <div className="relative aspect-square w-full bg-gray-50 flex items-center justify-center border-b border-gray-100 overflow-hidden">
-                          {imageItem ? (
+                          {imageUrl && imageUrl !== '/placeholder.png' ? (
                             <Image
                               src={imageUrl}
                               alt={p.name}
@@ -2420,17 +2432,31 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       <div className="space-y-6 animate-fade-in">
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                          // Use the parent model No.'s image — SKUs (MM codes) don't carry their own images
-                          const activeImage = parent?.images || activeDrawerProduct.images;
+
+                          // Default to the first product shot of the family to save uploading time
+                          const firstFamilyProductShot = (family.media || []).find((m: any) => {
+                            if (!m) return false;
+                            if (m.type === 'video') return false;
+                            if (m.mimeType && typeof m.mimeType === 'string' && !m.mimeType.startsWith('image/')) return false;
+                            return Boolean(m.url || m.filename || (typeof m === 'string' && m.trim().length > 0));
+                          }) || (family.media && family.media.length > 0 ? family.media[0] : null);
+
+                          // Use the parent model No.'s image or SKU image if available; otherwise default to family's first product shot
+                          const candidateImage = parent?.images || activeDrawerProduct.images;
+                          const candidateUrl = candidateImage ? getImageUrl(candidateImage) : '';
+                          const finalImageUrl = (candidateUrl && candidateUrl !== '/placeholder.png')
+                            ? candidateUrl
+                            : (firstFamilyProductShot ? getImageUrl(firstFamilyProductShot) : '');
+                          const hasValidImage = Boolean(finalImageUrl && finalImageUrl !== '/placeholder.png');
 
                           return (
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                               <div className="md:col-span-5 flex flex-col space-y-4">
                                 <div className="relative aspect-square w-full bg-gray-50 border border-gray-200 rounded-none overflow-hidden flex items-center justify-center shadow-sm">
-                                  {activeImage ? (
+                                  {hasValidImage ? (
                                     <Image
-                                      src={getImageUrl(activeImage)}
-                                      alt={activeDrawerProduct.name}
+                                      src={finalImageUrl}
+                                      alt={activeDrawerProduct.name || family.name}
                                       fill
                                       className="object-contain w-full h-full"
                                       unoptimized
