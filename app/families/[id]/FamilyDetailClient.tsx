@@ -129,6 +129,8 @@ interface Family {
   lineDrawing?: MediaFile | null;
   lightSpectrumGraph?: MediaFile | null;
   spectrumImage?: MediaFile | null;
+  photometryLdt?: MediaFile | null;
+  photometryIes?: MediaFile | null;
   datasheet?: {
     enabled?: boolean;
     title?: string | null;
@@ -2813,10 +2815,20 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const hasAnyDiagram = Boolean(spectrumFile || polarFile || beamFile);
 
                           // CAD / Databases files
-                          const rawLdt = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
+                          const rawLdt = activeDrawerProduct.photometryLdt 
+                            || (activeDrawerProduct as any)?.photometryLdtZip
+                            || parent?.photometryLdt 
+                            || (parent as any)?.photometryLdtZip
+                            || family?.photometryLdt
+                            || (family as any)?.photometryLdtZip;
                           const ldtFile = isValidFile(rawLdt) ? rawLdt : null;
 
-                          const rawIes = activeDrawerProduct.photometryIes || parent?.photometryIes;
+                          const rawIes = activeDrawerProduct.photometryIes 
+                            || (activeDrawerProduct as any)?.photometryIesZip
+                            || parent?.photometryIes 
+                            || (parent as any)?.photometryIesZip
+                            || family?.photometryIes
+                            || (family as any)?.photometryIesZip;
                           const iesFile = isValidFile(rawIes) ? rawIes : null;
 
                           const rawLineDrawing = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
@@ -3038,7 +3050,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                             onClick={() => handleDownloadFile(ldtFile, 'Dialux Photometric (LDT)')}
                                             className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
                                           >
-                                            <span>DIALUX PHOTOMETRIC [LDT]</span>
+                                            <span>DIALUX PHOTOMETRIC [LDT]{((typeof ldtFile === 'object' && ldtFile?.filename?.toLowerCase().endsWith('.zip')) || (typeof ldtFile === 'string' && ldtFile.toLowerCase().endsWith('.zip'))) ? ' [.ZIP]' : ''}</span>
                                             <FontAwesomeIcon icon={faDownload} />
                                           </button>
                                         )}
@@ -3047,7 +3059,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                             onClick={() => handleDownloadFile(iesFile, 'IES Data Sheet Calculations (IES)')}
                                             className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
                                           >
-                                            <span>IES DATA SHEET CALCULATIONS [IES]</span>
+                                            <span>IES DATA SHEET CALCULATIONS [IES]{((typeof iesFile === 'object' && iesFile?.filename?.toLowerCase().endsWith('.zip')) || (typeof iesFile === 'string' && iesFile.toLowerCase().endsWith('.zip'))) ? ' [.ZIP]' : ''}</span>
                                             <FontAwesomeIcon icon={faDownload} />
                                           </button>
                                         )}

@@ -42,6 +42,8 @@ interface Family {
   lineDrawing?: any;
   lightSpectrumGraph?: any;
   spectrumImage?: any;
+  photometryLdt?: any;
+  photometryIes?: any;
   features?: { id?: string; feature: string }[];
   symbols?: SymbolItem[];
   layout?: any[];
