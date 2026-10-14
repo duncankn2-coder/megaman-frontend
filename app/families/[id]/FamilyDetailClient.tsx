@@ -126,6 +126,9 @@ interface Family {
   layout?: Block[];
   selectedParameters?: string[];
   dismantleInstructionPdf?: MediaFile | null;
+  lineDrawing?: MediaFile | null;
+  lightSpectrumGraph?: MediaFile | null;
+  spectrumImage?: MediaFile | null;
   datasheet?: {
     enabled?: boolean;
     title?: string | null;
@@ -2467,7 +2470,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                 </div>
                                 {/* Line Drawing / Dimensional Outline Box */}
                                 {(() => {
-                                  const lineDrawingFile = activeDrawerProduct.lineDrawing || parent?.lineDrawing;
+                                  // Line drawing defaults to the family's default line drawing if not specified on the product
+                                  const lineDrawingFile = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
                                   const heightVal = getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '');
                                   const diamVal = getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter', 'width_mm'], '');
 
@@ -2817,7 +2821,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         {/* Section 1: Photometric & Technical Diagrams Grid */}
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                          const spectrumFile = activeDrawerProduct.lightSpectrumGraph || parent?.lightSpectrumGraph;
+                          // Spectrum graph defaults to family's default spectrum image if not specified on the product
+                          const spectrumFile = activeDrawerProduct.lightSpectrumGraph 
+                            || (activeDrawerProduct as any)?.spectrumImage 
+                            || parent?.lightSpectrumGraph 
+                            || (parent as any)?.spectrumImage 
+                            || family?.lightSpectrumGraph 
+                            || (family as any)?.spectrumImage;
                           const polarFile = activeDrawerProduct.photometricPolarDiagram || parent?.photometricPolarDiagram;
                           const beamFile = activeDrawerProduct.beamAngleDiagram || parent?.beamAngleDiagram;
 
@@ -3107,9 +3117,19 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                               const ldtFile = activeDrawerProduct.photometryLdt || parent?.photometryLdt;
                               const iesFile = activeDrawerProduct.photometryIes || parent?.photometryIes;
+                              const lineDrawingFile = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
 
                               return (
                                 <div className="grid grid-cols-1 gap-2 text-xs">
+                                  {lineDrawingFile && (
+                                    <button
+                                      onClick={() => handleDownloadFile(lineDrawingFile, 'Dimensional Line Drawing')}
+                                      className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                    >
+                                      <span>DIMENSIONAL LINE DRAWING [CAD]</span>
+                                      <FontAwesomeIcon icon={faDownload} />
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => handleDownloadFile(ldtFile, 'Dialux LDT File is available on request. Please contact Megaman support.')}
                                     className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"

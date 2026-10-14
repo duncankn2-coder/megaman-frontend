@@ -39,6 +39,9 @@ interface Family {
   description?: string;
   media: MediaItem[];
   products: Product[];
+  lineDrawing?: any;
+  lightSpectrumGraph?: any;
+  spectrumImage?: any;
   features?: { id?: string; feature: string }[];
   symbols?: SymbolItem[];
   layout?: any[];
