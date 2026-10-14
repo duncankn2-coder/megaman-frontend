@@ -13,6 +13,7 @@ interface Product {
   power?: string;
   colourTemperature?: string;
   images?: { url: string; alt?: string; filename?: string } | string | null;
+  lineDrawing?: { url: string; alt?: string; filename?: string } | string | null;
   specifications?: Record<string, any> | null;
   families?: {
     id: string;
@@ -21,6 +22,7 @@ interface Product {
     features?: { id?: string; feature: string }[];
     applications?: { id?: string; application: string }[];
     media?: { url: string; alt?: string; filename?: string }[];
+    lineDrawing?: { url: string; alt?: string; filename?: string } | string | null;
     dismantleInstructionPdf?: {
       url: string;
       filename: string;
@@ -51,13 +53,14 @@ interface SKU {
   packingMethod?: string;
   remark?: string;
   optionCode?: string;
+  lineDrawing?: { url: string; alt?: string; filename?: string } | string | null;
   specifications?: Record<string, any> | null;
 }
 
 async function getProductSKUs(productId: string): Promise<SKU[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/skus?where[product][equals]=${productId}&limit=100`, {
+    const response = await fetch(`${payloadUrl}/api/skus?where[product][equals]=${productId}&depth=2&limit=100`, {
       next: { revalidate: 60 },
     });
     if (!response.ok) {
@@ -281,6 +284,23 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
 
   // Resolve packshot image URL
   const packshotImageUrl = product.images ? getImageUrl(product.images) : '/placeholder.png';
+
+  // Helper to validate whether a media upload is valid
+  const isValidFile = (fileObj: any): boolean => {
+    if (!fileObj) return false;
+    if (typeof fileObj === 'string') return fileObj.trim().length > 0 && fileObj !== '/placeholder.png';
+    if (typeof fileObj === 'object') return Boolean(fileObj.url || fileObj.filename);
+    return false;
+  };
+
+  // Resolve dimensional line drawing (SKU -> Product model -> Family)
+  const rawLineDrawing = (selectedSku && isValidFile(selectedSku.lineDrawing))
+    ? selectedSku.lineDrawing
+    : (isValidFile(product.lineDrawing)
+      ? product.lineDrawing
+      : (product.families && isValidFile(product.families.lineDrawing) ? product.families.lineDrawing : null));
+  const lineDrawingUrl = rawLineDrawing ? getImageUrl(rawLineDrawing) : '';
+  const hasLineDrawing = Boolean(lineDrawingUrl && lineDrawingUrl !== '/placeholder.png');
 
   // Dynamic Features List
   const features = (product.families?.features && product.families.features.length > 0)
@@ -791,26 +811,34 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
             </h4>
             
             <div className="grid grid-cols-[40%_55%] gap-[5%] items-center mt-8">
-              {/* Left: Annotated SVG light bulb */}
-              <div className="flex flex-col items-center justify-center p-4 border border-gray-150 bg-gray-50/50 relative rounded">
-                <svg viewBox="0 0 140 200" className="w-36 h-48 text-gray-500">
-                  {/* Outer Glass */}
-                  <path d="M70 25 C45 25 30 45 30 70 C30 95 45 115 53 130 L53 150 L87 150 L87 130 C95 115 110 95 110 70 C110 45 95 25 70 25 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                  {/* Base Screw E27 */}
-                  <path d="M53 150 L87 150 M53 155 L87 155 M53 160 L87 160 M55 165 L85 165 M57 170 L83 170 M60 175 C60 178 80 178 80 175" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                  
-                  {/* Height annotation line on the left */}
-                  <line x1="15" y1="25" x2="15" y2="175" stroke="#009fe3" strokeWidth="1" strokeDasharray="3,3" />
-                  <line x1="10" y1="25" x2="20" y2="25" stroke="#009fe3" strokeWidth="1" />
-                  <line x1="10" y1="175" x2="20" y2="175" stroke="#009fe3" strokeWidth="1" />
-                  <text x="8" y="105" fill="#009fe3" fontSize="10" fontWeight="bold" textAnchor="middle" transform="rotate(-90 8 105)">H</text>
-                  
-                  {/* Diameter annotation line at the bottom */}
-                  <line x1="30" y1="190" x2="110" y2="190" stroke="#009fe3" strokeWidth="1" strokeDasharray="3,3" />
-                  <line x1="30" y1="185" x2="30" y2="195" stroke="#009fe3" strokeWidth="1" />
-                  <line x1="110" y1="185" x2="110" y2="195" stroke="#009fe3" strokeWidth="1" />
-                  <text x="70" y="198" fill="#009fe3" fontSize="10" fontWeight="bold" textAnchor="middle">D</text>
-                </svg>
+              {/* Left: Attached Dimension Line Drawing or Fallback Annotated SVG */}
+              <div className="flex flex-col items-center justify-center p-4 border border-gray-150 bg-white relative rounded h-[65mm] max-h-[65mm] overflow-hidden">
+                {hasLineDrawing ? (
+                  <img 
+                    src={lineDrawingUrl} 
+                    alt={`${product.name} Dimension Line Drawing`}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <svg viewBox="0 0 140 200" className="w-36 h-48 text-gray-500">
+                    {/* Outer Glass */}
+                    <path d="M70 25 C45 25 30 45 30 70 C30 95 45 115 53 130 L53 150 L87 150 L87 130 C95 115 110 95 110 70 C110 45 95 25 70 25 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                    {/* Base Screw E27 */}
+                    <path d="M53 150 L87 150 M53 155 L87 155 M53 160 L87 160 M55 165 L85 165 M57 170 L83 170 M60 175 C60 178 80 178 80 175" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                    
+                    {/* Height annotation line on the left */}
+                    <line x1="15" y1="25" x2="15" y2="175" stroke="#009fe3" strokeWidth="1" strokeDasharray="3,3" />
+                    <line x1="10" y1="25" x2="20" y2="25" stroke="#009fe3" strokeWidth="1" />
+                    <line x1="10" y1="175" x2="20" y2="175" stroke="#009fe3" strokeWidth="1" />
+                    <text x="8" y="105" fill="#009fe3" fontSize="10" fontWeight="bold" textAnchor="middle" transform="rotate(-90 8 105)">H</text>
+                    
+                    {/* Diameter annotation line at the bottom */}
+                    <line x1="30" y1="190" x2="110" y2="190" stroke="#009fe3" strokeWidth="1" strokeDasharray="3,3" />
+                    <line x1="30" y1="185" x2="30" y2="195" stroke="#009fe3" strokeWidth="1" />
+                    <line x1="110" y1="185" x2="110" y2="195" stroke="#009fe3" strokeWidth="1" />
+                    <text x="70" y="198" fill="#009fe3" fontSize="10" fontWeight="bold" textAnchor="middle">D</text>
+                  </svg>
+                )}
               </div>
               
               {/* Right: Dimension specifications table */}
