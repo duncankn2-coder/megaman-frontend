@@ -14,6 +14,7 @@ interface Product {
   colourTemperature?: string;
   images?: { url: string; alt?: string; filename?: string } | string | null;
   lineDrawing?: { url: string; alt?: string; filename?: string } | string | null;
+  userManual?: { url: string; filename?: string } | string | null;
   specifications?: Record<string, any> | null;
   families?: {
     id: string;
@@ -23,6 +24,10 @@ interface Product {
     applications?: { id?: string; application: string }[];
     media?: { url: string; alt?: string; filename?: string }[];
     lineDrawing?: { url: string; alt?: string; filename?: string } | string | null;
+    userManual?: {
+      url: string;
+      filename?: string;
+    } | string | null;
     dismantleInstructionPdf?: {
       url: string;
       filename: string;

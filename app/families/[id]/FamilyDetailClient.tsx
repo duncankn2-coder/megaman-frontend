@@ -46,6 +46,7 @@ interface Product {
   colourTemperature?: string;
   specifications?: Record<string, unknown> | null;
   datasheetPdf?: MediaFile | null;
+  userManual?: MediaFile | null;
   photometryLdt?: MediaFile | null;
   photometryIes?: MediaFile | null;
   lightSpectrumGraph?: MediaFile | null;
@@ -125,6 +126,7 @@ interface Family {
   symbols?: SymbolItem[];
   layout?: Block[];
   selectedParameters?: string[];
+  userManual?: MediaFile | null;
   dismantleInstructionPdf?: MediaFile | null;
   lineDrawing?: MediaFile | null;
   lightSpectrumGraph?: MediaFile | null;
@@ -240,6 +242,9 @@ const getMediaUrl = (media: any): string => {
   }
   return '';
 };
+
+// Helper to check for a valid uploaded media file
+const isValidFile = (f: any): boolean => Boolean(f && (typeof f === 'string' ? f.trim().length > 0 && f !== '/placeholder.png' : Boolean(f.url || f.filename)));
 
 // Helper to clean up and deduplicate raw IP values (e.g. "IP65/IP65" -> "IP65")
 const formatIpRating = (ipStr: string): string => {
@@ -1425,6 +1430,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       <FontAwesomeIcon icon={faFilePdf} className="text-xs" />
                       Family Datasheet
                     </Link>
+                  )}
+                  {Boolean(family.userManual) && (
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadFile(family.userManual, `${family.name} User Manual`)}
+                      className="bg-white border border-gray-300 text-gray-700 hover:border-[#005288] hover:text-[#005288] text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition-all duration-300 shadow-sm inline-flex items-center justify-center gap-2 text-center cursor-pointer"
+                    >
+                      <FontAwesomeIcon icon={faDownload} className="text-xs" />
+                      User Manual
+                    </button>
                   )}
                 </div>
               </div>
@@ -2836,9 +2851,20 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                           const hasCadFiles = Boolean(lineDrawingFile || ldtFile || iesFile);
 
-                          // Technical Documents
                           const famObj = family || (parent && typeof parent.families === 'object' ? parent.families : null);
                           const familyDi = famObj?.dismantleInstructionPdf || null;
+
+                          // User Manual: Product-specific manual if uploaded, otherwise fallback to family default manual
+                          const rawUserManual = activeDrawerProduct.userManual 
+                            || (activeDrawerProduct as any)?.userManualPdf
+                            || parent?.userManual 
+                            || (parent as any)?.userManualPdf 
+                            || famObj?.userManual 
+                            || (famObj as any)?.userManualPdf
+                            || family?.userManual
+                            || (family as any)?.userManualPdf;
+                          const userManualFile = isValidFile(rawUserManual) ? rawUserManual : null;
+                          const isFamilyDefaultManual = !isValidFile(activeDrawerProduct.userManual || parent?.userManual) && Boolean(userManualFile);
 
                           const specs = (activeDrawerProduct.specifications || parent?.specifications || {}) as Record<string, any>;
 
@@ -2855,8 +2881,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const showContainingProductDoc = hasContainingProductSpecs || Boolean(activeDrawerProduct.techDocContainingProduct || parent?.techDocContainingProduct) || Boolean(familyDi);
                           const techDocLightSourceFile = activeDrawerProduct.techDocLightSource || parent?.techDocLightSource;
                           const showLightSourceDoc = Boolean(techDocLightSourceFile) || Boolean(familyDi) || isValidDriverModel(specs.model_identifier) || Boolean(parent);
+                          const showUserManualDoc = Boolean(userManualFile);
 
-                          const hasTechDocs = Boolean(showControlGearDoc || showContainingProductDoc || showLightSourceDoc);
+                          const hasTechDocs = Boolean(showControlGearDoc || showContainingProductDoc || showLightSourceDoc || showUserManualDoc);
 
                           const parentId = activeDrawerProduct.isFallbackProduct || !activeDrawerProduct.product
                             ? activeDrawerProduct.id
@@ -3074,6 +3101,24 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                         Technical Documents
                                       </h4>
                                       <div className="grid grid-cols-1 gap-2 text-xs">
+                                        {showUserManualDoc && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDownloadFile(userManualFile, `${activeDrawerProduct.name} User Manual`)}
+                                            className="w-full flex justify-between items-center p-3 border border-gray-200 bg-white hover:border-[#005288] hover:text-[#005288] transition-all text-left font-mono cursor-pointer shadow-sm"
+                                          >
+                                            <span className="flex items-center gap-2">
+                                              <FontAwesomeIcon icon={faFilePdf} className="text-[#005288]" />
+                                              <span>USER MANUAL / INSTALLATION GUIDE</span>
+                                              {isFamilyDefaultManual && (
+                                                <span className="text-[10px] text-gray-500 font-sans normal-case bg-gray-100 px-1.5 py-0.5 rounded">
+                                                  (Family Default)
+                                                </span>
+                                              )}
+                                            </span>
+                                            <FontAwesomeIcon icon={faDownload} />
+                                          </button>
+                                        )}
                                         {showLightSourceDoc && (
                                           <Link
                                             href={`/products/${parentId}/eprel-light-source${skuQuery}`}
@@ -3134,8 +3179,28 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       const pdfLink = `/products/${parentId}/datasheet${skuQuery}`;
                       const pdfFile = activeDrawerProduct.datasheetPdf || parent?.datasheetPdf;
 
+                      const famObj = family || (parent && typeof parent.families === 'object' ? parent.families : null);
+                      const rawUserManual = activeDrawerProduct.userManual 
+                        || (activeDrawerProduct as any)?.userManualPdf
+                        || parent?.userManual 
+                        || (parent as any)?.userManualPdf 
+                        || famObj?.userManual 
+                        || (famObj as any)?.userManualPdf
+                        || family?.userManual
+                        || (family as any)?.userManualPdf;
+                      const userManualFile = isValidFile(rawUserManual) ? rawUserManual : null;
+
                       return (
                         <>
+                          {userManualFile && (
+                            <button
+                              onClick={() => handleDownloadFile(userManualFile, `${activeDrawerProduct.name} User Manual`)}
+                              className="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-xs font-bold uppercase tracking-widest px-4 py-2.5 rounded-none transition-all cursor-pointer font-sans shadow-sm inline-flex items-center"
+                            >
+                              <FontAwesomeIcon icon={faDownload} className="mr-2 text-gray-500" />
+                              DOWNLOAD MANUAL
+                            </button>
+                          )}
                           {pdfFile ? (
                             <button
                               onClick={() => handleDownloadFile(pdfFile, '')}

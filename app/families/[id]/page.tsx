@@ -14,6 +14,7 @@ interface Product {
   colourTemperature?: string;
   specifications?: Record<string, unknown> | null;
   symbols?: SymbolItem[] | null;
+  userManual?: any;
 }
 
 interface MediaItem {
@@ -39,6 +40,8 @@ interface Family {
   description?: string;
   media: MediaItem[];
   products: Product[];
+  userManual?: any;
+  dismantleInstructionPdf?: any;
   lineDrawing?: any;
   lightSpectrumGraph?: any;
   spectrumImage?: any;
