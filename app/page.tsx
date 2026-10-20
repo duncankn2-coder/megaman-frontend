@@ -6,8 +6,17 @@ import { getSiteContext } from './utils/siteContext';
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'High-Performance LED Lighting Solutions | MEGAMAN® Official',
+  title: 'MEGAMAN | LED, Luminaires, Components, Smart Lighting & Energy-efficient Lighting',
   description: 'Pioneering energy-efficient architectural and smart home LED lighting systems worldwide since 1994. Explore Siena, Toledo, Triona, and Ingenium Matter solutions.',
+  openGraph: {
+    siteName: 'megaman.cc',
+    title: 'MEGAMAN | LED, Luminaires, Components, Smart Lighting & Energy-efficient Lighting',
+    description: 'Pioneering energy-efficient architectural and smart home LED lighting systems worldwide since 1994. Explore Siena, Toledo, Triona, and Ingenium Matter solutions.',
+    url: 'https://megaman.cc',
+  },
+  alternates: {
+    canonical: 'https://megaman.cc',
+  },
 };
 
 async function getHomePageData() {
