@@ -778,58 +778,32 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
   const [previewAccessoryImage, setPreviewAccessoryImage] = useState<{ url: string; title: string } | null>(null);
 
-  // Memoized accessory items from family.accessories or fallback extraction from products' specifications
+  // Memoized accessory items explicitly configured on family.accessories in CMS
   const accessoriesList = useMemo<AccessoryItem[]>(() => {
-    // 1. Explicitly configured accessories on family (from CMS)
-    if (Array.isArray(family.accessories) && family.accessories.length > 0) {
-      return family.accessories.filter(item => {
-        if (!item) return false;
-        return Boolean(
-          item.modelNumber ||
-          item.modelNo ||
-          item.mmCode ||
-          item.name ||
-          item.title ||
-          item.description ||
-          item.colour ||
-          item.product ||
-          item.image
-        );
-      });
+    if (!Array.isArray(family.accessories) || family.accessories.length === 0) {
+      return [];
     }
 
-    // 2. Secondary fallback: check products for standard_accessories / optional_accessories
-    const extracted: AccessoryItem[] = [];
-    const seen = new Set<string>();
-
-    (family.products || []).forEach((prod: any) => {
-      if (!prod || !prod.specifications) return;
-      const opt = prod.specifications.optional_accessories;
-      const std = prod.specifications.standard_accessories;
-
-      [opt, std].forEach(val => {
-        if (!val || typeof val !== 'string') return;
-        const trimmed = val.trim();
-        if (!trimmed || trimmed.toUpperCase() === 'N/A') return;
-
-        // Split by common delimiters like /, +, comma
-        const tokens = trimmed.split(/[\/,+]/).map(t => t.trim()).filter(Boolean);
-        tokens.forEach(tok => {
-          const key = tok.toLowerCase();
-          if (!seen.has(key)) {
-            seen.add(key);
-            extracted.push({
-              modelNumber: tok,
-              name: tok.startsWith('LA') ? `Accessory (${tok})` : tok,
-              colour: '—',
-            });
-          }
-        });
-      });
+    return family.accessories.filter(item => {
+      if (!item) return false;
+      const hasProduct = Boolean(
+        typeof item.product === 'object' ? item.product?.id || item.product?.name : isFieldFilled(item.product)
+      );
+      const hasImage = Boolean(item.image && getImageUrl(item.image) !== '/placeholder.png');
+      return (
+        isFieldFilled(item.modelNumber) ||
+        isFieldFilled(item.modelNo) ||
+        isFieldFilled(item.mmCode) ||
+        isFieldFilled(item.name) ||
+        isFieldFilled(item.title) ||
+        isFieldFilled(item.description) ||
+        isFieldFilled(item.colour) ||
+        isFieldFilled(item.color) ||
+        hasProduct ||
+        hasImage
+      );
     });
-
-    return extracted;
-  }, [family.accessories, family.products]);
+  }, [family.accessories]);
 
   const [allSymbolsMap, setAllSymbolsMap] = useState<Record<string, SymbolItem>>(() => {
     const initialMap: Record<string, SymbolItem> = {};
