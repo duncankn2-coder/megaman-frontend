@@ -121,6 +121,7 @@ interface Family {
   description?: string;
   media: MediaItem[];
   products: Product[];
+  accessoryProducts?: (Product | string)[];
   accessories?: AccessoryItem[];
   features?: { id?: string; feature: string }[];
   symbols?: SymbolItem[];
@@ -775,35 +776,167 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [gearFilter, setGearFilter] = useState('All');
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
   const [skus, setSkus] = useState<any[]>([]);
+  const [accessorySkus, setAccessorySkus] = useState<any[]>([]);
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
   const [previewAccessoryImage, setPreviewAccessoryImage] = useState<{ url: string; title: string } | null>(null);
 
-  // Memoized accessory items explicitly configured on family.accessories in CMS
-  const accessoriesList = useMemo<AccessoryItem[]>(() => {
-    if (!Array.isArray(family.accessories) || family.accessories.length === 0) {
-      return [];
-    }
+  // Fetch SKUs for accessory products (kept separate from main luminaire `skus` so they don't appear in Technical Configurations)
+  useEffect(() => {
+    async function fetchAccessorySkus() {
+      const idSet = new Set<string>();
+      (family.accessoryProducts || []).forEach(p => {
+        if (p && typeof p === 'object' && p.id) {
+          idSet.add(String(p.id));
+        } else if (typeof p === 'string' && p.trim()) {
+          idSet.add(p.trim());
+        }
+      });
+      (family.accessories || []).forEach(item => {
+        if (!item?.product) return;
+        if (typeof item.product === 'object' && item.product.id) {
+          idSet.add(String(item.product.id));
+        } else if (typeof item.product === 'string' && item.product.trim()) {
+          idSet.add(item.product.trim());
+        }
+      });
 
-    return family.accessories.filter(item => {
-      if (!item) return false;
-      const hasProduct = Boolean(
-        typeof item.product === 'object' ? item.product?.id || item.product?.name : isFieldFilled(item.product)
-      );
-      const hasImage = Boolean(item.image && getImageUrl(item.image) !== '/placeholder.png');
-      return (
-        isFieldFilled(item.modelNumber) ||
-        isFieldFilled(item.modelNo) ||
-        isFieldFilled(item.mmCode) ||
-        isFieldFilled(item.name) ||
-        isFieldFilled(item.title) ||
-        isFieldFilled(item.description) ||
-        isFieldFilled(item.colour) ||
-        isFieldFilled(item.color) ||
-        hasProduct ||
-        hasImage
-      );
+      const productIds = Array.from(idSet);
+      if (productIds.length === 0) {
+        setAccessorySkus([]);
+        return;
+      }
+
+      try {
+        const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+        const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${encodeURIComponent(id)}`).join('&');
+        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=3`);
+        if (response.ok) {
+          const data = await response.json();
+          setAccessorySkus(data.docs || []);
+        }
+      } catch (err) {
+        console.error('Error fetching accessory SKUs in FamilyDetailClient:', err);
+      }
+    }
+    fetchAccessorySkus();
+  }, [family.accessoryProducts, family.accessories]);
+
+  // Memoized accessory items combining selected `accessoryProducts` and manual `accessories` from CMS
+  const accessoriesList = useMemo<AccessoryItem[]>(() => {
+    const cleanAccText = (val: any): string => {
+      if (!isFieldFilled(val)) return '';
+      const str = String(val).trim();
+      return str === '/' ? '' : str;
+    };
+
+    const skusByProductId = new Map<string, any[]>();
+    accessorySkus.forEach(sku => {
+      const prodId = typeof sku.product === 'object' ? sku.product?.id : sku.product;
+      if (prodId) {
+        const key = String(prodId);
+        const list = skusByProductId.get(key) || [];
+        list.push(sku);
+        skusByProductId.set(key, list);
+      }
     });
-  }, [family.accessories]);
+
+    const validManualItems = Array.isArray(family.accessories)
+      ? family.accessories.filter(item => {
+          if (!item) return false;
+          const hasProduct = Boolean(
+            typeof item.product === 'object' ? item.product?.id || item.product?.name : isFieldFilled(item.product)
+          );
+          const hasImage = Boolean(item.image && getImageUrl(item.image) !== '/placeholder.png');
+          return (
+            Boolean(cleanAccText(item.modelNumber)) ||
+            Boolean(cleanAccText(item.modelNo)) ||
+            Boolean(cleanAccText(item.mmCode)) ||
+            Boolean(cleanAccText(item.name)) ||
+            Boolean(cleanAccText(item.title)) ||
+            Boolean(cleanAccText(item.description)) ||
+            Boolean(cleanAccText(item.colour)) ||
+            Boolean(cleanAccText(item.color)) ||
+            hasProduct ||
+            hasImage
+          );
+        })
+      : [];
+
+    // Avoid duplicating a product if it is both selected in `accessoryProducts` and overridden in `accessories`
+    const manualProductIds = new Set<string>();
+    validManualItems.forEach(item => {
+      const pid = typeof item.product === 'object' ? item.product?.id : item.product;
+      if (pid && isFieldFilled(pid)) {
+        manualProductIds.add(String(pid));
+      }
+    });
+
+    const items: AccessoryItem[] = [];
+    const seenProductIds = new Set<string>();
+
+    // 1. Directly selected products from `family.accessoryProducts`
+    (family.accessoryProducts || []).forEach(rawProd => {
+      if (!rawProd || typeof rawProd !== 'object' || !rawProd.id) return;
+      const prodId = String(rawProd.id);
+      if (manualProductIds.has(prodId) || seenProductIds.has(prodId)) return;
+      seenProductIds.add(prodId);
+
+      const specs = (rawProd.specifications || {}) as Record<string, any>;
+      const prodTitle = cleanAccText(rawProd.description) || cleanAccText(specs.description);
+      const prodColour = cleanAccText(rawProd.colour) || cleanAccText(specs.fitting_colour);
+      const prodMmCode = cleanAccText(specs.Art_Nr);
+      const matchedSkus = skusByProductId.get(prodId) || [];
+
+      if (matchedSkus.length > 0) {
+        matchedSkus.forEach(sku => {
+          items.push({
+            id: `acc-prod-${prodId}-${sku.id || sku.name}`,
+            modelNumber: cleanAccText(sku.modelNumber) || cleanAccText(rawProd.name),
+            mmCode: cleanAccText(sku.name) || prodMmCode,
+            name: prodTitle || cleanAccText(sku.description),
+            colour: cleanAccText(sku.colour) || prodColour,
+            image: rawProd.images || null,
+            product: rawProd,
+          });
+        });
+      } else {
+        items.push({
+          id: `acc-prod-${prodId}`,
+          modelNumber: cleanAccText(rawProd.name),
+          mmCode: prodMmCode,
+          name: prodTitle,
+          colour: prodColour,
+          image: rawProd.images || null,
+          product: rawProd,
+        });
+      }
+    });
+
+    // 2. Manual entries from `family.accessories` (+ Add Accessory)
+    validManualItems.forEach((item, idx) => {
+      const linkedProd = typeof item.product === 'object' && item.product ? item.product : null;
+      const linkedSpecs = (linkedProd?.specifications || {}) as Record<string, any>;
+      const matchedSkus = linkedProd?.id ? skusByProductId.get(String(linkedProd.id)) || [] : [];
+      const skuMmCodes = Array.from(
+        new Set(matchedSkus.map(s => cleanAccText(s.name)).filter(Boolean))
+      ).join(' / ');
+      const skuColour = matchedSkus.map(s => cleanAccText(s.colour)).find(Boolean) || '';
+
+      items.push({
+        ...item,
+        id: item.id || `acc-manual-${idx}`,
+        modelNumber: cleanAccText(item.modelNumber) || cleanAccText(item.modelNo) || cleanAccText(linkedProd?.name),
+        mmCode: cleanAccText(item.mmCode) || skuMmCodes || cleanAccText(linkedSpecs.Art_Nr),
+        name: cleanAccText(item.name) || cleanAccText(item.title) || cleanAccText(linkedProd?.description) || cleanAccText(linkedSpecs.description),
+        description: cleanAccText(item.description),
+        colour: cleanAccText(item.colour) || cleanAccText(item.color) || cleanAccText(linkedProd?.colour) || skuColour || cleanAccText(linkedSpecs.fitting_colour),
+        image: item.image || linkedProd?.images || null,
+        product: linkedProd || item.product,
+      });
+    });
+
+    return items;
+  }, [family.accessoryProducts, family.accessories, accessorySkus]);
 
   const [allSymbolsMap, setAllSymbolsMap] = useState<Record<string, SymbolItem>>(() => {
     const initialMap: Record<string, SymbolItem> = {};
@@ -812,7 +945,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         initialMap[String(s.id)] = s;
       }
     });
-    (family.products || []).forEach((p: any) => {
+    [...(family.products || []), ...(family.accessoryProducts || [])].forEach((p: any) => {
       if (p && typeof p === 'object' && Array.isArray(p.symbols)) {
         p.symbols.forEach((s: any) => {
           if (s && typeof s === 'object' && s.id) {
@@ -872,7 +1005,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   // Map family products by model number and ID to call back symbols according to product model number
   const productModelSymbolsMap = useMemo(() => {
     const map = new Map<string, SymbolItem[]>();
-    (family.products || []).forEach(p => {
+    [...(family.products || []), ...(family.accessoryProducts || [])].forEach(p => {
       if (p && typeof p === 'object') {
         const syms = (p.symbols || []) as SymbolItem[];
         if (p.name) {
@@ -884,7 +1017,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       }
     });
     return map;
-  }, [family.products]);
+  }, [family.products, family.accessoryProducts]);
 
   // Helper to reliably call back symbols according to the model no. of the product
   const getSymbolsForProduct = useCallback((prodOrSku: any): SymbolItem[] => {
@@ -2304,7 +2437,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             {linkedProduct ? (
                               <button
                                 type="button"
-                                onClick={() => handleOpenProduct(linkedProduct)}
+                                onClick={() => handleOpenProduct(mmCode !== '—' ? ({ ...linkedProduct, mmCode } as any) : linkedProduct)}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#005288] hover:bg-[#003e66] text-white text-[11px] font-sans font-medium rounded transition-all shadow-xs"
                               >
                                 <span>Details</span>

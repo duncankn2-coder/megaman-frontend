@@ -40,6 +40,7 @@ interface Family {
   description?: string;
   media: MediaItem[];
   products: Product[];
+  accessoryProducts?: Product[];
   userManual?: any;
   dismantleInstructionPdf?: any;
   lineDrawing?: any;
