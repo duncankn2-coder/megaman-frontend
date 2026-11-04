@@ -781,6 +781,16 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [accessorySkus, setAccessorySkus] = useState<any[]>([]);
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
   const [previewAccessoryImage, setPreviewAccessoryImage] = useState<{ url: string; title: string } | null>(null);
+  const [accessorySearchQuery, setAccessorySearchQuery] = useState('');
+
+  const accessoryProductIds = useMemo(() => {
+    const idSet = new Set<string>();
+    (family.accessoryProducts || []).forEach(p => {
+      const pid = typeof p === 'object' && p?.id ? String(p.id) : String(p);
+      if (pid) idSet.add(pid);
+    });
+    return idSet;
+  }, [family.accessoryProducts]);
 
   // Fetch SKUs for accessory products (kept separate from main luminaire `skus` so they don't appear in Technical Configurations)
   useEffect(() => {
@@ -940,6 +950,20 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     return items;
   }, [family.accessoryProducts, family.accessories, accessorySkus]);
 
+  // Search filter for accessories table
+  const filteredAccessoriesList = useMemo(() => {
+    if (!accessorySearchQuery.trim()) return accessoriesList;
+    const q = accessorySearchQuery.toLowerCase().trim();
+    return accessoriesList.filter(acc => {
+      const mNo = (acc.modelNumber || acc.modelNo || '').toLowerCase();
+      const mm = (acc.mmCode || '').toLowerCase();
+      const nm = (acc.name || acc.title || '').toLowerCase();
+      const desc = (acc.description || '').toLowerCase();
+      const col = (acc.colour || acc.color || '').toLowerCase();
+      return mNo.includes(q) || mm.includes(q) || nm.includes(q) || desc.includes(q) || col.includes(q);
+    });
+  }, [accessoriesList, accessorySearchQuery]);
+
   const [allSymbolsMap, setAllSymbolsMap] = useState<Record<string, SymbolItem>>(() => {
     const initialMap: Record<string, SymbolItem> = {};
     (family.symbols || []).forEach((s: any) => {
@@ -1049,7 +1073,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
   useEffect(() => {
     async function fetchSkus() {
-      const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null);
+      const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null && !accessoryProductIds.has(String(p.id)));
       if (validProducts.length === 0) {
         return;
       }
@@ -1170,7 +1194,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       })
     );
 
-    const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null);
+    const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null && !accessoryProductIds.has(String(p.id)));
     const productsWithoutSkus = validProducts.filter(p => !productIdsWithSkus.has(String(p.id)));
     const fallbackSkus = productsWithoutSkus.map(p => ({
       id: p.id,
@@ -1248,7 +1272,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       })
     );
 
-    const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null);
+    const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null && !accessoryProductIds.has(String(p.id)));
     const productsWithoutSkus = validProducts.filter(p => !productIdsWithSkus.has(String(p.id)));
     const fallbackSkus = productsWithoutSkus.map(p => ({
       id: p.id,
@@ -1530,6 +1554,15 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   >
                     Configure {family.products?.length || 0} Models &darr;
                   </a>
+                  {accessoriesList.length > 0 && (
+                    <a
+                      href="#accessories"
+                      className="bg-white border border-[#005288] text-[#005288] hover:bg-[#005288] hover:text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition-all duration-300 shadow-sm text-center inline-flex items-center justify-center gap-2"
+                    >
+                      <FontAwesomeIcon icon={faCogs} className="text-xs" />
+                      View {accessoriesList.length} {accessoriesList.length === 1 ? 'Accessory' : 'Accessories'} &darr;
+                    </a>
+                  )}
                   {Boolean(family.datasheet?.enabled) && (
                     <Link
                       href={`/families/${family.slug || family.id}/datasheet`}
@@ -2322,25 +2355,56 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
           <p className="mt-4 text-xs text-gray-500 font-sans">
             Rated values are based on average performance, individual products will vary.
           </p>
+        </div>
+      </section>
 
-          {/* ACCESSORIES TABLE (Rendered below technical configurations if accessories exist) */}
-          {accessoriesList.length > 0 && (
-            <div id="accessories" className="mt-12 pt-8 border-t border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div>
-                  <h3 className="text-xl uppercase tracking-widest text-gray-900 font-light flex items-center gap-2.5">
-                    ACCESSORIES
-                  </h3>
-                  <p className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider">
-                    Optional and compatible accessories for the {family.name} series.
-                  </p>
+      {/* SECTION: Dedicated Accessories & Optional Parts Table (Separate Standalone Table) */}
+      {accessoriesList.length > 0 && (
+        <section id="accessories" className="container mx-auto px-6 md:px-12 max-w-7xl mt-12 mb-20 scroll-mt-24">
+          <div className="bg-white border border-gray-200 p-6 md:p-8 relative shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-gray-200">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-[#005288]"></span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#005288] font-bold">Compatible Optional Parts</span>
                 </div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-200 rounded text-[11px] font-mono text-gray-600 self-start sm:self-auto">
+                <h2 className="text-xl uppercase tracking-widest text-gray-900 font-light flex items-center gap-2.5">
+                  ACCESSORIES &amp; OPTIONAL PARTS
+                </h2>
+                <p className="text-[11px] text-gray-500 mt-1 uppercase tracking-wider">
+                  Optional and compatible accessories, mounts, sensors, and optics for the {family.name} series.
+                </p>
+              </div>
+              <div className="flex items-center gap-3 self-start sm:self-auto">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded text-[11px] font-mono text-gray-600">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#005288]"></span>
-                  <span>{accessoriesList.length} {accessoriesList.length === 1 ? 'Accessory' : 'Accessories'}</span>
+                  <span className="font-semibold text-[#005288]">{accessoriesList.length}</span>
+                  <span>{accessoriesList.length === 1 ? 'Accessory Item' : 'Accessory Items'}</span>
                 </div>
               </div>
+            </div>
 
+            {/* Accessories Search (when more than 3 items) */}
+            {accessoriesList.length > 3 && (
+              <div className="mb-6 flex justify-end">
+                <div className="relative w-full sm:w-72">
+                  <input
+                    type="text"
+                    placeholder="Search accessories (model, code, name)..."
+                    value={accessorySearchQuery}
+                    onChange={(e) => setAccessorySearchQuery(e.target.value)}
+                    className="w-full bg-white border border-gray-300 text-gray-800 text-xs pl-8 pr-4 py-2 focus:outline-none focus:border-[#005288] focus:ring-1 focus:ring-[#005288] transition-all placeholder:text-gray-400 font-mono shadow-inner"
+                  />
+                  <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-3 text-gray-400 text-xs" />
+                </div>
+              </div>
+            )}
+
+            {filteredAccessoriesList.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 font-mono text-xs">
+                No accessories found matching &ldquo;{accessorySearchQuery}&rdquo;.
+              </div>
+            ) : (
               <div className="overflow-x-auto border border-gray-200 shadow-xs bg-white">
                 <table className="w-full text-left border-collapse text-xs font-mono">
                   <thead>
@@ -2354,12 +2418,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white">
-                    {accessoriesList.map((acc, index) => {
-                      const modelNo = acc.modelNumber || acc.modelNo || (typeof acc.product === 'object' ? acc.product?.name : '') || '—';
-                      const mmCode = acc.mmCode || '—';
-                      const title = acc.name || acc.title || (typeof acc.product === 'object' ? acc.product?.description : '') || '—';
+                    {filteredAccessoriesList.map((acc, index) => {
+                      const modelNo = acc.modelNumber || acc.modelNo || (typeof acc.product === 'object' ? acc.product?.name : '') || '?';
+                      const mmCode = acc.mmCode || '?';
+                      const title = acc.name || acc.title || (typeof acc.product === 'object' ? acc.product?.description : '') || '?';
                       const description = acc.description || '';
-                      const colour = acc.colour || acc.color || (typeof acc.product === 'object' ? acc.product?.colour : '') || '—';
+                      const colour = acc.colour || acc.color || (typeof acc.product === 'object' ? acc.product?.colour : '') || '?';
 
                       const rawImage = acc.image || (typeof acc.product === 'object' ? acc.product?.images : null);
                       const imgUrl = rawImage ? getImageUrl(rawImage) : '';
@@ -2377,7 +2441,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             {hasValidImg ? (
                               <button
                                 type="button"
-                                onClick={() => setPreviewAccessoryImage({ url: imgUrl, title: `${modelNo} ${title !== '—' ? `- ${title}` : ''}` })}
+                                onClick={() => setPreviewAccessoryImage({ url: imgUrl, title: `${modelNo} ${title !== '?' ? `- ${title}` : ''}` })}
                                 className="relative w-12 h-12 mx-auto bg-gray-50 border border-gray-200 rounded p-1 overflow-hidden group-hover:border-[#005288]/40 transition-all hover:scale-105 cursor-zoom-in block"
                                 title="Click to view full image"
                               >
@@ -2404,12 +2468,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                           {/* MM Code */}
                           <td className="py-3 px-4 font-mono text-gray-700 align-middle whitespace-nowrap">
-                            {mmCode !== '—' ? (
+                            {mmCode !== '?' ? (
                               <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded text-[11px] font-mono border border-gray-200/60">
                                 {mmCode}
                               </span>
                             ) : (
-                              <span className="text-gray-400">—</span>
+                              <span className="text-gray-400">?</span>
                             )}
                           </td>
 
@@ -2425,12 +2489,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                           {/* Colour */}
                           <td className="py-3 px-4 font-sans text-gray-700 align-middle whitespace-nowrap">
-                            {colour !== '—' ? (
+                            {colour !== '?' ? (
                               <span className="inline-block px-2 py-0.5 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-700">
                                 {colour}
                               </span>
                             ) : (
-                              <span className="text-gray-400">—</span>
+                              <span className="text-gray-400">?</span>
                             )}
                           </td>
 
@@ -2439,7 +2503,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             {linkedProduct ? (
                               <button
                                 type="button"
-                                onClick={() => handleOpenProduct(mmCode !== '—' ? ({ ...linkedProduct, mmCode } as any) : linkedProduct)}
+                                onClick={() => handleOpenProduct(mmCode !== '?' ? ({ ...linkedProduct, mmCode } as any) : linkedProduct)}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#005288] hover:bg-[#003e66] text-white text-[11px] font-sans font-medium rounded transition-all shadow-xs"
                               >
                                 <span>Details</span>
@@ -2448,14 +2512,14 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             ) : hasValidImg ? (
                               <button
                                 type="button"
-                                onClick={() => setPreviewAccessoryImage({ url: imgUrl, title: `${modelNo} ${title !== '—' ? `- ${title}` : ''}` })}
+                                onClick={() => setPreviewAccessoryImage({ url: imgUrl, title: `${modelNo} ${title !== '?' ? `- ${title}` : ''}` })}
                                 className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-gray-50 text-gray-700 text-[11px] font-sans border border-gray-300 rounded transition-all"
                               >
                                 <FontAwesomeIcon icon={faSearch} className="text-[10px] text-gray-500" />
                                 <span>Preview</span>
                               </button>
                             ) : (
-                              <span className="text-gray-400 text-xs">—</span>
+                              <span className="text-gray-400 text-xs">?</span>
                             )}
                           </td>
                         </tr>
@@ -2464,10 +2528,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* RZB-Style Technical Drawer Overlay Container (Fully Accessible and Clickable Fix) */}
       {selectedProduct && (
