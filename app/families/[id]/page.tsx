@@ -15,6 +15,8 @@ interface Product {
   specifications?: Record<string, unknown> | null;
   symbols?: SymbolItem[] | null;
   userManual?: any;
+  lightSpectrumGraph?: any;
+  lightSpectrumGraphs?: any[];
 }
 
 interface MediaItem {
@@ -46,6 +48,7 @@ interface Family {
   lineDrawing?: any;
   lightSpectrumGraph?: any;
   spectrumImage?: any;
+  lightSpectrumGraphs?: any[];
   photometryLdt?: any;
   photometryIes?: any;
   features?: { id?: string; feature: string }[];

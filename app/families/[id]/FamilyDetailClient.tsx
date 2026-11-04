@@ -50,6 +50,7 @@ interface Product {
   photometryLdt?: MediaFile | null;
   photometryIes?: MediaFile | null;
   lightSpectrumGraph?: MediaFile | null;
+  lightSpectrumGraphs?: (MediaFile | any)[] | null;
   photometricPolarDiagram?: MediaFile | null;
   beamAngleDiagram?: MediaFile | null;
   lineDrawing?: MediaFile | null;
@@ -131,6 +132,7 @@ interface Family {
   dismantleInstructionPdf?: MediaFile | null;
   lineDrawing?: MediaFile | null;
   lightSpectrumGraph?: MediaFile | null;
+  lightSpectrumGraphs?: (MediaFile | any)[] | null;
   spectrumImage?: MediaFile | null;
   photometryLdt?: MediaFile | null;
   photometryIes?: MediaFile | null;
@@ -2919,14 +2921,44 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           // Helper to check for a valid uploaded media file
                           const isValidFile = (f: any) => Boolean(f && (typeof f === 'string' ? f.trim().length > 0 && f !== '/placeholder.png' : Boolean(f.url || f.filename)));
 
-                          // Spectrum graph defaults to family's default spectrum image if not specified on the product
-                          const rawSpectrum = activeDrawerProduct.lightSpectrumGraph 
-                            || (activeDrawerProduct as any)?.spectrumImage 
-                            || parent?.lightSpectrumGraph 
-                            || (parent as any)?.spectrumImage 
-                            || family?.lightSpectrumGraph 
-                            || (family as any)?.spectrumImage;
-                          const spectrumFile = isValidFile(rawSpectrum) ? rawSpectrum : null;
+                          // Spectrum graphs: supports single and multiple graphs (for Multi-CCT luminaires)
+                          const rawSpectrumList: any[] = [];
+                          const addSpectrums = (source: any) => {
+                            if (!source) return;
+                            if (Array.isArray(source.lightSpectrumGraphs)) {
+                              source.lightSpectrumGraphs.forEach((item: any) => {
+                                if (isValidFile(item)) rawSpectrumList.push(item);
+                              });
+                            }
+                            if (Array.isArray(source.spectrumImages)) {
+                              source.spectrumImages.forEach((item: any) => {
+                                if (isValidFile(item)) rawSpectrumList.push(item);
+                              });
+                            }
+                            if (isValidFile(source.lightSpectrumGraph)) {
+                              rawSpectrumList.push(source.lightSpectrumGraph);
+                            }
+                            if (isValidFile(source.spectrumImage)) {
+                              rawSpectrumList.push(source.spectrumImage);
+                            }
+                          };
+
+                          addSpectrums(activeDrawerProduct);
+                          if (rawSpectrumList.length === 0 && parent) {
+                            addSpectrums(parent);
+                          }
+                          if (rawSpectrumList.length === 0 && family) {
+                            addSpectrums(family);
+                          }
+
+                          const seenSpectrumKeys = new Set<string>();
+                          const spectrumFiles = rawSpectrumList.filter((f) => {
+                            const key = f?.id || f?.url || f?.filename || (typeof f === 'string' ? f : '');
+                            if (!key || seenSpectrumKeys.has(key)) return false;
+                            seenSpectrumKeys.add(key);
+                            return true;
+                          });
+                          const spectrumFile = spectrumFiles.length > 0 ? spectrumFiles[0] : null;
 
                           const rawPolar = activeDrawerProduct.photometricPolarDiagram || parent?.photometricPolarDiagram;
                           const polarFile = isValidFile(rawPolar) ? rawPolar : null;
@@ -2934,7 +2966,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const rawBeam = activeDrawerProduct.beamAngleDiagram || parent?.beamAngleDiagram;
                           const beamFile = isValidFile(rawBeam) ? rawBeam : null;
 
-                          const hasAnyDiagram = Boolean(spectrumFile || polarFile || beamFile);
+                          const hasAnyDiagram = Boolean(spectrumFiles.length > 0 || polarFile || beamFile);
 
                           // CAD / Databases files
                           const rawLdt = activeDrawerProduct.photometryLdt 
@@ -3016,7 +3048,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             );
                           }
 
-                          const activeDiagramCount = [spectrumFile, polarFile, beamFile].filter(Boolean).length;
+                          const activeDiagramCount = spectrumFiles.length + [polarFile, beamFile].filter(Boolean).length;
 
                           return (
                             <>
@@ -3037,46 +3069,54 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       ? 'max-w-md' 
                                       : activeDiagramCount === 2 
                                         ? 'md:grid-cols-2' 
-                                        : 'md:grid-cols-3'
+                                        : 'md:grid-cols-2 lg:grid-cols-3'
                                   } gap-4`}>
 
-                                    {/* 1. Light Spectrum Graph */}
-                                    {spectrumFile && (
-                                      <div className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
-                                        <div>
-                                          <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
-                                              Light Spectrum Graph
-                                            </span>
-                                            <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100">
-                                              SPD
-                                            </span>
-                                          </div>
-                                          <p className="text-[9px] text-gray-400 font-mono mb-3">Visible Wavelength Spectrum (380 - 780nm)</p>
+                                    {/* 1. Light Spectrum Graph(s) (Supports Multi-CCT) */}
+                                    {spectrumFiles.map((specFile, specIdx) => {
+                                      const filename = specFile.filename || '';
+                                      const altText = specFile.alt || '';
+                                      const combinedText = (filename + ' ' + altText).toUpperCase();
+                                      const cctMatch = combinedText.match(/\b(2700K|3000K|3500K|4000K|5000K|5700K|6500K|\d{4}K)\b/);
+                                      const cctTag = cctMatch ? cctMatch[1] : (spectrumFiles.length > 1 ? `CCT ${specIdx + 1}` : 'SPD');
 
-                                          <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
-                                            <img
-                                              src={getImageUrl(spectrumFile)}
-                                              alt="Light Spectrum Graph"
-                                              className="max-h-full max-w-full object-contain"
-                                            />
+                                      return (
+                                        <div key={specFile.id || `spectrum-${specIdx}-${filename}`} className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
+                                          <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
+                                                Light Spectrum Graph {spectrumFiles.length > 1 ? `(${cctTag})` : ''}
+                                              </span>
+                                              <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100 font-bold">
+                                                {cctTag}
+                                              </span>
+                                            </div>
+                                            <p className="text-[9px] text-gray-400 font-mono mb-3">Visible Wavelength Spectrum (380 - 780nm)</p>
+
+                                            <div className="relative aspect-[4/3] w-full bg-gray-50/80 border border-gray-150 rounded flex items-center justify-center p-2 overflow-hidden">
+                                              <img
+                                                src={getImageUrl(specFile)}
+                                                alt={`Light Spectrum Graph ${cctTag}`}
+                                                className="max-h-full max-w-full object-contain"
+                                              />
+                                            </div>
+                                          </div>
+
+                                          <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                                            <span className="text-[8px] font-mono text-gray-400 truncate max-w-[160px]" title={specFile.filename || ''}>
+                                              {specFile.filename || 'Uploaded File'}
+                                            </span>
+                                            <button
+                                              onClick={() => handleDownloadFile(specFile, `Light Spectrum Graph ${cctTag}`)}
+                                              className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline cursor-pointer"
+                                            >
+                                              <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
+                                              <span>Download</span>
+                                            </button>
                                           </div>
                                         </div>
-
-                                        <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
-                                          <span className="text-[8px] font-mono text-gray-400 truncate max-w-[160px]">
-                                            {spectrumFile.filename || 'Uploaded File'}
-                                          </span>
-                                          <button
-                                            onClick={() => handleDownloadFile(spectrumFile, 'Light Spectrum Graph')}
-                                            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#005288] hover:underline cursor-pointer"
-                                          >
-                                            <FontAwesomeIcon icon={faDownload} className="text-[9px]" />
-                                            <span>Download</span>
-                                          </button>
-                                        </div>
-                                      </div>
-                                    )}
+                                      );
+                                    })}
 
                                     {/* 2. Photometric Polar Diagram */}
                                     {polarFile && (
