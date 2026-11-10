@@ -287,7 +287,7 @@ const expandSpecNames = (specNames: string[]): string[] => {
   for (const name of specNames) {
     const lower = name.toLowerCase();
     if (lower.includes('model') || lower.includes('item_no') || lower.includes('art_nr')) {
-      expanded.push('customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'customer_model_no_old', 'modelNo');
+      expanded.push('customer_model_no_new', 'model_number', 'yk_model_no', 'customer_model_no_old', 'modelNo');
     }
     if (lower.includes('flux') || lower.includes('lumen')) {
       expanded.push(
@@ -2081,7 +2081,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                   {filteredSkus.map((sku, modelIndex) => {
                     const parent = typeof sku.product === 'object' && sku.product !== null ? sku.product : null;
                     const mmCode = sku.name;
-                    const modelNo = getSkuSpec(sku, ['customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'modelNo'], parent?.name || sku.modelNumber || '—');
+                    const modelNo = getSkuSpec(sku, ['customer_model_no_new', 'model_number', 'yk_model_no', 'modelNo'], parent?.name || sku.modelNumber || '—');
                     // Call back symbols according to the model no. of the product
                     const productSymbols = getSymbolsForProduct(sku);
 
@@ -2557,7 +2557,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                       const isMmCode = /^MM\d+/i.test(activeDrawerProduct.name);
                       const mmCode = isMmCode ? activeDrawerProduct.name : (activeDrawerProduct.isFallbackProduct ? '—' : (activeDrawerProduct.mmCode || '—'));
-                      const modelNo = getSkuSpec(activeDrawerProduct, ['customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'modelNo'], parent?.name || activeDrawerProduct.modelNumber || (!isMmCode ? activeDrawerProduct.name : '—'));
+                      const modelNo = getSkuSpec(activeDrawerProduct, ['customer_model_no_new', 'model_number', 'yk_model_no', 'modelNo'], parent?.name || activeDrawerProduct.modelNumber || (!isMmCode ? activeDrawerProduct.name : '—'));
 
                       return (
                         <div className="flex flex-col gap-1">
@@ -2785,7 +2785,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
                           const isMmCode = /^MM\d+/i.test(activeDrawerProduct.name);
                           const mmCode = isMmCode ? activeDrawerProduct.name : (activeDrawerProduct.isFallbackProduct ? '—' : (activeDrawerProduct.mmCode || '—'));
-                          const modelNo = getSkuSpec(activeDrawerProduct, ['customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'modelNo'], parent?.name || activeDrawerProduct.modelNumber || (!isMmCode ? activeDrawerProduct.name : '—'));
+                          const modelNo = getSkuSpec(activeDrawerProduct, ['customer_model_no_new', 'model_number', 'yk_model_no', 'modelNo'], parent?.name || activeDrawerProduct.modelNumber || (!isMmCode ? activeDrawerProduct.name : '—'));
                           const rawPower = getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w', 'light_source_on_mode_power_w'], '—');
                           const rawCurrent = getSkuSpec(activeDrawerProduct, ['input_current_ma', 'input_current', 'light_source_input_current_ma'], '—');
                           const formattedCurrent = formatCurrent(rawCurrent, rawPower);
