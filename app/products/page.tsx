@@ -43,7 +43,16 @@ interface Family {
 async function getFamilies(): Promise<Family[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/families?depth=2&limit=1000&pagination=false&sort=-priority`, {
+    const selectFields = [
+      'select[name]=true',
+      'select[slug]=true',
+      'select[priority]=true',
+      'select[description]=true',
+      'select[categories]=true',
+      'select[media]=true',
+      'select[products]=true',
+    ].join('&');
+    const response = await fetch(`${payloadUrl}/api/families?depth=2&limit=1000&pagination=false&sort=-priority&${selectFields}`, {
       next: { revalidate: 300 },
     });
     if (!response.ok) {

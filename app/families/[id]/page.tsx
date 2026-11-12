@@ -63,7 +63,7 @@ async function getFamily(idOrSlug: string): Promise<Family | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     // 1. Try finding by readable slug first
-    const slugRes = await fetch(`${payloadUrl}/api/families?where[slug][equals]=${encodeURIComponent(idOrSlug)}&depth=3`, {
+    const slugRes = await fetch(`${payloadUrl}/api/families?where[slug][equals]=${encodeURIComponent(idOrSlug)}&depth=2`, {
       next: { revalidate: 300 },
     });
     if (slugRes.ok) {
@@ -73,7 +73,7 @@ async function getFamily(idOrSlug: string): Promise<Family | null> {
       }
     }
     // 2. Fallback to direct ID fetch for backward compatibility
-    const response = await fetch(`${payloadUrl}/api/families/${idOrSlug}?depth=3`, {
+    const response = await fetch(`${payloadUrl}/api/families/${idOrSlug}?depth=2`, {
       next: { revalidate: 300 },
     });
     if (!response.ok) {
@@ -84,6 +84,25 @@ async function getFamily(idOrSlug: string): Promise<Family | null> {
   } catch (error) {
     console.error('Error fetching family:', error);
     return null;
+  }
+}
+
+export async function generateStaticParams() {
+  try {
+    const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+    const res = await fetch(`${payloadUrl}/api/families?limit=100&depth=0`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.docs || []).flatMap((fam: any) => {
+      const entries: { id: string }[] = [];
+      if (fam.id) entries.push({ id: String(fam.id) });
+      if (fam.slug) entries.push({ id: String(fam.slug) });
+      return entries;
+    });
+  } catch {
+    return [];
   }
 }
 

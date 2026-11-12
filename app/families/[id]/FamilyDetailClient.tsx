@@ -821,7 +821,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
       try {
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
         const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${encodeURIComponent(id)}`).join('&');
-        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=3`);
+        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=1`);
         if (response.ok) {
           const data = await response.json();
           setAccessorySkus(data.docs || []);
@@ -987,7 +987,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     async function fetchAllSymbols() {
       try {
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-        const res = await fetch(`${payloadUrl}/api/symbols?limit=100&depth=2`);
+        const res = await fetch(`${payloadUrl}/api/symbols?limit=100&depth=1`);
         if (res.ok) {
           const data = await res.json();
           setAllSymbolsMap(prev => {
@@ -1081,7 +1081,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         const productIds = validProducts.map(p => p.id);
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
         const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${id}`).join('&');
-        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=3`);
+        const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=1`);
         if (response.ok) {
           const data = await response.json();
           setSkus(data.docs || []);

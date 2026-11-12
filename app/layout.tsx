@@ -1,11 +1,24 @@
 import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Geist, Geist_Mono } from 'next/font/google';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import Header from './components/Header';
 import './globals.css';
 import { ReactNode } from 'react';
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 config.autoAddCss = false;
 
@@ -57,7 +70,7 @@ const websiteJsonLd = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
         <link rel="preconnect" href="https://megaman-backend.vercel.app" />
         <link rel="dns-prefetch" href="https://megaman-backend.vercel.app" />
@@ -66,7 +79,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
       </head>
-      <body>
+      <body className="antialiased">
         <Header />
         <main>{children}</main>
         <Analytics />
