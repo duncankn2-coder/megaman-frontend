@@ -296,7 +296,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                             sizes="100vw"
                             unoptimized={isSvg}
                             className="object-cover transition-opacity duration-700 sharpen-media"
-                            priority={currentSlide === 0}
+                            priority={activeSlide === 0}
                           />
                         );
                       }
