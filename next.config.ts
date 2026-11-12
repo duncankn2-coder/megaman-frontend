@@ -44,7 +44,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: [
       '@fortawesome/free-solid-svg-icons',
-      '@fortawesome/react-fontawesome',
     ],
   },
   images: {
@@ -103,6 +102,20 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: '/resources',
+        destination: '/resources/downloads',
+        permanent: false,
+      },
+      {
+        source: '/company',
+        destination: '/company/about-megaman',
+        permanent: false,
+      },
+    ];
   },
   async rewrites() {
     return [

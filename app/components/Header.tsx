@@ -23,7 +23,7 @@ interface SubmenuItem {
 
 interface NavItem {
   name: string;
-  path: string;
+  path?: string;
   description: string;
   tagline: string;
   submenu: SubmenuItem[];
@@ -115,7 +115,6 @@ const navItems: NavItem[] = [
   },
   {
     name: 'Resources',
-    path: '/resources',
     description: 'Access essential technical data sheets, catalogs, installation manuals, dialux files, and interactive videos for your next project planning.',
     tagline: 'KNOWLEDGE & TOOLS',
     submenu: [
@@ -125,7 +124,6 @@ const navItems: NavItem[] = [
   },
   {
     name: 'Company',
-    path: '/company',
     description: 'Learn about Megaman\'s commitment to sustainability, pioneering quality assurance standards, global awards, and latest corporate news.',
     tagline: 'LIFE IN LIGHT',
     submenu: [
@@ -303,20 +301,37 @@ export default function Header({ initialSiteContext = 'international' }: HeaderP
                 className="static"
                 onMouseEnter={() => handleMouseEnter(item.name)}
               >
-                <Link
-                  href={item.path}
-                  onClick={() => setActiveMenu(null)}
-                  className={`px-4 py-2 font-medium text-[15px] rounded-md transition-all duration-200 flex items-center gap-1.5 focus:outline-none ${isOpen
-                      ? 'bg-[#004a7b] text-white'
-                      : 'text-white hover:bg-[#005e9c]/50 hover:text-white'
-                    }`}
-                >
-                  {item.name}
-                  <FontAwesomeIcon
-                    icon={faChevronDown}
-                    className={`text-[10px] opacity-80 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-                  />
-                </Link>
+                {item.path ? (
+                  <Link
+                    href={item.path}
+                    onClick={() => setActiveMenu(null)}
+                    className={`px-4 py-2 font-medium text-[15px] rounded-md transition-all duration-200 flex items-center gap-1.5 focus:outline-none ${isOpen
+                        ? 'bg-[#004a7b] text-white'
+                        : 'text-white hover:bg-[#005e9c]/50 hover:text-white'
+                      }`}
+                  >
+                    {item.name}
+                    <FontAwesomeIcon
+                      icon={faChevronDown}
+                      className={`text-[10px] opacity-80 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActiveMenu(isOpen ? null : item.name)}
+                    className={`px-4 py-2 font-medium text-[15px] rounded-md transition-all duration-200 flex items-center gap-1.5 focus:outline-none cursor-pointer ${isOpen
+                        ? 'bg-[#004a7b] text-white'
+                        : 'text-white hover:bg-[#005e9c]/50 hover:text-white'
+                      }`}
+                  >
+                    {item.name}
+                    <FontAwesomeIcon
+                      icon={faChevronDown}
+                      className={`text-[10px] opacity-80 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                )}
 
                 {/* Dropdown Panel */}
                 {isOpen && (
@@ -684,13 +699,15 @@ export default function Header({ initialSiteContext = 'international' }: HeaderP
                           </Link>
                         );
                       })}
-                      <Link
-                        href={item.path}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="block py-2.5 px-3 text-[14px] font-semibold text-white border-t border-[#004e82]/50 hover:bg-[#005288]/40 rounded transition-all"
-                      >
-                        Explore All {item.name} →
-                      </Link>
+                      {item.path && (
+                        <Link
+                          href={item.path}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="block py-2.5 px-3 text-[14px] font-semibold text-white border-t border-[#004e82]/50 hover:bg-[#005288]/40 rounded transition-all"
+                        >
+                          Explore All {item.name} →
+                        </Link>
+                      )}
                     </div>
                   )}
                 </div>
