@@ -287,8 +287,14 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   const typeName = getSpec('product_type') || 'LED Luminaire';
   const refCode = product.name || selectedSku?.modelNumber || getSpec('customer_model_no_new') || getSpec('yk_product_code');
 
-  // Resolve packshot image URL
-  const packshotImageUrl = product.images ? getImageUrl(product.images) : '/placeholder.png';
+  // Resolve packshot image URL: Product model image first, else family first shot, else placeholder
+  const productShot = product.images ? getImageUrl(product.images) : '';
+  const familyShot = (product.families?.media && product.families.media.length > 0)
+    ? getImageUrl(product.families.media[0])
+    : '';
+  const packshotImageUrl = (productShot && productShot !== '/placeholder.png')
+    ? productShot
+    : (familyShot && familyShot !== '/placeholder.png' ? familyShot : '/placeholder.png');
 
   // Helper to validate whether a media upload is valid
   const isValidFile = (fileObj: any): boolean => {

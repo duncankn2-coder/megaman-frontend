@@ -669,7 +669,13 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                         const categoryTag = (family.categories && family.categories.length > 0 && family.categories[0]?.name)
                           ? family.categories[0].name
                           : family.resolvedCategories[0] || 'Luminaires';
-                        const imageItem = family.media?.find(m => m.type === 'image');
+                        // Prioritize product-level images if uploaded; otherwise fall back to family-level media
+                        const productWithImage = (family.products || []).find((p: any) => {
+                          if (!p || !p.images) return false;
+                          if (typeof p.images === 'string') return p.images.trim().length > 0 && p.images !== '/placeholder.png';
+                          return Boolean(p.images.url || p.images.filename);
+                        });
+                        const imageItem = productWithImage?.images || family.media?.find(m => m.type === 'image');
                         const imgUrl = imageItem ? getImageUrl(imageItem) : '';
                         const isSvg = imgUrl.toLowerCase().endsWith('.svg');
                         

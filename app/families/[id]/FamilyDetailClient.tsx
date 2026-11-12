@@ -1174,8 +1174,71 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     }
   };
 
-  const mediaList = useMemo(() => family.media || [], [family.media]);
+  // Resolve visual gallery media: prioritize product-level images if uploaded, else fall back to family-level media
+  const mediaList = useMemo(() => {
+    const productMedia: MediaItem[] = [];
+    const seenUrls = new Set<string>();
+
+    (family.products || []).forEach((p: any) => {
+      if (p && p.images) {
+        const raw = p.images;
+        const url = typeof raw === 'string' ? raw : (raw.url || raw.filename);
+        if (url && url !== '/placeholder.png' && !seenUrls.has(url)) {
+          seenUrls.add(url);
+          productMedia.push({
+            id: (typeof raw === 'object' && raw.id) || `prod-img-${p.id}`,
+            url: typeof raw === 'string' ? raw : (raw.url || ''),
+            filename: typeof raw === 'object' ? raw.filename : undefined,
+            alt: (typeof raw === 'object' && raw.alt) || p.name || family.name,
+            type: 'image',
+            description: (typeof raw === 'object' && raw.description) || p.description || undefined,
+          });
+        }
+      }
+    });
+
+    // Also check SKUs for images if products don't have them
+    if (productMedia.length === 0 && Array.isArray(skus)) {
+      skus.forEach((s: any) => {
+        if (s && s.images) {
+          const raw = s.images;
+          const url = typeof raw === 'string' ? raw : (raw.url || raw.filename);
+          if (url && url !== '/placeholder.png' && !seenUrls.has(url)) {
+            seenUrls.add(url);
+            productMedia.push({
+              id: (typeof raw === 'object' && raw.id) || `sku-img-${s.id}`,
+              url: typeof raw === 'string' ? raw : (raw.url || ''),
+              filename: typeof raw === 'object' ? raw.filename : undefined,
+              alt: (typeof raw === 'object' && raw.alt) || s.name || family.name,
+              type: 'image',
+            });
+          }
+        }
+      });
+    }
+
+    // If product-level images exist, prioritize product level!
+    if (productMedia.length > 0) {
+      // Retain any family-level video media if available
+      const familyVideos = (family.media || []).filter((m: any) => m && m.type === 'video');
+      return [...productMedia, ...familyVideos];
+    }
+
+    // Otherwise, fall back to family-level media
+    return family.media || [];
+  }, [family.products, family.media, family.name, skus]);
+
   const activeMedia = mediaList[activeMediaIndex];
+
+  // Resolve user manual: product-level manual if uploaded, else family default manual
+  const effectiveFamilyUserManual = useMemo(() => {
+    const isValid = (f: any) => Boolean(f && (typeof f === 'string' ? f.trim().length > 0 && f !== '/placeholder.png' : Boolean(f.url || f.filename)));
+    const prodWithManual = (family.products || []).find((p: any) => p && isValid(p.userManual || (p as any).userManualPdf));
+    if (prodWithManual) {
+      return prodWithManual.userManual || (prodWithManual as any).userManualPdf;
+    }
+    return isValid(family.userManual) ? family.userManual : null;
+  }, [family.products, family.userManual]);
 
   // Dynamically extract unique filtering parameters from products/SKUs
   const filtersData = useMemo(() => {
@@ -1573,10 +1636,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       Family Datasheet
                     </Link>
                   )}
-                  {Boolean(family.userManual) && (
+                  {Boolean(effectiveFamilyUserManual) && (
                     <button
                       type="button"
-                      onClick={() => handleDownloadFile(family.userManual, `${family.name} User Manual`)}
+                      onClick={() => handleDownloadFile(effectiveFamilyUserManual, `${family.name} User Manual`)}
                       className="bg-white border border-gray-300 text-gray-700 hover:border-[#005288] hover:text-[#005288] text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition-all duration-300 shadow-sm inline-flex items-center justify-center gap-2 text-center cursor-pointer"
                     >
                       <FontAwesomeIcon icon={faDownload} className="text-xs" />
@@ -2623,8 +2686,19 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       <div className="space-y-6 animate-fade-in">
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
+                          const famProducts = (family.products || []) as any[];
 
-                          // Default to the first product shot of the family to save uploading time
+                          // Helper to validate whether a media upload is valid
+                          const isValidMedia = (f: any) => Boolean(f && (typeof f === 'string' ? f.trim().length > 0 && f !== '/placeholder.png' : Boolean(f.url || f.filename)));
+
+                          // 1. Prioritize active product/SKU image first, then parent product model image
+                          const productLevelImage = (isValidMedia(activeDrawerProduct.images) ? activeDrawerProduct.images : null)
+                            || (isValidMedia(parent?.images) ? parent.images : null);
+
+                          // 2. Fallback to any other product model in this family that has an image uploaded
+                          const anyProductImage = famProducts.find((p: any) => p && isValidMedia(p.images))?.images;
+
+                          // 3. Fallback to first family-level image shot
                           const firstFamilyProductShot = (family.media || []).find((m: any) => {
                             if (!m) return false;
                             if (m.type === 'video') return false;
@@ -2632,13 +2706,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                             return Boolean(m.url || m.filename || (typeof m === 'string' && m.trim().length > 0));
                           }) || (family.media && family.media.length > 0 ? family.media[0] : null);
 
-                          // Use the parent model No.'s image or SKU image if available; otherwise default to family's first product shot
-                          const candidateImage = parent?.images || activeDrawerProduct.images;
+                          const candidateImage = productLevelImage || anyProductImage || firstFamilyProductShot;
                           const candidateUrl = candidateImage ? getImageUrl(candidateImage) : '';
-                          const finalImageUrl = (candidateUrl && candidateUrl !== '/placeholder.png')
-                            ? candidateUrl
-                            : (firstFamilyProductShot ? getImageUrl(firstFamilyProductShot) : '');
-                          const hasValidImage = Boolean(finalImageUrl && finalImageUrl !== '/placeholder.png');
+                          const finalImageUrl = (candidateUrl && candidateUrl !== '/placeholder.png') ? candidateUrl : '';
+                          const hasValidImage = Boolean(finalImageUrl);
 
                           return (
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -2658,9 +2729,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                 </div>
                                 {/* Line Drawing / Dimensional Outline Box (Hidden if no file uploaded) */}
                                 {(() => {
-                                  // Line drawing defaults to the family's default line drawing if not specified on the product
-                                  const rawLineDrawing = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
-                                  const lineDrawingFile = (rawLineDrawing && (typeof rawLineDrawing === 'string' ? rawLineDrawing.trim().length > 0 : Boolean(rawLineDrawing.url || rawLineDrawing.filename))) ? rawLineDrawing : null;
+                                  // Line drawing defaults to product level first, other product in family, then family
+                                  const prodLineDrawing = famProducts.find((p: any) => isValidMedia(p?.lineDrawing))?.lineDrawing;
+                                  const rawLineDrawing = activeDrawerProduct.lineDrawing || parent?.lineDrawing || prodLineDrawing || family?.lineDrawing;
+                                  const lineDrawingFile = (rawLineDrawing && (typeof rawLineDrawing === 'string' ? rawLineDrawing.trim().length > 0 && rawLineDrawing !== '/placeholder.png' : Boolean(rawLineDrawing.url || rawLineDrawing.filename))) ? rawLineDrawing : null;
                                   if (!lineDrawingFile) return null;
 
                                   return (
@@ -3030,24 +3102,34 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
                           const hasAnyDiagram = Boolean(spectrumFiles.length > 0 || polarFile || beamFile);
 
-                          // CAD / Databases files
+                          const famProducts = (family.products || []) as any[];
+
+                          // CAD / Databases files: active product -> parent product -> other family products -> family default
+                          const prodLdt = famProducts.find((p: any) => isValidFile(p?.photometryLdt || p?.photometryLdtZip))?.photometryLdt;
                           const rawLdt = activeDrawerProduct.photometryLdt 
                             || (activeDrawerProduct as any)?.photometryLdtZip
                             || parent?.photometryLdt 
                             || (parent as any)?.photometryLdtZip
+                            || prodLdt
                             || family?.photometryLdt
                             || (family as any)?.photometryLdtZip;
                           const ldtFile = isValidFile(rawLdt) ? rawLdt : null;
 
+                          const prodIes = famProducts.find((p: any) => isValidFile(p?.photometryIes || p?.photometryIesZip))?.photometryIes;
                           const rawIes = activeDrawerProduct.photometryIes 
                             || (activeDrawerProduct as any)?.photometryIesZip
                             || parent?.photometryIes 
                             || (parent as any)?.photometryIesZip
+                            || prodIes
                             || family?.photometryIes
                             || (family as any)?.photometryIesZip;
                           const iesFile = isValidFile(rawIes) ? rawIes : null;
 
-                          const rawLineDrawing = activeDrawerProduct.lineDrawing || parent?.lineDrawing || family?.lineDrawing;
+                          const prodLineDrawing = famProducts.find((p: any) => isValidFile(p?.lineDrawing))?.lineDrawing;
+                          const rawLineDrawing = activeDrawerProduct.lineDrawing 
+                            || parent?.lineDrawing 
+                            || prodLineDrawing
+                            || family?.lineDrawing;
                           const lineDrawingFile = isValidFile(rawLineDrawing) ? rawLineDrawing : null;
 
                           const hasCadFiles = Boolean(lineDrawingFile || ldtFile || iesFile);
@@ -3056,16 +3138,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const familyDi = famObj?.dismantleInstructionPdf || null;
 
                           // User Manual: Product-specific manual if uploaded, otherwise fallback to family default manual
+                          const prodManual = famProducts.find((p: any) => isValidFile(p?.userManual || p?.userManualPdf))?.userManual;
                           const rawUserManual = activeDrawerProduct.userManual 
                             || (activeDrawerProduct as any)?.userManualPdf
                             || parent?.userManual 
                             || (parent as any)?.userManualPdf 
+                            || prodManual
                             || famObj?.userManual 
                             || (famObj as any)?.userManualPdf
                             || family?.userManual
                             || (family as any)?.userManualPdf;
                           const userManualFile = isValidFile(rawUserManual) ? rawUserManual : null;
-                          const isFamilyDefaultManual = !isValidFile(activeDrawerProduct.userManual || parent?.userManual) && Boolean(userManualFile);
+                          const isFamilyDefaultManual = !isValidFile(activeDrawerProduct.userManual || parent?.userManual || prodManual) && Boolean(userManualFile);
 
                           const specs = (activeDrawerProduct.specifications || parent?.specifications || {}) as Record<string, any>;
 
@@ -3386,13 +3470,17 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         ? ''
                         : `?sku=${activeDrawerProduct.name}`;
                       const pdfLink = `/products/${parentId}/datasheet${skuQuery}`;
-                      const pdfFile = activeDrawerProduct.datasheetPdf || parent?.datasheetPdf;
+                      const famProducts = (family.products || []) as any[];
+                      const prodDatasheet = famProducts.find((p: any) => isValidFile(p?.datasheetPdf))?.datasheetPdf;
+                      const pdfFile = activeDrawerProduct.datasheetPdf || parent?.datasheetPdf || prodDatasheet;
 
                       const famObj = family || (parent && typeof parent.families === 'object' ? parent.families : null);
+                      const prodManual = famProducts.find((p: any) => isValidFile(p?.userManual || p?.userManualPdf))?.userManual;
                       const rawUserManual = activeDrawerProduct.userManual 
                         || (activeDrawerProduct as any)?.userManualPdf
                         || parent?.userManual 
                         || (parent as any)?.userManualPdf 
+                        || prodManual
                         || famObj?.userManual 
                         || (famObj as any)?.userManualPdf
                         || family?.userManual
