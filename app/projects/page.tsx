@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import ProjectsListClient from './ProjectsListClient';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Projects & Case Studies | MEGAMAN® High-Performance LED Solutions',
@@ -13,7 +13,7 @@ async function getProjects() {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/projects?limit=100&depth=2`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch projects: ${response.status}`);

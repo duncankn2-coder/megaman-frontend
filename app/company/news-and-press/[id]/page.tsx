@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Footer from '../../../components/Footer';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 interface Media {
   id: string;
@@ -29,7 +29,7 @@ async function getNewsArticle(id: string): Promise<NewsArticle | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/news/${id}?depth=2`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (response.ok) {
       return await response.json();

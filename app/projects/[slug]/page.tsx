@@ -6,7 +6,7 @@ import { renderWithSup } from '../../utils/text';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faMapMarkerAlt, faBuilding, faSlidersH, faLightbulb, faCube, faServer } from '@fortawesome/free-solid-svg-icons';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 interface Media {
   id: string;
@@ -110,7 +110,7 @@ async function getProject(slug: string): Promise<Project | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/projects?where[slug][equals]=${slug}&depth=2`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (response.ok) {
       const data = await response.json();

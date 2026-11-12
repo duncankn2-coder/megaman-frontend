@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import ProductsCatalog from './ProductsCatalog';
 import { getSiteContext } from '../utils/siteContext';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Products Catalog | MEGAMAN® High-Performance LED Solutions',
@@ -44,7 +44,7 @@ async function getFamilies(): Promise<Family[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/families?depth=2&limit=1000&pagination=false&sort=-priority`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch families: ${response.status}`);

@@ -286,15 +286,17 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                           />
                         );
                       } else {
+                        const isSvg = url.toLowerCase().endsWith('.svg');
                         return (
                           <Image 
                             src={url} 
                             alt={getImageAlt(media, currentSlideData.title || 'Slide')} 
                             fill
-                            quality={100}
-                            unoptimized
+                            quality={85}
+                            sizes="100vw"
+                            unoptimized={isSvg}
                             className="object-cover transition-opacity duration-700 sharpen-media"
-                            priority
+                            priority={currentSlide === 0}
                           />
                         );
                       }

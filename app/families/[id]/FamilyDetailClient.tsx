@@ -1395,9 +1395,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                       src={getImageUrl(activeMedia)}
                       alt={activeMedia.alt || family.name}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 60vw"
                       className="object-contain w-full h-full transition-transform duration-700 hover:scale-102"
                       priority
-                      unoptimized
                     />
                   ) : (
                     <video controls className="w-full h-full object-contain">
@@ -1445,8 +1445,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           src={getImageUrl(media)}
                           alt={media.alt || ''}
                           fill
+                          sizes="150px"
                           className="object-contain w-full h-full"
-                          unoptimized
                         />
                       ) : (
                         <div className="flex items-center justify-center h-full text-[8px] font-bold text-gray-500">
@@ -1848,9 +1848,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                               src={imageUrl}
                               alt={p.name}
                               fill
-                              quality={95}
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                               className="object-contain w-full h-full sharpen-media"
-                              unoptimized
                             />
                           ) : (
                             <div className="text-gray-300 font-mono text-xs uppercase tracking-widest">MEGAMAN<sup>®</sup> Optic</div>
@@ -2451,7 +2450,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   fill
                                   sizes="48px"
                                   className="object-contain p-0.5"
-                                  unoptimized
                                 />
                               </button>
                             ) : (
@@ -2651,8 +2649,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                       src={finalImageUrl}
                                       alt={activeDrawerProduct.name || family.name}
                                       fill
+                                      sizes="(max-width: 768px) 100vw, 400px"
                                       className="object-contain w-full h-full"
-                                      unoptimized
                                     />
                                   ) : (
                                     <FontAwesomeIcon icon={faLightbulb} className="text-gray-300 text-4xl" />
@@ -3471,7 +3469,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                 fill
                 sizes="(max-width: 768px) 100vw, 600px"
                 className="object-contain"
-                unoptimized
               />
             </div>
           </div>

@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
 import FamilyDetailClient from './FamilyDetailClient';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 300;
 
 interface Product {
   id: string;
@@ -65,7 +64,7 @@ async function getFamily(idOrSlug: string): Promise<Family | null> {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     // 1. Try finding by readable slug first
     const slugRes = await fetch(`${payloadUrl}/api/families?where[slug][equals]=${encodeURIComponent(idOrSlug)}&depth=3`, {
-      cache: 'no-store',
+      next: { revalidate: 300 },
     });
     if (slugRes.ok) {
       const data = await slugRes.json();
@@ -75,7 +74,7 @@ async function getFamily(idOrSlug: string): Promise<Family | null> {
     }
     // 2. Fallback to direct ID fetch for backward compatibility
     const response = await fetch(`${payloadUrl}/api/families/${idOrSlug}?depth=3`, {
-      cache: 'no-store',
+      next: { revalidate: 300 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch family: ${response.status}`);

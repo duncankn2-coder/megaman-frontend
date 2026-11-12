@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import HomeClient from './HomeClient';
 import { getSiteContext } from './utils/siteContext';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'MEGAMAN | LED, Luminaires, Components, Smart Lighting & Energy-efficient Lighting',
@@ -23,7 +23,7 @@ async function getHomePageData() {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/globals/home-page?depth=2`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (!response.ok) {
       throw new Error(`Failed to fetch home page: ${response.status}`);
@@ -40,7 +40,7 @@ async function getProductsCount(siteContext: string): Promise<number> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/products?where[sites][in]=${siteContext}`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (response.ok) {
       const data = await response.json();
@@ -57,7 +57,7 @@ async function getLatestNews(): Promise<any[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/news?sort=-publishDate&limit=3`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (response.ok) {
       const data = await response.json();

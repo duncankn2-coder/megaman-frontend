@@ -16,7 +16,7 @@ const getImageUrl = (image: any): string => {
   return '';
 };
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'News & Press | MEGAMAN®',
@@ -27,7 +27,7 @@ async function getNewsArticles() {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     const response = await fetch(`${payloadUrl}/api/news?sort=-publishDate&limit=24&depth=1`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (response.ok) {
       const data = await response.json();

@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+import { config } from '@fortawesome/fontawesome-svg-core';
 import Header from './components/Header';
 import './globals.css';
 import { ReactNode } from 'react';
+
+config.autoAddCss = false;
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://megaman.cc'),
@@ -55,6 +59,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://megaman-backend.vercel.app" />
+        <link rel="dns-prefetch" href="https://megaman-backend.vercel.app" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}

@@ -665,11 +665,13 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
 
                     {/* Cards Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-                      {familiesInCategory.map((family) => {
+                      {familiesInCategory.map((family, familyIdx) => {
                         const categoryTag = (family.categories && family.categories.length > 0 && family.categories[0]?.name)
                           ? family.categories[0].name
                           : family.resolvedCategories[0] || 'Luminaires';
                         const imageItem = family.media?.find(m => m.type === 'image');
+                        const imgUrl = imageItem ? getImageUrl(imageItem) : '';
+                        const isSvg = imgUrl.toLowerCase().endsWith('.svg');
                         
                         return (
                           <Link
@@ -682,13 +684,13 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
                               {imageItem ? (
                                 <div className="relative w-full h-full flex items-center justify-center">
                                   <Image
-                                    src={getImageUrl(imageItem)}
+                                    src={imgUrl}
                                     alt={imageItem.alt || family.name}
                                     fill
                                     sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                     className="object-contain transition-transform duration-500 group-hover:scale-105"
-                                    priority={false}
-                                    unoptimized
+                                    priority={familyIdx < 4}
+                                    unoptimized={isSvg}
                                   />
                                 </div>
                               ) : (
