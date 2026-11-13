@@ -2747,21 +2747,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                   {activeDrawerProduct.description || parent?.description || "The Toledo-Triona system represents circular rimless optical perfection. Delivers elegant, homogenous distribution across premium corporate environments."}
                                 </p>
 
-                                <div className="grid grid-cols-1 gap-2 pt-2">
-                                  <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
-                                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
-                                    <span>SIDELITE<sup>®</sup> Lateral optical reflection system</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
-                                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
-                                    <span>Circadian Human Centric lighting support</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-gray-600 font-light">
-                                    <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[10px]" />
-                                    <span>Dimmable via architectural DALI systems</span>
-                                  </div>
-                                </div>
-
                                 {/* Product Symbols & Certifications */}
                                 {(() => {
                                   const drawerSymbols = getSymbolsForProduct(activeDrawerProduct);
