@@ -153,6 +153,13 @@ interface FamilyDetailClientProps {
 // Helper to safely resolve media and image URLs (supporting Vercel Blob CDN)
 const getImageUrl = (image: any): string => {
   if (!image) return '/placeholder.png';
+  if (typeof image === 'object') {
+    const fname = String(image.filename || '').trim().toLowerCase();
+    const url = String(image.url || '').trim().toLowerCase();
+    if (fname === 'placeholder.png' || url === '/placeholder.png' || url.endsWith('/placeholder.png')) {
+      return '/placeholder.png';
+    }
+  }
   const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
   const resolveAbsoluteUrl = (url: string): string => {
@@ -249,12 +256,17 @@ const getMediaUrl = (media: any): string => {
   return '';
 };
 
-// Helper to check for a valid uploaded media file (rejects unpopulated 24-char MongoDB ObjectIds)
+// Helper to check for a valid uploaded media file (rejects unpopulated 24-char MongoDB ObjectIds and placeholder.png)
 const isValidFile = (f: any): boolean => {
   if (!f) return false;
   if (typeof f === 'string') {
-    const trimmed = f.trim();
-    return trimmed.length > 0 && trimmed !== '/placeholder.png' && !/^[0-9a-fA-F]{24}$/.test(trimmed);
+    const trimmed = f.trim().toLowerCase();
+    return trimmed.length > 0 && trimmed !== '/placeholder.png' && !trimmed.endsWith('/placeholder.png') && trimmed !== 'placeholder.png' && !/^[0-9a-f]{24}$/.test(trimmed);
+  }
+  const fname = String(f.filename || '').trim().toLowerCase();
+  const url = String(f.url || '').trim().toLowerCase();
+  if (fname === 'placeholder.png' || url === '/placeholder.png' || url.endsWith('/placeholder.png')) {
+    return false;
   }
   return Boolean(f.url || f.filename);
 };
