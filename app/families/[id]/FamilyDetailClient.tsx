@@ -3163,18 +3163,19 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                     {spectrumFiles.map((specFile, specIdx) => {
                                       const filename = specFile.filename || '';
                                       const altText = specFile.alt || '';
-                                      const combinedText = (filename + ' ' + altText).toUpperCase();
+                                      const descText = typeof specFile.description === 'string' ? specFile.description.trim() : '';
+                                      const combinedText = (filename + ' ' + altText + ' ' + descText).toUpperCase();
                                       const cctMatch = combinedText.match(/\b(2700K|3000K|3500K|4000K|5000K|5700K|6500K|\d{4}K)\b/);
-                                      const cctTag = cctMatch ? cctMatch[1] : (spectrumFiles.length > 1 ? `CCT ${specIdx + 1}` : 'SPD');
+                                      const cctTag = descText || (cctMatch ? cctMatch[1] : 'SPD');
 
                                       return (
                                         <div key={specFile.id || `spectrum-${specIdx}-${filename}`} className="border border-gray-200 bg-white p-4 flex flex-col justify-between shadow-sm hover:border-[#005288]/40 transition-all group">
                                           <div>
-                                            <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center justify-between gap-2 mb-2">
                                               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800 font-sans">
-                                                Light Spectrum Graph {spectrumFiles.length > 1 ? `(${cctTag})` : ''}
+                                                Light Spectrum Graph
                                               </span>
-                                              <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100 font-bold">
+                                              <span className="text-[8px] font-mono uppercase bg-blue-50 text-[#005288] px-1.5 py-0.5 rounded border border-blue-100 font-bold whitespace-nowrap shrink-0">
                                                 {cctTag}
                                               </span>
                                             </div>
