@@ -150,16 +150,37 @@ interface FamilyDetailClientProps {
   family: Family;
 }
 
+const isPlaceholderFile = (f: any): boolean => {
+  if (!f) return true;
+  if (typeof f === 'string') {
+    const trimmed = f.trim().toLowerCase();
+    return (
+      !trimmed ||
+      trimmed === '/placeholder.png' ||
+      trimmed === 'placeholder.png' ||
+      /\/placeholder([-_.][^/]*)?\.png$/i.test(trimmed) ||
+      /^placeholder[-_.].*\.png$/i.test(trimmed) ||
+      /^[0-9a-f]{24}$/.test(trimmed)
+    );
+  }
+  const fname = String(f.filename || '').trim().toLowerCase();
+  const url = String(f.url || '').trim().toLowerCase();
+  const alt = String(f.alt || '').trim().toLowerCase();
+  if (
+    fname === 'placeholder.png' ||
+    /^placeholder[-_.].*\.png$/i.test(fname) ||
+    url === '/placeholder.png' ||
+    /\/placeholder([-_.][^/]*)?\.png$/i.test(url) ||
+    alt === 'placeholder image'
+  ) {
+    return true;
+  }
+  return !Boolean(f.url || f.filename);
+};
+
 // Helper to safely resolve media and image URLs (supporting Vercel Blob CDN)
 const getImageUrl = (image: any): string => {
-  if (!image) return '/placeholder.png';
-  if (typeof image === 'object') {
-    const fname = String(image.filename || '').trim().toLowerCase();
-    const url = String(image.url || '').trim().toLowerCase();
-    if (fname === 'placeholder.png' || url === '/placeholder.png' || url.endsWith('/placeholder.png')) {
-      return '/placeholder.png';
-    }
-  }
+  if (!image || isPlaceholderFile(image)) return '/placeholder.png';
   const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
   const resolveAbsoluteUrl = (url: string): string => {
@@ -257,19 +278,7 @@ const getMediaUrl = (media: any): string => {
 };
 
 // Helper to check for a valid uploaded media file (rejects unpopulated 24-char MongoDB ObjectIds and placeholder.png)
-const isValidFile = (f: any): boolean => {
-  if (!f) return false;
-  if (typeof f === 'string') {
-    const trimmed = f.trim().toLowerCase();
-    return trimmed.length > 0 && trimmed !== '/placeholder.png' && !trimmed.endsWith('/placeholder.png') && trimmed !== 'placeholder.png' && !/^[0-9a-f]{24}$/.test(trimmed);
-  }
-  const fname = String(f.filename || '').trim().toLowerCase();
-  const url = String(f.url || '').trim().toLowerCase();
-  if (fname === 'placeholder.png' || url === '/placeholder.png' || url.endsWith('/placeholder.png')) {
-    return false;
-  }
-  return Boolean(f.url || f.filename);
-};
+const isValidFile = (f: any): boolean => !isPlaceholderFile(f);
 
 // Helper to clean up and deduplicate raw IP values (e.g. "IP65/IP65" -> "IP65")
 const formatIpRating = (ipStr: string): string => {
@@ -2658,13 +2667,13 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                           const productLevelImage = (isValidFile(activeDrawerProduct.images) ? activeDrawerProduct.images : null)
                             || (isValidFile(parent?.images) ? parent.images : null);
 
-                          // 2. If no files on the product level, use the family level
+                          // 2. If no valid image on the product model, use the first valid image of the product family
                           const firstFamilyProductShot = (family.media || []).find((m: any) => {
-                            if (!m) return false;
+                            if (!m || !isValidFile(m)) return false;
                             if (m.type === 'video') return false;
                             if (m.mimeType && typeof m.mimeType === 'string' && !m.mimeType.startsWith('image/')) return false;
-                            return Boolean(m.url || m.filename || (typeof m === 'string' && m.trim().length > 0));
-                          }) || (family.media && family.media.length > 0 ? family.media[0] : null);
+                            return true;
+                          }) || (family.media || []).find((m: any) => isValidFile(m)) || null;
 
                           const candidateImage = productLevelImage || firstFamilyProductShot;
                           const candidateUrl = candidateImage ? getImageUrl(candidateImage) : '';
