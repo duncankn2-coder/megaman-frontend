@@ -37,3 +37,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Error revalidating' }, { status: 500 });
   }
 }
+
