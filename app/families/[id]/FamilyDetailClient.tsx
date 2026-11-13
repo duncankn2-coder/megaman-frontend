@@ -221,6 +221,9 @@ const getMediaUrl = (media: any): string => {
   };
 
   if (typeof media === 'string') {
+    if (/^[0-9a-fA-F]{24}$/.test(media.trim())) {
+      return '';
+    }
     if (media.startsWith('http') || media.startsWith('//')) {
       return resolveAbsoluteUrl(media);
     }
@@ -246,8 +249,15 @@ const getMediaUrl = (media: any): string => {
   return '';
 };
 
-// Helper to check for a valid uploaded media file
-const isValidFile = (f: any): boolean => Boolean(f && (typeof f === 'string' ? f.trim().length > 0 && f !== '/placeholder.png' : Boolean(f.url || f.filename)));
+// Helper to check for a valid uploaded media file (rejects unpopulated 24-char MongoDB ObjectIds)
+const isValidFile = (f: any): boolean => {
+  if (!f) return false;
+  if (typeof f === 'string') {
+    const trimmed = f.trim();
+    return trimmed.length > 0 && trimmed !== '/placeholder.png' && !/^[0-9a-fA-F]{24}$/.test(trimmed);
+  }
+  return Boolean(f.url || f.filename);
+};
 
 // Helper to clean up and deduplicate raw IP values (e.g. "IP65/IP65" -> "IP65")
 const formatIpRating = (ipStr: string): string => {
@@ -824,7 +834,18 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=1`);
         if (response.ok) {
           const data = await response.json();
-          setAccessorySkus(data.docs || []);
+          const accProdMap = new Map<string, any>();
+          [...(family.accessoryProducts || []), ...(family.products || [])].forEach((p: any) => {
+            if (p && typeof p === 'object' && p.id) {
+              accProdMap.set(String(p.id), p);
+            }
+          });
+          const enrichedAccSkus = (data.docs || []).map((sku: any) => {
+            const rawProdId = typeof sku.product === 'object' && sku.product !== null ? sku.product.id : sku.product;
+            const populatedProd = rawProdId ? accProdMap.get(String(rawProdId)) : null;
+            return populatedProd ? { ...sku, product: populatedProd } : sku;
+          });
+          setAccessorySkus(enrichedAccSkus);
         }
       } catch (err) {
         console.error('Error fetching accessory SKUs in FamilyDetailClient:', err);
@@ -1084,7 +1105,15 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
         const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=1`);
         if (response.ok) {
           const data = await response.json();
-          setSkus(data.docs || []);
+          const productsById = new Map<string, any>(
+            validProducts.map((p: any) => [String(p.id), p])
+          );
+          const enrichedSkus = (data.docs || []).map((sku: any) => {
+            const rawProdId = typeof sku.product === 'object' && sku.product !== null ? sku.product.id : sku.product;
+            const populatedProd = rawProdId ? productsById.get(String(rawProdId)) : null;
+            return populatedProd ? { ...sku, product: populatedProd } : sku;
+          });
+          setSkus(enrichedSkus);
         }
       } catch (err) {
         console.error('Error fetching SKUs in FamilyDetailClient:', err);
@@ -1124,24 +1153,12 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
     setActiveModalTab('overview');
   };
 
-  const handleDownloadFile = (fileObj: MediaFile | null | undefined, defaultMsg: string) => {
-    if (fileObj && fileObj.url) {
-      const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-      let fullUrl = fileObj.url;
-      if (fileObj.url.startsWith('http') || fileObj.url.startsWith('//')) {
-        const isLocalhostUrl = fileObj.url.includes('localhost:3000') || fileObj.url.includes('127.0.0.1:3000');
-        const isBaseUrlLocalhost = payloadUrl.includes('localhost:3000') || payloadUrl.includes('127.0.0.1:3000');
-        if (isLocalhostUrl && !isBaseUrlLocalhost) {
-          fullUrl = fileObj.url
-            .replace(/^https?:\/\/localhost:3000/, payloadUrl)
-            .replace(/^https?:\/\/127.0.0.1:3000/, payloadUrl);
-        }
-      } else {
-        const cleanBaseUrl = payloadUrl.endsWith('/') ? payloadUrl.slice(0, -1) : payloadUrl;
-        const cleanPath = fileObj.url.startsWith('/') ? fileObj.url : `/${fileObj.url}`;
-        fullUrl = `${cleanBaseUrl}${cleanPath}`;
-      }
-      const filename = fileObj.filename || fileObj.url.split('/').pop() || 'download';
+  const handleDownloadFile = (fileObj: MediaFile | string | null | undefined, defaultMsg: string) => {
+    const fullUrl = getMediaUrl(fileObj);
+    if (fullUrl) {
+      const filename = (typeof fileObj === 'object' && fileObj?.filename)
+        || fullUrl.split('/').pop()?.split('?')[0]
+        || 'download';
 
       // Fetch the file as a blob to force direct download without opening in a new tab
       fetch(fullUrl)
@@ -2625,12 +2642,9 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
 
-                          // Helper to validate whether a media upload is valid
-                          const isValidMedia = (f: any) => Boolean(f && (typeof f === 'string' ? f.trim().length > 0 && f !== '/placeholder.png' : Boolean(f.url || f.filename)));
-
                           // 1. Take images on the product level first (SKU or product model)
-                          const productLevelImage = (isValidMedia(activeDrawerProduct.images) ? activeDrawerProduct.images : null)
-                            || (isValidMedia(parent?.images) ? parent.images : null);
+                          const productLevelImage = (isValidFile(activeDrawerProduct.images) ? activeDrawerProduct.images : null)
+                            || (isValidFile(parent?.images) ? parent.images : null);
 
                           // 2. If no files on the product level, use the family level
                           const firstFamilyProductShot = (family.media || []).find((m: any) => {
@@ -2664,10 +2678,10 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                                 {/* Line Drawing / Dimensional Outline Box (Hidden if no file uploaded) */}
                                 {(() => {
                                   // Line drawing: product level first, if no files on product level use family level
-                                  const productLineDrawing = (isValidMedia(activeDrawerProduct.lineDrawing) ? activeDrawerProduct.lineDrawing : null)
-                                    || (isValidMedia(parent?.lineDrawing) ? parent.lineDrawing : null);
+                                  const productLineDrawing = (isValidFile(activeDrawerProduct.lineDrawing) ? activeDrawerProduct.lineDrawing : null)
+                                    || (isValidFile(parent?.lineDrawing) ? parent.lineDrawing : null);
                                   const rawLineDrawing = productLineDrawing || family?.lineDrawing;
-                                  const lineDrawingFile = (rawLineDrawing && (typeof rawLineDrawing === 'string' ? rawLineDrawing.trim().length > 0 && rawLineDrawing !== '/placeholder.png' : Boolean(rawLineDrawing.url || rawLineDrawing.filename))) ? rawLineDrawing : null;
+                                  const lineDrawingFile = isValidFile(rawLineDrawing) ? rawLineDrawing : null;
                                   if (!lineDrawingFile) return null;
 
                                   return (
@@ -2986,9 +3000,6 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
                         {/* Section 1 & Section 2: Photometrics, CAD, and Technical Documents */}
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-
-                          // Helper to check for a valid uploaded media file
-                          const isValidFile = (f: any) => Boolean(f && (typeof f === 'string' ? f.trim().length > 0 && f !== '/placeholder.png' : Boolean(f.url || f.filename)));
 
                           // Spectrum graphs: supports single and multiple graphs (for Multi-CCT luminaires)
                           const rawSpectrumList: any[] = [];
