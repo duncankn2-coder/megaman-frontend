@@ -148,6 +148,9 @@ interface Family {
 
 interface FamilyDetailClientProps {
   family: Family;
+  initialSkus?: any[];
+  initialAccessorySkus?: any[];
+  initialSymbols?: SymbolItem[];
 }
 
 const isPlaceholderFile = (f: any): boolean => {
@@ -782,7 +785,12 @@ const renderParamHeader = (label: string, isCenter = false) => {
   );
 };
 
-export default function FamilyDetailClient({ family }: FamilyDetailClientProps) {
+export default function FamilyDetailClient({
+  family,
+  initialSkus,
+  initialAccessorySkus,
+  initialSymbols,
+}: FamilyDetailClientProps) {
   const activeParams = family.selectedParameters || [
     'mmCode',
     'modelNo',
@@ -808,8 +816,8 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   const [voltageFilter, setVoltageFilter] = useState('All');
   const [gearFilter, setGearFilter] = useState('All');
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
-  const [skus, setSkus] = useState<any[]>([]);
-  const [accessorySkus, setAccessorySkus] = useState<any[]>([]);
+  const [skus, setSkus] = useState<any[]>(() => initialSkus || []);
+  const [accessorySkus, setAccessorySkus] = useState<any[]>(() => initialAccessorySkus || []);
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
   const [previewAccessoryImage, setPreviewAccessoryImage] = useState<{ url: string; title: string } | null>(null);
   const [accessorySearchQuery, setAccessorySearchQuery] = useState('');
@@ -826,6 +834,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   // Fetch SKUs for accessory products (kept separate from main luminaire `skus` so they don't appear in Technical Configurations)
   useEffect(() => {
     async function fetchAccessorySkus() {
+      if (initialAccessorySkus !== undefined) return;
       const idSet = new Set<string>();
       (family.accessoryProducts || []).forEach(p => {
         if (p && typeof p === 'object' && p.id) {
@@ -1008,6 +1017,11 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
 
   const [allSymbolsMap, setAllSymbolsMap] = useState<Record<string, SymbolItem>>(() => {
     const initialMap: Record<string, SymbolItem> = {};
+    (initialSymbols || []).forEach((s: any) => {
+      if (s && typeof s === 'object' && s.id) {
+        initialMap[String(s.id)] = s;
+      }
+    });
     (family.symbols || []).forEach((s: any) => {
       if (s && typeof s === 'object' && s.id) {
         initialMap[String(s.id)] = s;
@@ -1026,6 +1040,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   });
 
   useEffect(() => {
+    if (initialSymbols !== undefined) return;
     async function fetchAllSymbols() {
       try {
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
@@ -1114,6 +1129,7 @@ export default function FamilyDetailClient({ family }: FamilyDetailClientProps) 
   }, [productModelSymbolsMap, resolveSymbol]);
 
   useEffect(() => {
+    if (initialSkus !== undefined) return;
     async function fetchSkus() {
       const validProducts = (family.products || []).filter(p => typeof p === 'object' && p !== null && !accessoryProductIds.has(String(p.id)));
       if (validProducts.length === 0) {

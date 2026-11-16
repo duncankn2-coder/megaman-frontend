@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 import { Metadata } from 'next';
 import Image from 'next/image';
+import DOMPurify from 'isomorphic-dompurify';
 import FamilyPrintController from './FamilyPrintController';
 
 interface PageProps {
@@ -451,7 +452,7 @@ const CustomContentRenderer = ({ blk }: { blk: any }) => {
     return (
       <div
         className="datasheet-custom-rich-text text-xs print:text-[9.5px] text-gray-800 leading-relaxed font-sans"
-        dangerouslySetInnerHTML={{ __html: blk.content_html }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(blk.content_html) }}
       />
     );
   }

@@ -748,24 +748,6 @@ export default function Header({ initialSiteContext = 'international' }: HeaderP
                 })}
               </div>
             </div>
-
-            {/* Contact & Careers for Mobile */}
-            <div className="pt-4 flex flex-col space-y-2 border-t border-[#005e9c]/50">
-              <Link
-                href="/contact"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm text-blue-200 hover:text-white py-2"
-              >
-                Contact Us
-              </Link>
-              <Link
-                href="/careers"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm text-blue-200 hover:text-white py-2"
-              >
-                Careers
-              </Link>
-            </div>
           </div>
         </div>
       )}

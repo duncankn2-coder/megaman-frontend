@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import FamilyDetailClient from './FamilyDetailClient';
 
 export const revalidate = 300;
@@ -73,7 +74,7 @@ async function getFamily(idOrSlug: string): Promise<Family | null> {
       }
     }
     // 2. Fallback to direct ID fetch for backward compatibility
-    const response = await fetch(`${payloadUrl}/api/families/${idOrSlug}?depth=2`, {
+    const response = await fetch(`${payloadUrl}/api/families/${encodeURIComponent(idOrSlug)}?depth=2`, {
       next: { revalidate: 300 },
     });
     if (!response.ok) {
@@ -126,6 +127,42 @@ export async function generateMetadata({
   };
 }
 
+async function fetchSkusByProductIds(productIds: string[], productsById: Map<string, any>): Promise<any[]> {
+  if (productIds.length === 0) return [];
+  try {
+    const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+    const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${encodeURIComponent(id)}`).join('&');
+    const res = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=1`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.docs || []).map((sku: any) => {
+      const rawProdId = typeof sku.product === 'object' && sku.product !== null ? sku.product.id : sku.product;
+      const populatedProd = rawProdId ? productsById.get(String(rawProdId)) : null;
+      return populatedProd ? { ...sku, product: populatedProd } : sku;
+    });
+  } catch (err) {
+    console.error('Error fetching SKUs in FamilyDetailPage:', err);
+    return [];
+  }
+}
+
+async function fetchAllSymbols(): Promise<any[]> {
+  try {
+    const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+    const res = await fetch(`${payloadUrl}/api/symbols?limit=100&depth=1`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.docs || [];
+  } catch (err) {
+    console.error('Error fetching symbols in FamilyDetailPage:', err);
+    return [];
+  }
+}
+
 export default async function FamilyDetailPage({
   params
 }: {
@@ -135,13 +172,56 @@ export default async function FamilyDetailPage({
   const family = await getFamily(resolvedParams.id);
 
   if (!family) {
-    return (
-      <div className="container mx-auto p-12 text-center text-gray-500">
-        <h2 className="text-xl font-bold mb-2">Series Not Found</h2>
-        <p className="text-sm">The product series you are looking for does not exist or has been moved.</p>
-      </div>
-    );
+    notFound();
   }
 
-  return <FamilyDetailClient family={family} />;
+  const accessoryIdSet = new Set<string>(
+    ((family as any).accessoryProducts || [])
+      .map((p: any) => (typeof p === 'object' && p?.id ? String(p.id) : String(p)))
+      .filter(Boolean)
+  );
+
+  const mainProducts = (family.products || []).filter(
+    (p: any) => typeof p === 'object' && p !== null && !accessoryIdSet.has(String(p.id))
+  );
+  const mainProductIds = mainProducts.map((p: any) => String(p.id));
+  const mainProductsById = new Map<string, any>(mainProducts.map((p: any) => [String(p.id), p]));
+
+  const accIdSet = new Set<string>();
+  const accProductsById = new Map<string, any>();
+  ((family as any).accessoryProducts || []).forEach((p: any) => {
+    if (typeof p === 'object' && p?.id) {
+      accIdSet.add(String(p.id));
+      accProductsById.set(String(p.id), p);
+    } else if (typeof p === 'string' && p) {
+      accIdSet.add(p);
+    }
+  });
+  ((family as any).accessories || []).forEach((acc: any) => {
+    if (acc?.product) {
+      const pid = typeof acc.product === 'object' && acc.product?.id ? String(acc.product.id) : String(acc.product);
+      if (pid) accIdSet.add(pid);
+    }
+  });
+  (family.products || []).forEach((p: any) => {
+    if (p && typeof p === 'object' && p.id) {
+      accProductsById.set(String(p.id), p);
+    }
+  });
+  const accProductIds = Array.from(accIdSet);
+
+  const [initialSkus, initialAccessorySkus, initialSymbols] = await Promise.all([
+    fetchSkusByProductIds(mainProductIds, mainProductsById),
+    fetchSkusByProductIds(accProductIds, accProductsById),
+    fetchAllSymbols(),
+  ]);
+
+  return (
+    <FamilyDetailClient
+      family={family}
+      initialSkus={initialSkus}
+      initialAccessorySkus={initialAccessorySkus}
+      initialSymbols={initialSymbols}
+    />
+  );
 }

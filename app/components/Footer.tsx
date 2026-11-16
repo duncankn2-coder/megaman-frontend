@@ -1,9 +1,24 @@
 "use client";
 
+import { useState, FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  const handleSubscribe = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setStatusMsg({ type: 'err', text: 'Please enter a valid email address.' });
+      return;
+    }
+    setEmail('');
+    setStatusMsg({ type: 'ok', text: 'Thank you for subscribing to MEGAMAN® updates.' });
+  };
+
   return (
     <footer className="bg-gray-50 border-t border-gray-200 py-16 px-6 md:px-12 relative z-10 w-full">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
@@ -51,19 +66,30 @@ export default function Footer() {
           <p className="text-[11px] text-gray-500 font-light mb-4 leading-relaxed font-sans">
             Sign up for professional specifications updates, DIALux models release, and design releases.
           </p>
-          <div className="flex border border-gray-300 bg-white shadow-sm">
+          <form onSubmit={handleSubscribe} className="flex border border-gray-300 bg-white shadow-sm">
             <input 
               type="email" 
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (statusMsg) setStatusMsg(null);
+              }}
               placeholder="YOUR EMAIL" 
+              aria-label="Email address for newsletter"
               className="bg-transparent text-xs p-3 flex-1 focus:outline-none placeholder:text-gray-400 uppercase text-gray-700 font-mono"
             />
             <button 
-              onClick={() => alert('Subscription successful!')}
+              type="submit"
               className="bg-[#005288] text-white text-xs px-4 uppercase font-bold hover:bg-[#003c64] transition-colors cursor-pointer font-sans"
             >
               JOIN
             </button>
-          </div>
+          </form>
+          {statusMsg && (
+            <p className={`mt-2 text-[11px] font-sans ${statusMsg.type === 'ok' ? 'text-emerald-700' : 'text-red-600'}`}>
+              {statusMsg.text}
+            </p>
+          )}
         </div>
       </div>
 
@@ -71,9 +97,9 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-400 font-light gap-4">
         <p>&copy; {new Date().getFullYear()} MEGAMAN<sup>®</sup>. ALL RIGHTS RESERVED. POWERED BY ARCHITECTURAL STANDARDS.</p>
         <div className="flex gap-6 uppercase tracking-wider font-mono">
-          <Link href="#" className="hover:text-[#005288] transition-colors">Privacy Policy</Link>
-          <Link href="#" className="hover:text-[#005288] transition-colors">Terms of Use</Link>
-          <Link href="#" className="hover:text-[#005288] transition-colors">Cookies Config</Link>
+          <span>Privacy Policy</span>
+          <span>Terms of Use</span>
+          <span>Cookies Config</span>
         </div>
       </div>
     </footer>
