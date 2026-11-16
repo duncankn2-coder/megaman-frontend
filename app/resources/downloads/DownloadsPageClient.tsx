@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faSearch, faFilePdf, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../../components/Footer';
+import { getImageUrl as resolveMediaUrl } from '../../utils/media';
 
 export interface CatalogItem {
   id: string;
@@ -37,22 +38,7 @@ const CATEGORY_MAP: Record<string, string> = {
   technical: 'Technical Guides',
 };
 
-const getImageUrl = (image: any): string => {
-  if (!image) return '';
-  const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-  if (typeof image === 'string') {
-    if (image.startsWith('http') || image.startsWith('//') || image.startsWith('/')) return image;
-    return `${baseUrl}/media/${image}`;
-  }
-  if (image.url) {
-    if (image.url.startsWith('http') || image.url.startsWith('//')) return image.url;
-    return `${baseUrl}${image.url.startsWith('/') ? '' : '/'}${image.url}`;
-  }
-  if (image.filename) {
-    return `${baseUrl}/media/${image.filename}`;
-  }
-  return '';
-};
+const getImageUrl = (image: any): string => resolveMediaUrl(image, '');
 
 const getFileUrl = (file: any): string => {
   if (!file) return '#';

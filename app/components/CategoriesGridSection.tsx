@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { getImageUrl } from '../utils/media';
 
 import {
   resolveTitleColor,
@@ -34,20 +35,6 @@ interface CategoriesGridSectionProps {
   categories: CategoryItem[];
   blockIdx?: number | string;
 }
-
-const getImageUrl = (image: any): string => {
-  if (!image) return '/placeholder.png';
-  const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-  if (typeof image === 'string') {
-    if (image.startsWith('http')) return image;
-    return `${baseUrl}${image.startsWith('/') ? '' : '/'}${image}`;
-  }
-  if (image.url) {
-    if (image.url.startsWith('http')) return image.url;
-    return `${baseUrl}${image.url.startsWith('/') ? '' : '/'}${image.url}`;
-  }
-  return '/placeholder.png';
-};
 
 export default function CategoriesGridSection({
   title = 'PRODUCT CATEGORIES',

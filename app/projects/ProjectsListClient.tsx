@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { getImageUrl as resolveMediaUrl } from '../utils/media';
 
 interface Media {
   id: string;
@@ -109,18 +110,7 @@ export default function ProjectsListClient({ initialProjects }: ProjectsListClie
     : displayProjects.filter(p => p.applicationType === selectedFilter);
 
   // Helper to safely get the image URL from dynamic CMS payload structure or fallback
-  const getImageUrl = (listImage: Media | string): string => {
-    if (typeof listImage === 'string') return listImage;
-    if (listImage && listImage.url) {
-      // If it's a relative URL from CMS, prefix it with payload url
-      if (listImage.url.startsWith('/')) {
-        const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-        return `${payloadUrl}${listImage.url}`;
-      }
-      return listImage.url;
-    }
-    return '/placeholder.png';
-  };
+  const getImageUrl = (listImage: Media | string): string => resolveMediaUrl(listImage);
 
   return (
     <div className="bg-[#fcfcfc] text-gray-800 min-h-screen pb-24 font-sans relative">

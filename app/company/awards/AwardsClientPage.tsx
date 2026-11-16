@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useMemo } from 'react';
+import { getImageUrl as resolveMediaUrl } from '../../utils/media';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faArrowRight, 
@@ -102,18 +103,7 @@ export default function AwardsClientPage({ initialAwards }: AwardsClientPageProp
     }
   };
 
-  const getImageUrl = (logo: any) => {
-    if (!logo) return '';
-    if (typeof logo === 'string') return logo;
-    if (logo.url) {
-      const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-      if (logo.url.startsWith('http://') || logo.url.startsWith('https://')) {
-        return logo.url;
-      }
-      return `${payloadUrl}${logo.url}`;
-    }
-    return '';
-  };
+  const getImageUrl = (logo: any) => resolveMediaUrl(logo, '');
 
   return (
     <div className="bg-[#fcfcfc] text-gray-800 min-h-screen pb-0 font-sans selection:bg-[#005288] selection:text-white relative overflow-hidden">
