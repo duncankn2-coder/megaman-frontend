@@ -152,7 +152,7 @@ async function fetchSkusByProductIds(productIds: string[], productsById: Map<str
 async function fetchAllSymbols(): Promise<any[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const res = await fetch(`${payloadUrl}/api/symbols?limit=100&depth=1`, {
+    const res = await fetch(`${payloadUrl}/api/symbols?limit=1000&depth=1`, {
       next: { revalidate: 300 },
     });
     if (!res.ok) return [];

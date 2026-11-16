@@ -1017,11 +1017,6 @@ export default function FamilyDetailClient({
 
   const [allSymbolsMap, setAllSymbolsMap] = useState<Record<string, SymbolItem>>(() => {
     const initialMap: Record<string, SymbolItem> = {};
-    (initialSymbols || []).forEach((s: any) => {
-      if (s && typeof s === 'object' && s.id) {
-        initialMap[String(s.id)] = s;
-      }
-    });
     (family.symbols || []).forEach((s: any) => {
       if (s && typeof s === 'object' && s.id) {
         initialMap[String(s.id)] = s;
@@ -1030,10 +1025,16 @@ export default function FamilyDetailClient({
     [...(family.products || []), ...(family.accessoryProducts || [])].forEach((p: any) => {
       if (p && typeof p === 'object' && Array.isArray(p.symbols)) {
         p.symbols.forEach((s: any) => {
-          if (s && typeof s === 'object' && s.id) {
+          if (s && typeof s === 'object' && s.id && !initialMap[String(s.id)]) {
             initialMap[String(s.id)] = s;
           }
         });
+      }
+    });
+    // Apply depth=1 initialSymbols last so populated icon objects are never overwritten by depth=2 ObjectId refs
+    (initialSymbols || []).forEach((s: any) => {
+      if (s && typeof s === 'object' && s.id) {
+        initialMap[String(s.id)] = s;
       }
     });
     return initialMap;
@@ -1044,7 +1045,7 @@ export default function FamilyDetailClient({
     async function fetchAllSymbols() {
       try {
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-        const res = await fetch(`${payloadUrl}/api/symbols?limit=100&depth=1`);
+        const res = await fetch(`${payloadUrl}/api/symbols?limit=1000&depth=1`);
         if (res.ok) {
           const data = await res.json();
           setAllSymbolsMap(prev => {
