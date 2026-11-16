@@ -109,7 +109,7 @@ async function getProject(slug: string): Promise<Project | null> {
   // First attempt: fetch from CMS
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/projects?where[slug][equals]=${slug}&depth=2`, {
+    const response = await fetch(`${payloadUrl}/api/projects?where[slug][equals]=${encodeURIComponent(slug)}&depth=2`, {
       next: { revalidate: 300 },
     });
     if (response.ok) {

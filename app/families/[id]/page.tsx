@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import FamilyDetailClient from './FamilyDetailClient';
@@ -60,7 +61,7 @@ interface Family {
   accessories?: any[];
 }
 
-async function getFamily(idOrSlug: string): Promise<Family | null> {
+const getFamily = cache(async function getFamily(idOrSlug: string): Promise<Family | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     // 1. Try finding by readable slug first
@@ -86,7 +87,7 @@ async function getFamily(idOrSlug: string): Promise<Family | null> {
     console.error('Error fetching family:', error);
     return null;
   }
-}
+});
 
 export async function generateStaticParams() {
   try {

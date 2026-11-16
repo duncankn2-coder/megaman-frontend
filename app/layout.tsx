@@ -41,9 +41,6 @@ export const metadata: Metadata = {
     locale: 'en_US',
     type: 'website',
   },
-  alternates: {
-    canonical: 'https://megaman.cc',
-  },
   robots: {
     index: true,
     follow: true,

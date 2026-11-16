@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { cache } from 'react';
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,10 +26,10 @@ interface NewsArticle {
   linkUrl?: string;
 }
 
-async function getNewsArticle(id: string): Promise<NewsArticle | null> {
+const getNewsArticle = cache(async function getNewsArticle(id: string): Promise<NewsArticle | null> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const response = await fetch(`${payloadUrl}/api/news/${id}?depth=2`, {
+    const response = await fetch(`${payloadUrl}/api/news/${encodeURIComponent(id)}?depth=2`, {
       next: { revalidate: 300 },
     });
     if (response.ok) {
@@ -38,7 +39,7 @@ async function getNewsArticle(id: string): Promise<NewsArticle | null> {
     console.error(`Error fetching news article with ID ${id}:`, error);
   }
   return null;
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

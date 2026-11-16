@@ -859,7 +859,7 @@ async function getFamily(idOrSlug: string): Promise<any> {
       }
     }
     // 2. Fallback to direct ID fetch
-    const response = await fetch(`${payloadUrl}/api/families/${idOrSlug}?depth=3`, {
+    const response = await fetch(`${payloadUrl}/api/families/${encodeURIComponent(idOrSlug)}?depth=3`, {
       cache: 'no-store',
     });
     if (!response.ok) return null;

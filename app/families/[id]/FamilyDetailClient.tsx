@@ -1138,7 +1138,7 @@ export default function FamilyDetailClient({
       try {
         const productIds = validProducts.map(p => p.id);
         const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-        const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${id}`).join('&');
+        const queryParams = productIds.map((id, idx) => `where[product][in][${idx}]=${encodeURIComponent(String(id))}`).join('&');
         const response = await fetch(`${payloadUrl}/api/skus?${queryParams}&limit=1000&depth=1`);
         if (response.ok) {
           const data = await response.json();
