@@ -72,7 +72,7 @@ interface MediaItem {
 interface SymbolItem {
   id: string;
   name: string;
-  icon?: { url?: string; alt?: string; filename?: string; [key: string]: any } | string | null;
+  icon?: { url?: string; alt?: string; filename?: string;[key: string]: any } | string | null;
   isHighlighted?: boolean;
 }
 
@@ -916,24 +916,24 @@ export default function FamilyDetailClient({
 
     const validManualItems = Array.isArray(family.accessories)
       ? family.accessories.filter(item => {
-          if (!item) return false;
-          const hasProduct = Boolean(
-            typeof item.product === 'object' ? item.product?.id || item.product?.name : isFieldFilled(item.product)
-          );
-          const hasImage = Boolean(item.image && getImageUrl(item.image) !== '/placeholder.png');
-          return (
-            Boolean(cleanAccText(item.modelNumber)) ||
-            Boolean(cleanAccText(item.modelNo)) ||
-            Boolean(cleanAccText(item.mmCode)) ||
-            Boolean(cleanAccText(item.name)) ||
-            Boolean(cleanAccText(item.title)) ||
-            Boolean(cleanAccText(item.description)) ||
-            Boolean(cleanAccText(item.colour)) ||
-            Boolean(cleanAccText(item.color)) ||
-            hasProduct ||
-            hasImage
-          );
-        })
+        if (!item) return false;
+        const hasProduct = Boolean(
+          typeof item.product === 'object' ? item.product?.id || item.product?.name : isFieldFilled(item.product)
+        );
+        const hasImage = Boolean(item.image && getImageUrl(item.image) !== '/placeholder.png');
+        return (
+          Boolean(cleanAccText(item.modelNumber)) ||
+          Boolean(cleanAccText(item.modelNo)) ||
+          Boolean(cleanAccText(item.mmCode)) ||
+          Boolean(cleanAccText(item.name)) ||
+          Boolean(cleanAccText(item.title)) ||
+          Boolean(cleanAccText(item.description)) ||
+          Boolean(cleanAccText(item.colour)) ||
+          Boolean(cleanAccText(item.color)) ||
+          hasProduct ||
+          hasImage
+        );
+      })
       : [];
 
     // Avoid duplicating a product if it is both selected in `accessoryProducts` and overridden in `accessories`
@@ -1117,12 +1117,12 @@ export default function FamilyDetailClient({
   // Helper to reliably call back symbols according to the model no. of the product
   const getSymbolsForProduct = useCallback((prodOrSku: any): SymbolItem[] => {
     if (!prodOrSku) return [];
-    const model = (typeof prodOrSku.product === 'object' ? prodOrSku.product?.name : '') || 
-                  prodOrSku.modelNumber || 
-                  prodOrSku.name || 
-                  '';
+    const model = (typeof prodOrSku.product === 'object' ? prodOrSku.product?.name : '') ||
+      prodOrSku.modelNumber ||
+      prodOrSku.name ||
+      '';
     const prodId = typeof prodOrSku.product === 'object' ? prodOrSku.product?.id : (prodOrSku.product || prodOrSku.id);
-    
+
     let matchedSymbols: any[] | undefined;
     if (model && model !== '—') {
       matchedSymbols = productModelSymbolsMap.get(model.trim().toLowerCase());
@@ -1134,7 +1134,7 @@ export default function FamilyDetailClient({
       const parent = typeof prodOrSku.product === 'object' ? prodOrSku.product : null;
       matchedSymbols = parent?.symbols || prodOrSku.symbols || [];
     }
-    
+
     return (matchedSymbols || [])
       .map(resolveSymbol)
       .filter((s): s is SymbolItem => Boolean(s && s.name));
@@ -3115,7 +3115,7 @@ export default function FamilyDetailClient({
                             || (isValidFile(parent?.userManual) ? parent.userManual : null)
                             || (isValidFile((parent as any)?.userManualPdf) ? (parent as any)?.userManualPdf : null);
                           const rawUserManual = productManual
-                            || famObj?.userManual 
+                            || famObj?.userManual
                             || (famObj as any)?.userManualPdf
                             || family?.userManual
                             || (family as any)?.userManualPdf;
@@ -3181,13 +3181,12 @@ export default function FamilyDetailClient({
                                     </span>
                                   </div>
 
-                                  <div className={`grid grid-cols-1 ${
-                                    activeDiagramCount === 1 
-                                      ? 'max-w-md' 
-                                      : activeDiagramCount === 2 
-                                        ? 'md:grid-cols-2' 
+                                  <div className={`grid grid-cols-1 ${activeDiagramCount === 1
+                                      ? 'max-w-md'
+                                      : activeDiagramCount === 2
+                                        ? 'md:grid-cols-2'
                                         : 'md:grid-cols-2 lg:grid-cols-3'
-                                  } gap-4`}>
+                                    } gap-4`}>
 
                                     {/* 1. Light Spectrum Graph(s) (Supports Multi-CCT) */}
                                     {spectrumFiles.map((specFile, specIdx) => {
@@ -3449,8 +3448,8 @@ export default function FamilyDetailClient({
                         || (isValidFile((activeDrawerProduct as any)?.userManualPdf) ? (activeDrawerProduct as any)?.userManualPdf : null)
                         || (isValidFile(parent?.userManual) ? parent.userManual : null)
                         || (isValidFile((parent as any)?.userManualPdf) ? (parent as any)?.userManualPdf : null);
-                      const rawUserManual = productManual 
-                        || famObj?.userManual 
+                      const rawUserManual = productManual
+                        || famObj?.userManual
                         || (famObj as any)?.userManualPdf
                         || family?.userManual
                         || (family as any)?.userManualPdf;
