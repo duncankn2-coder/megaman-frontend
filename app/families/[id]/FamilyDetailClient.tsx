@@ -445,6 +445,17 @@ const parseDescriptionSpecs = (desc: string): Record<string, string> => {
   return specs;
 };
 
+const formatMmCode = (raw?: string | null): string => {
+  if (!raw) return '—';
+  const trimmed = String(raw).trim();
+  if (!trimmed) return '—';
+  if (trimmed.includes('/')) {
+    const afterSlash = trimmed.split('/').pop()?.trim();
+    if (afterSlash) return afterSlash;
+  }
+  return trimmed;
+};
+
 // Extraction utility for technical parameters inside product specifications JSON (RZB Style)
 // Prioritizes General Data specifications first for all parameters
 const getRawProductSpec = (productObj: any, specNames: string[], defaultValue = '—'): string => {
@@ -2135,7 +2146,7 @@ export default function FamilyDetailClient({
                 <tbody className="divide-y divide-gray-200/70 text-black font-normal">
                   {filteredSkus.map((sku, modelIndex) => {
                     const parent = typeof sku.product === 'object' && sku.product !== null ? sku.product : null;
-                    const mmCode = sku.name;
+                    const mmCode = formatMmCode(sku.name);
                     const modelNo = getSkuSpec(sku, ['customer_model_no_new', 'model_number', 'yk_model_no', 'modelNo'], parent?.name || sku.modelNumber || '—');
                     // Call back symbols according to the model no. of the product
                     const productSymbols = getSymbolsForProduct(sku);
@@ -2609,8 +2620,9 @@ export default function FamilyDetailClient({
                   <div className="px-8 py-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-transparent">
                     {(() => {
                       const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                      const isMmCode = /^MM\d+/i.test(activeDrawerProduct.name);
-                      const mmCode = isMmCode ? activeDrawerProduct.name : (activeDrawerProduct.isFallbackProduct ? '—' : (activeDrawerProduct.mmCode || '—'));
+                      const formattedActiveName = formatMmCode(activeDrawerProduct.name);
+                      const isMmCode = /^MM\d+/i.test(formattedActiveName);
+                      const mmCode = isMmCode ? formattedActiveName : (activeDrawerProduct.isFallbackProduct ? '—' : formatMmCode(activeDrawerProduct.mmCode));
                       const modelNo = getSkuSpec(activeDrawerProduct, ['customer_model_no_new', 'model_number', 'yk_model_no', 'modelNo'], parent?.name || activeDrawerProduct.modelNumber || (!isMmCode ? activeDrawerProduct.name : '—'));
 
                       return (
@@ -2825,8 +2837,9 @@ export default function FamilyDetailClient({
                       <div className="space-y-6 animate-fade-in font-mono text-[11px] text-gray-700">
                         {(() => {
                           const parent = typeof activeDrawerProduct.product === 'object' ? activeDrawerProduct.product : null;
-                          const isMmCode = /^MM\d+/i.test(activeDrawerProduct.name);
-                          const mmCode = isMmCode ? activeDrawerProduct.name : (activeDrawerProduct.isFallbackProduct ? '—' : (activeDrawerProduct.mmCode || '—'));
+                          const formattedActiveName = formatMmCode(activeDrawerProduct.name);
+                          const isMmCode = /^MM\d+/i.test(formattedActiveName);
+                          const mmCode = isMmCode ? formattedActiveName : (activeDrawerProduct.isFallbackProduct ? '—' : formatMmCode(activeDrawerProduct.mmCode));
                           const modelNo = getSkuSpec(activeDrawerProduct, ['customer_model_no_new', 'model_number', 'yk_model_no', 'modelNo'], parent?.name || activeDrawerProduct.modelNumber || (!isMmCode ? activeDrawerProduct.name : '—'));
                           const rawPower = getSkuSpec(activeDrawerProduct, ['power', 'wattage', 'on_mode_power_w', 'light_source_on_mode_power_w'], '—');
                           const rawCurrent = getSkuSpec(activeDrawerProduct, ['input_current_ma', 'input_current', 'light_source_input_current_ma'], '—');
