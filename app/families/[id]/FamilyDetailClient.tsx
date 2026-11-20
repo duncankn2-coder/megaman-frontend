@@ -1444,12 +1444,6 @@ export default function FamilyDetailClient({
       {/* RZB Triona-style Hero Product Showcase (RZB Dual-Column Split Grid) */}
       <section className="border-b border-gray-200 py-16 bg-white relative">
 
-        {/* Fine drafting-blueprint crosshairs & grids */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.03]">
-          <div className="absolute left-[33%] top-0 bottom-0 w-[1px] bg-black"></div>
-          <div className="absolute left-[66%] top-0 bottom-0 w-[1px] bg-black"></div>
-        </div>
-
         <div className="container mx-auto px-6 md:px-12 max-w-7xl relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
 
