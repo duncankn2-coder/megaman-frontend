@@ -342,8 +342,8 @@ const matchesFamilySearch = (family: Family & { resolvedCategories: string[] }, 
   }
 
   // 2. Normalized alphanumeric match (ignores spaces, hyphens, slashes)
-  const allNormStrings = allStrings.map(str => str.replace(/[^a-z0-9]/g, ''));
-  if (normQuery && allNormStrings.some(str => str.includes(normQuery) || normQuery.includes(str))) {
+  const allNormStrings = allStrings.map(str => str.replace(/[^a-z0-9]/g, '')).filter(Boolean);
+  if (normQuery && allNormStrings.some(str => str.includes(normQuery) || (str.length >= 2 && normQuery.includes(str)))) {
     return true;
   }
 
@@ -459,15 +459,19 @@ export default function ProductsCatalog({ families }: ProductsCatalogProps) {
     router.push(`/products?${params.toString()}`, { scroll: false });
   };
 
-  // Helper to update search parameter in URL
+  // Helper to update search state immediately and sync URL without triggering a server round-trip per keystroke
   const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
     const params = new URLSearchParams(searchParams.toString());
     if (!query) {
       params.delete('search');
     } else {
       params.set('search', query);
     }
-    router.push(`/products?${params.toString()}`, { scroll: false });
+    const qs = params.toString();
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', qs ? `/products?${qs}` : '/products');
+    }
   };
 
   // Enrich families with resolved category tags
