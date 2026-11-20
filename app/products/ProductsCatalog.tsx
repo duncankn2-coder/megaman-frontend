@@ -327,12 +327,36 @@ const matchesFamilySearch = (family: Family & { resolvedCategories: string[] }, 
   const productNames = (family.products || []).map(p => p?.name?.toLowerCase() || '').filter(Boolean);
   const productDescs = (family.products || []).map(p => p?.description?.toLowerCase() || '').filter(Boolean);
 
-  // Exact category match for nav subcategory links (e.g. "Filament Lamps" shouldn't pull in "360° illumination" via product descriptions)
+  // Exact subcategory matching for Lamps nav links so broad product descriptions / base codes (E27, bulb, etc.) don't leak unrelated families
+  if (rawQuery === 'classic bulbs') {
+    return categoryNames.some(c => c === 'classic bulbs') || familyName.includes('classic bulb');
+  }
   if (rawQuery === 'filament lamps') {
     return categoryNames.some(c => c === 'filament lamps') || (familyName.includes('filament') && !familyName.includes('golden'));
   }
+  if (rawQuery === '360' || rawQuery === '360° illumination' || rawQuery === '360 illumination') {
+    return categoryNames.some(c => c.includes('360')) || familyName.includes('360');
+  }
   if (rawQuery === 'golden filament') {
     return categoryNames.some(c => c.includes('golden filament')) || familyName.includes('golden');
+  }
+  if (rawQuery === 'reflector lamps') {
+    return categoryNames.some(c => c === 'reflector lamps') || familyName.includes('reflector');
+  }
+  if (rawQuery === 'led tubes') {
+    return categoryNames.some(c => c.includes('tube')) || familyName.includes('tube');
+  }
+  if (rawQuery === 'special applications') {
+    return categoryNames.some(c => c.includes('special')) || familyName.includes('special');
+  }
+  if (rawQuery === 'decorative') {
+    return categoryNames.some(c => c.includes('decorative')) || familyName.includes('decorative');
+  }
+  if (rawQuery === 'dim-to-warm' || rawQuery === 'dim to warm') {
+    return categoryNames.some(c => c === 'dim-to-warm' || c === 'dim to warm') || familyName.includes('dim-to-warm') || familyName.includes('dim to warm');
+  }
+  if (rawQuery === 'mega efficiency') {
+    return categoryNames.some(c => c === 'mega efficiency') || familyName.includes('mega efficiency');
   }
 
   const allStrings = [

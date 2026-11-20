@@ -42,7 +42,7 @@ const navItems: NavItem[] = [
         items: [
           { name: 'Classic Bulbs', path: '/products?category=Lamps&search=Classic%20Bulbs' },
           { name: 'Filament Lamps', path: '/products?category=Lamps&search=Filament%20Lamps' },
-          { name: '360° Illumination', path: '/products?category=Lamps&search=360' },
+          { name: '360° Illumination', path: '/products?category=Lamps&search=360%C2%B0%20Illumination' },
           { name: 'Golden Filament', path: '/products?category=Lamps&search=Golden%20Filament' },
           { name: 'Reflector Lamps', path: '/products?category=Lamps&search=Reflector%20Lamps' },
           { name: 'LED Tubes', path: '/products?category=Lamps&search=LED%20Tubes' },
