@@ -327,6 +327,14 @@ const matchesFamilySearch = (family: Family & { resolvedCategories: string[] }, 
   const productNames = (family.products || []).map(p => p?.name?.toLowerCase() || '').filter(Boolean);
   const productDescs = (family.products || []).map(p => p?.description?.toLowerCase() || '').filter(Boolean);
 
+  // Exact category match for nav subcategory links (e.g. "Filament Lamps" shouldn't pull in "360° illumination" via product descriptions)
+  if (rawQuery === 'filament lamps') {
+    return categoryNames.some(c => c === 'filament lamps') || (familyName.includes('filament') && !familyName.includes('golden'));
+  }
+  if (rawQuery === 'golden filament') {
+    return categoryNames.some(c => c.includes('golden filament')) || familyName.includes('golden');
+  }
+
   const allStrings = [
     familyName,
     familyDesc,
