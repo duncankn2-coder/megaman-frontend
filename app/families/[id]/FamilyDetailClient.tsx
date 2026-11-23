@@ -355,7 +355,12 @@ const expandSpecNames = (specNames: string[]): string[] => {
     if ((lower.includes('colour') || lower.includes('color')) && !lower.includes('temp') && !lower.includes('cct') && !lower.includes('rendering') && !lower.includes('consistency')) {
       expanded.push('fitting_colour', 'colour', 'color', 'luminaires_color');
     }
-    if (lower.includes('power') || lower.includes('watt') || lower.includes('system power')) {
+    if (
+      (lower.includes('power') || lower.includes('watt') || lower.includes('system power')) &&
+      !lower.includes('factor') &&
+      !lower.includes('equivalent') &&
+      !lower.includes('standby')
+    ) {
       expanded.push('on_mode_power_w', 'wattage', 'power', 'on_mode_power', 'light_source_on_mode_power_w', 'energy_consumption_on_mode');
     }
     if (lower.includes('efficacy')) {
@@ -377,7 +382,7 @@ const expandSpecNames = (specNames: string[]): string[] => {
       expanded.push('beam_angle', 'beam', 'beamAngle', 'dls_beam_angle');
     }
     if (lower.includes('base') || lower.includes('cap')) {
-      expanded.push('cap_type', 'lamp_holder_type', 'lamp_source', 'lampBase', 'lamp_base');
+      expanded.push('cap_type', 'cap_base', 'lamp_holder_type', 'lamp_source', 'lampBase', 'lamp_base');
     }
     if (lower.includes('housing') || lower.includes('material')) {
       expanded.push('housing_material', 'housingMaterial');
@@ -727,7 +732,7 @@ const formatMultiCondition = (str: any): string => {
 };
 
 const getRatedLife = (sku: any): string => {
-  const directLife = getSkuSpec(sku, ['norminal_life_h', 'nominal_life_h', 'rated_life_h', 'rated_life', 'norminal_life_l70b50_h'], '');
+  const directLife = getSkuSpec(sku, ['norminal_life_h', 'nominal_life_h', 'rated_life_h', 'rated_life', 'norminal_life_l70b50_h', 'indicative_lifetime_l70b50', 'indicative_lifetime_l80b50', 'lifetime_l70b50'], '');
   if (directLife && directLife !== '—' && directLife !== 'null') return directLife;
   const desc = String(sku?.specifications?.description || sku?.description || '');
   const match = desc.match(/(\d{1,3}(?:,\d{3})+|\d{4,6})\s*hrs?(?:\s*([A-Za-z0-9@℃°C]+))?/i);
@@ -2861,16 +2866,18 @@ export default function FamilyDetailClient({
                             efficacyVal = formatMultiCondition(efficacyVal);
                           }
 
-                          const diamVal = getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter'], '—');
-                          const widthVal = getSkuSpec(activeDrawerProduct, ['width_mm', 'width'], '—');
-                          const heightVal = getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'depth_mm'], '—');
-                          const lengthVal = getSkuSpec(activeDrawerProduct, ['length_mm', 'length'], '—');
+                          const diamVal = getSkuSpec(activeDrawerProduct, ['diameter_mm', 'diameter', 'diameter_d'], '—');
+                          const widthVal = getSkuSpec(activeDrawerProduct, ['width_mm', 'width', 'width_w'], '—');
+                          const heightVal = getSkuSpec(activeDrawerProduct, ['height_mm', 'height', 'height_h', 'depth_mm'], '—');
+                          const lengthVal = getSkuSpec(activeDrawerProduct, ['length_mm', 'length', 'length_l'], '—');
+                          const depthVal = getSkuSpec(activeDrawerProduct, ['depth_d'], '—');
                           const cutOutVal = getSkuSpec(activeDrawerProduct, ['recessed_cut_out_mm', 'recessed_cut_out', 'cut_out_mm'], '—');
 
                           const dimensionRows = [
                             ...(diamVal !== '—' ? [{ label: 'Diameter (mm)', value: diamVal }] : []),
                             ...(lengthVal !== '—' ? [{ label: 'Length (mm)', value: lengthVal }] : []),
                             ...(widthVal !== '—' ? [{ label: 'Width (mm)', value: widthVal }] : []),
+                            ...(depthVal !== '—' ? [{ label: 'Depth (mm)', value: depthVal }] : []),
                             ...(heightVal !== '—' ? [{ label: 'Height (mm)', value: heightVal }] : []),
                             ...(cutOutVal !== '—' ? [{ label: 'Cut-out (mm)', value: cutOutVal }] : [])
                           ];
@@ -2898,9 +2905,9 @@ export default function FamilyDetailClient({
                                         { label: 'Voltage (V)', value: getSkuSpec(activeDrawerProduct, ['rated_voltage_v', 'light_source_rated_voltage_v', 'voltage', 'Input Voltage'], '—') },
                                         { label: 'Frequency (Hz)', value: getSkuSpec(activeDrawerProduct, ['frequency_hz', 'frequency', 'mains_frequency_hz'], '—') },
                                         { label: 'Current (mA)', value: formattedCurrent },
-                                        { label: 'Power Factor (λ)', value: getSkuSpec(activeDrawerProduct, ['power_factor', 'displacement_factor'], '—') },
+                                        { label: 'Power Factor (λ)', value: getSkuSpec(activeDrawerProduct, ['power_factor', 'displacement_factor_cos_1', 'displacement_factor'], '—') },
                                         { label: 'Starting Time (sec)', value: getSkuSpec(activeDrawerProduct, ['starting_time_sec', 'starting_time', 'start_time'], '—') },
-                                        { label: 'Warm-up Time Up to 60% of the Full Light Output (sec)', value: getSkuSpec(activeDrawerProduct, ['warm_up_time_sec', 'warm_up_time', 'warmup_time', 'warm_up_time_up_to_60_of_the_full_light_output_sec'], '—') }
+                                        { label: 'Warm-up Time Up to 60% of the Full Light Output (sec)', value: getSkuSpec(activeDrawerProduct, ['warm_up_time_sec', 'warm_up_time', 'warmup_time', 'warm_up_time_60_of_full_light', 'warm_up_time_up_to_60_of_the_full_light_output_sec'], '—') }
                                       ].map((row, index) => (
                                         <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
                                           <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
@@ -2924,20 +2931,20 @@ export default function FamilyDetailClient({
                                         { label: 'Model No.', value: modelNo },
                                         { label: 'MM Code', value: mmCode },
                                         { label: 'Product Wattage (W)', value: rawPower },
-                                        { label: 'Lamp Base / Light Source', value: getSkuSpec(activeDrawerProduct, ['cap_type', 'lamp_holder_type', 'lamp_source', 'lampBase', 'lamp_base', 'luminaire_category', 'base'], '—') },
+                                        { label: 'Lamp Base / Light Source', value: getSkuSpec(activeDrawerProduct, ['cap_type', 'cap_base', 'lamp_holder_type', 'lamp_source', 'lampBase', 'lamp_base', 'luminaire_category', 'base'], '—') },
                                         { label: 'Equivalent Wattage (W)', value: getSkuSpec(activeDrawerProduct, ['equivalent_power_w', 'equivalent_power', 'equivalent_wattage'], '—') },
                                         { label: 'Colour Temperature (K)', value: formattedCct },
                                         { label: 'Colour Render Index (Ra)', value: getSkuSpec(activeDrawerProduct, ['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index'], '—') },
                                         { label: 'Colour Consistency (SDCM)', value: getSkuSpec(activeDrawerProduct, ['colour_consistency', 'color_consistency', 'sdcm'], '—') },
-                                        { label: 'Beam Angle (°)', value: formatBeamAngle(getSkuSpec(activeDrawerProduct, ['beam_angle', 'beamAngle', 'beam_angle_deg'], '—')) },
+                                        { label: 'Beam Angle (°)', value: formatBeamAngle(getSkuSpec(activeDrawerProduct, ['beam_angle', 'beamAngle', 'beam_angle_deg', 'illumination_angle'], '—')) },
                                         { label: 'IP Rating', value: formatIpRating(getSkuSpec(activeDrawerProduct, ['ip', 'ipRating', 'IP rating', 'IP Rating', 'ip_rating'], '—')) },
                                         { label: 'IK Rating', value: getSkuSpec(activeDrawerProduct, ['ik', 'ikRating', 'ik_rating'], '—') },
                                         { label: 'Control Gear', value: getSkuSpec(activeDrawerProduct, ['control_gear', 'driver_type', 'driver_model', 'dimming_type', 'type_terminal block', 'controlGear', 'connector'], '—') },
                                         { label: 'Dimmable', value: getSkuSpec(activeDrawerProduct, ['dimmable', 'light_source_dimmable'], '—') },
-                                        { label: 'Operating Temperature (°C)', value: formatOperatingTemp(getSkuSpec(activeDrawerProduct, ['operating_temperature', 'temperature_of_ambient'], '—')) },
-                                        { label: 'Switching Cycles (times)', value: formatSwitchingCycles(getSkuSpec(activeDrawerProduct, ['switching_cycles', 'switching_Cycles'], '')) },
+                                        { label: 'Operating Temperature (°C)', value: formatOperatingTemp(getSkuSpec(activeDrawerProduct, ['operating_temperature', 'working_temperature', 'temperature_of_ambient'], '—')) },
+                                        { label: 'Switching Cycles (times)', value: formatSwitchingCycles(getSkuSpec(activeDrawerProduct, ['switching_cycles', 'switching_Cycles', 'number_of_switching_cycles'], '')) },
                                         { label: 'Weight (g)', value: getSkuSpec(activeDrawerProduct, ['net_weight_g', 'net_weight', 'weight'], '—') },
-                                        { label: 'Application', value: getSkuSpec(activeDrawerProduct, ['application', 'intended_use'], '—') }
+                                        { label: 'Application', value: getSkuSpec(activeDrawerProduct, ['application', 'applications', 'intended_use'], '—') }
                                       ].map((row, index) => (
                                         <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
                                           <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
