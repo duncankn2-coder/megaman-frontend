@@ -1573,48 +1573,64 @@ export default function FamilyDetailClient({
 
               {/* RZB Certifications Bar */}
               <div className="mt-12 pt-6 border-t border-gray-200 flex flex-wrap gap-4 items-center justify-between">
-                {family.symbols && family.symbols.length > 0 ? (
-                  <div className="flex flex-wrap gap-4 items-center">
-                    {family.symbols.map((rawSym) => {
-                      const symbol = resolveSymbol(rawSym);
-                      if (!symbol || !symbol.name) return null;
-                      const iconUrl = symbol.icon ? getImageUrl(symbol.icon) : '';
-                      const hasValidIcon = !failedImageIds[symbol.id] && iconUrl && iconUrl !== '/placeholder.png';
-                      if (hasValidIcon) {
+                {(() => {
+                  const rawHeroSymbols = (family.symbols && family.symbols.length > 0)
+                    ? family.symbols
+                    : (family.products || []).flatMap((p: any) =>
+                        p && typeof p === 'object' && Array.isArray(p.symbols) ? p.symbols : []
+                      );
+                  const seenHeroSymIds = new Set<string>();
+                  const heroSymbols = rawHeroSymbols
+                    .map(resolveSymbol)
+                    .filter((s): s is SymbolItem => {
+                      if (!s || !s.name) return false;
+                      const key = String(s.id || s.name);
+                      if (seenHeroSymIds.has(key)) return false;
+                      seenHeroSymIds.add(key);
+                      return true;
+                    });
+
+                  if (heroSymbols.length === 0) return <div />;
+
+                  return (
+                    <div className="flex flex-wrap gap-4 items-center">
+                      {heroSymbols.map((symbol) => {
+                        const iconUrl = symbol.icon ? getImageUrl(symbol.icon) : '';
+                        const hasValidIcon = !failedImageIds[symbol.id] && iconUrl && iconUrl !== '/placeholder.png';
+                        if (hasValidIcon) {
+                          return (
+                            <div
+                              key={symbol.id}
+                              className="relative h-12 w-12 md:h-14 md:w-14 flex items-center justify-center transition-transform hover:scale-105"
+                              title={symbol.name}
+                            >
+                              <Image
+                                src={iconUrl}
+                                alt={symbol.name}
+                                fill
+                                className="object-contain"
+                                unoptimized
+                                onError={() => setFailedImageIds(prev => ({ ...prev, [symbol.id]: true }))}
+                              />
+                            </div>
+                          );
+                        }
                         return (
-                          <div
+                          <span
                             key={symbol.id}
-                            className="relative h-12 w-12 md:h-14 md:w-14 flex items-center justify-center transition-transform hover:scale-105"
+                            className={`px-3 py-1 text-xs md:text-sm font-mono uppercase tracking-wider ${symbol.isHighlighted
+                              ? 'text-[#005288] bg-[#005288]/10 font-bold'
+                              : 'bg-gray-100 text-gray-700 font-medium'
+                              }`}
                             title={symbol.name}
                           >
-                            <Image
-                              src={iconUrl}
-                              alt={symbol.name}
-                              fill
-                              className="object-contain"
-                              unoptimized
-                              onError={() => setFailedImageIds(prev => ({ ...prev, [symbol.id]: true }))}
-                            />
-                          </div>
+                            {symbol.name}
+                          </span>
                         );
-                      }
-                      return (
-                        <span
-                          key={symbol.id}
-                          className={`px-3 py-1 text-xs md:text-sm font-mono uppercase tracking-wider ${symbol.isHighlighted
-                            ? 'text-[#005288] bg-[#005288]/10 font-bold'
-                            : 'bg-gray-100 text-gray-700 font-medium'
-                            }`}
-                          title={symbol.name}
-                        >
-                          {symbol.name}
-                        </span>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div />
-                )}
+                      })}
+                    </div>
+                  );
+                })()}
                 <div className="flex flex-col gap-2.5">
                   <a
                     href="#variants"
