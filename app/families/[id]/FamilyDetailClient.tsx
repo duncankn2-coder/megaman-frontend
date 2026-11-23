@@ -2773,8 +2773,8 @@ export default function FamilyDetailClient({
                                 <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
                                   Optical Innovation Engine
                                 </h4>
-                                <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed">
-                                  {activeDrawerProduct.description || parent?.description || "The Toledo-Triona system represents circular rimless optical perfection. Delivers elegant, homogenous distribution across premium corporate environments."}
+                                <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed whitespace-pre-line">
+                                  {family.description || activeDrawerProduct.description || parent?.description || ''}
                                 </p>
 
                                 {/* Product Symbols & Certifications */}
