@@ -2771,11 +2771,26 @@ export default function FamilyDetailClient({
 
                               <div className="md:col-span-7 space-y-4">
                                 <h4 className="text-xs font-bold uppercase tracking-widest text-[#005288] pb-2 border-b border-gray-200 font-sans">
-                                  Optical Innovation Engine
+                                  Key Features
                                 </h4>
-                                <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed whitespace-pre-line">
-                                  {family.description || activeDrawerProduct.description || parent?.description || ''}
-                                </p>
+                                {family.features && family.features.length > 0 ? (
+                                  <div className="grid grid-cols-1 gap-2.5">
+                                    {family.features.map((f, idx) => (
+                                      <div key={f.id || idx} className="flex items-start gap-2.5">
+                                        <div className="w-4 h-4 rounded-full bg-[#005288]/10 flex items-center justify-center mt-0.5 flex-shrink-0">
+                                          <FontAwesomeIcon icon={faCheck} className="text-[#005288] text-[8px]" />
+                                        </div>
+                                        <span className="text-sm text-gray-700 font-light leading-relaxed">
+                                          {f.feature}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm md:text-base text-gray-600 font-light leading-relaxed whitespace-pre-line">
+                                    {family.description || activeDrawerProduct.description || parent?.description || ''}
+                                  </p>
+                                )}
 
                                 {/* Product Symbols & Certifications */}
                                 {(() => {
