@@ -2933,6 +2933,8 @@ export default function FamilyDetailClient({
                           }
 
                           const drawerSymbols = getSymbolsForProduct(activeDrawerProduct);
+                          const ipRatingVal = formatIpRating(getSkuSpec(activeDrawerProduct, ['ip', 'ipRating', 'IP rating', 'IP Rating', 'ip_rating'], '—'));
+                          const ikRatingVal = getSkuSpec(activeDrawerProduct, ['ik', 'ikRating', 'ik_rating'], '—');
 
                           return (
                             <>
@@ -2980,11 +2982,11 @@ export default function FamilyDetailClient({
                                         { label: 'Colour Render Index (Ra)', value: getSkuSpec(activeDrawerProduct, ['cri', 'CRI', 'ra', 'colour_rendering_index', 'color_rendering_index'], '—') },
                                         { label: 'Colour Consistency (SDCM)', value: getSkuSpec(activeDrawerProduct, ['colour_consistency', 'color_consistency', 'sdcm'], '—') },
                                         { label: 'Beam Angle (°)', value: formatBeamAngle(getSkuSpec(activeDrawerProduct, ['beam_angle', 'beamAngle', 'beam_angle_deg', 'illumination_angle'], '—')) },
-                                        { label: 'IP Rating', value: formatIpRating(getSkuSpec(activeDrawerProduct, ['ip', 'ipRating', 'IP rating', 'IP Rating', 'ip_rating'], '—')) },
-                                        { label: 'IK Rating', value: getSkuSpec(activeDrawerProduct, ['ik', 'ikRating', 'ik_rating'], '—') },
+                                        ...(ipRatingVal && ipRatingVal !== '—' ? [{ label: 'IP Rating', value: ipRatingVal }] : []),
+                                        ...(ikRatingVal && ikRatingVal !== '—' ? [{ label: 'IK Rating', value: ikRatingVal }] : []),
                                         { label: 'Control Gear', value: getSkuSpec(activeDrawerProduct, ['control_gear', 'driver_type', 'driver_model', 'dimming_type', 'type_terminal block', 'controlGear', 'connector'], '—') },
                                         { label: 'Dimmable', value: getSkuSpec(activeDrawerProduct, ['dimmable', 'light_source_dimmable'], '—') },
-                                        { label: 'Operating Temperature (°C)', value: formatOperatingTemp(getSkuSpec(activeDrawerProduct, ['operating_temperature', 'working_temperature', 'temperature_of_ambient'], '—')) },
+                                        { label: 'Operating Temperature (°C)', value: formatOperatingTemp(getSkuSpec(activeDrawerProduct, ['operating_temperature', 'working_temperature', 'ambient_temperature', 'operating_temp', 'temperature_of_ambient', 'ta'], '—')) },
                                         { label: 'Switching Cycles (times)', value: formatSwitchingCycles(getSkuSpec(activeDrawerProduct, ['switching_cycles', 'switching_Cycles', 'number_of_switching_cycles'], '')) },
                                         { label: 'Weight (g)', value: getSkuSpec(activeDrawerProduct, ['net_weight_g', 'net_weight', 'weight'], '—') },
                                         { label: 'Application', value: getSkuSpec(activeDrawerProduct, ['application', 'applications', 'intended_use'], '—') }
