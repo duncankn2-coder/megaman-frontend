@@ -63,9 +63,16 @@ interface Family {
 
 const getFamily = cache(async function getFamily(idOrSlug: string): Promise<Family | null> {
   try {
+    let decodedIdOrSlug = idOrSlug;
+    try {
+      decodedIdOrSlug = decodeURIComponent(idOrSlug);
+    } catch {
+      decodedIdOrSlug = idOrSlug;
+    }
+
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     // 1. Try finding by readable slug first
-    const slugRes = await fetch(`${payloadUrl}/api/families?where[slug][equals]=${encodeURIComponent(idOrSlug)}&depth=2`, {
+    const slugRes = await fetch(`${payloadUrl}/api/families?where[slug][equals]=${encodeURIComponent(decodedIdOrSlug)}&depth=2`, {
       next: { revalidate: 300 },
     });
     if (slugRes.ok) {
@@ -75,9 +82,12 @@ const getFamily = cache(async function getFamily(idOrSlug: string): Promise<Fami
       }
     }
     // 2. Fallback to direct ID fetch for backward compatibility
-    const response = await fetch(`${payloadUrl}/api/families/${encodeURIComponent(idOrSlug)}?depth=2`, {
+    const response = await fetch(`${payloadUrl}/api/families/${encodeURIComponent(decodedIdOrSlug)}?depth=2`, {
       next: { revalidate: 300 },
     });
+    if (response.status === 404) {
+      return null;
+    }
     if (!response.ok) {
       throw new Error(`Failed to fetch family: ${response.status}`);
     }
