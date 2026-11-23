@@ -117,9 +117,7 @@ const resolveCategories = (family: Family): string[] => {
         catLower.includes('wall lamp') ||
         catLower.includes('spotlight') ||
         catLower.includes('pendant') ||
-        catLower.includes('linear') ||
-        catLower.includes('bunker') ||
-        catLower.includes('bulkhead')
+        catLower.includes('linear')
       ) {
         resultCategories.add('Indoor Luminaires');
       }
@@ -191,119 +189,115 @@ const resolveCategories = (family: Family): string[] => {
     }
   }
 
-  // 2. Fallback matching rules based on family name / description if not resolved yet
-  const name = (family.name || '').toLowerCase();
-  const desc = (family.description || '').toLowerCase();
-  const text = `${name} ${desc}`;
+  // 2. Fallback matching rules based on family name / description ONLY if CMS categories did not resolve any category
+  if (resultCategories.size === 0) {
+    const name = (family.name || '').toLowerCase();
+    const desc = (family.description || '').toLowerCase();
+    const text = `${name} ${desc}`;
 
-  if (
-    text.includes('downlight') ||
-    text.includes('batten') ||
-    text.includes('panel') ||
-    text.includes('track') ||
-    text.includes('cabinet') ||
-    text.includes('ceiling') ||
-    text.includes('indoor') ||
-    text.includes('high bay') ||
-    text.includes('highbay') ||
-    text.includes('low bay') ||
-    text.includes('wall lamp') ||
-    text.includes('wall luminaire') ||
-    text.includes('damp proof') ||
-    text.includes('linear') ||
-    text.includes('pendant') ||
-    text.includes('spotlight') ||
-    text.includes('bulkhead') ||
-    text.includes('bunker') ||
-    text.includes('lyra') ||
-    text.includes('siena') ||
-    text.includes('toledo') ||
-    text.includes('triona') ||
-    text.includes('renzo') ||
-    text.includes('berto') ||
-    text.includes('fonda') ||
-    text.includes('dino') ||
-    text.includes('dani') ||
-    text.includes('marcus') ||
-    text.includes('morris') ||
-    text.includes('carl') ||
-    text.includes('conor') ||
-    text.includes('estela') ||
-    text.includes('enzo') ||
-    text.includes('kepler') ||
-    text.includes('lucas') ||
-    text.includes('mila') ||
-    text.includes('toby') ||
-    text.includes('claudia') ||
-    text.includes('berna') ||
-    text.includes('gemma') ||
-    text.includes('luca') ||
-    text.includes('gabio') ||
-    text.includes('bruno') ||
-    text.includes('garron') ||
-    text.includes('hagon') ||
-    text.includes('kana') ||
-    text.includes('karina') ||
-    text.includes('keo') ||
-    text.includes('keto') ||
-    text.includes('marco')
-  ) {
-    resultCategories.add('Indoor Luminaires');
-  }
+    if (
+      text.includes('floodlight') ||
+      text.includes('garden') ||
+      text.includes('outdoor') ||
+      text.includes('bulkhead') ||
+      text.includes('bunker') ||
+      text.includes('bollard') ||
+      text.includes('street') ||
+      text.includes('fonda') ||
+      text.includes('hera') ||
+      text.includes('lyra')
+    ) {
+      resultCategories.add('Outdoor Luminaires');
+    } else if (
+      text.includes('downlight') ||
+      text.includes('batten') ||
+      text.includes('panel') ||
+      text.includes('track') ||
+      text.includes('cabinet') ||
+      text.includes('ceiling') ||
+      text.includes('indoor') ||
+      text.includes('high bay') ||
+      text.includes('highbay') ||
+      text.includes('low bay') ||
+      text.includes('wall lamp') ||
+      text.includes('wall luminaire') ||
+      text.includes('damp proof') ||
+      text.includes('linear') ||
+      text.includes('pendant') ||
+      text.includes('spotlight') ||
+      text.includes('siena') ||
+      text.includes('toledo') ||
+      text.includes('triona') ||
+      text.includes('berto') ||
+      text.includes('dino') ||
+      text.includes('dani') ||
+      text.includes('marcus') ||
+      text.includes('morris') ||
+      text.includes('carl') ||
+      text.includes('conor') ||
+      text.includes('estela') ||
+      text.includes('enzo') ||
+      text.includes('kepler') ||
+      text.includes('lucas') ||
+      text.includes('mila') ||
+      text.includes('toby') ||
+      text.includes('claudia') ||
+      text.includes('berna') ||
+      text.includes('gemma') ||
+      text.includes('luca') ||
+      text.includes('gabio') ||
+      text.includes('bruno') ||
+      text.includes('garron') ||
+      text.includes('hagon') ||
+      text.includes('kana') ||
+      text.includes('karina') ||
+      text.includes('keo') ||
+      text.includes('keto') ||
+      text.includes('marco')
+    ) {
+      resultCategories.add('Indoor Luminaires');
+    }
 
-  if (
-    text.includes('floodlight') ||
-    text.includes('garden') ||
-    text.includes('outdoor') ||
-    text.includes('bulkhead') ||
-    text.includes('bunker') ||
-    text.includes('bollard') ||
-    text.includes('street') ||
-    text.includes('fonda') ||
-    text.includes('hera')
-  ) {
-    resultCategories.add('Outdoor Luminaires');
-  }
+    if (
+      text.includes('exit') ||
+      text.includes('emergency') ||
+      text.includes('twinspot') ||
+      text.includes('sign')
+    ) {
+      resultCategories.add('Emergency Lighting');
+    }
 
-  if (
-    text.includes('exit') ||
-    text.includes('emergency') ||
-    text.includes('twinspot') ||
-    text.includes('sign')
-  ) {
-    resultCategories.add('Emergency Lighting');
-  }
+    if (
+      text.includes('iot') ||
+      text.includes('ngenium') ||
+      text.includes('management') ||
+      text.includes('infinite') ||
+      text.includes('matter') ||
+      text.includes('smart')
+    ) {
+      resultCategories.add('Light Management');
+    }
 
-  if (
-    text.includes('iot') ||
-    text.includes('ngenium') ||
-    text.includes('management') ||
-    text.includes('infinite') ||
-    text.includes('matter') ||
-    text.includes('smart')
-  ) {
-    resultCategories.add('Light Management');
-  }
+    if (text.includes('driver') || text.includes('control gear') || text.includes('ballast')) {
+      resultCategories.add('Drivers');
+    }
 
-  if (text.includes('driver') || text.includes('control gear') || text.includes('ballast')) {
-    resultCategories.add('Drivers');
-  }
-
-  if (
-    text.includes('bulb') ||
-    text.includes('tubes') ||
-    text.includes('tube') ||
-    text.includes('filament') ||
-    text.includes('reflector') ||
-    text.includes('gu10') ||
-    text.includes('mr16') ||
-    text.includes('e27') ||
-    text.includes('e14') ||
-    text.includes('candle') ||
-    text.includes('globe') ||
-    text.includes('lamp')
-  ) {
-    resultCategories.add('LED Lamps');
+    if (
+      text.includes('bulb') ||
+      text.includes('tubes') ||
+      text.includes('tube') ||
+      text.includes('filament') ||
+      text.includes('reflector') ||
+      text.includes('gu10') ||
+      text.includes('mr16') ||
+      text.includes('e27') ||
+      text.includes('e14') ||
+      text.includes('candle') ||
+      text.includes('globe') ||
+      text.includes('lamp')
+    ) {
+      resultCategories.add('LED Lamps');
+    }
   }
 
   if (resultCategories.size === 0) {
@@ -357,6 +351,44 @@ const matchesFamilySearch = (family: Family & { resolvedCategories: string[] }, 
   }
   if (rawQuery === 'mega efficiency') {
     return categoryNames.some(c => c === 'mega efficiency') || familyName.includes('mega efficiency');
+  }
+
+  // Exact subcategory matching for Indoor & Outdoor Luminaires nav links
+  if (rawQuery === 'ceiling') {
+    return categoryNames.some(c => c.includes('ceiling')) || familyName.includes('ceiling');
+  }
+  if (rawQuery === 'downlight') {
+    return categoryNames.some(c => c.includes('downlight')) || familyName.includes('downlight');
+  }
+  if (rawQuery === 'damp proof batten') {
+    return categoryNames.some(c => c.includes('waterproof batten') || c.includes('damp proof')) || familyName.includes('damp proof') || familyName.includes('waterproof');
+  }
+  if (rawQuery === 'indoor batten') {
+    return categoryNames.some(c => c === 'batten' || c === 'indoor batten') || familyName.includes('batten');
+  }
+  if (rawQuery === 'high bay') {
+    return categoryNames.some(c => c.includes('highbay') || c.includes('high bay')) || familyName.includes('highbay') || familyName.includes('high bay');
+  }
+  if (rawQuery === 'panel') {
+    return categoryNames.some(c => c.includes('panel')) || familyName.includes('panel');
+  }
+  if (rawQuery === 'track lighting') {
+    return categoryNames.some(c => c.includes('track')) || familyName.includes('track');
+  }
+  if (rawQuery === 'under cabinet') {
+    return categoryNames.some(c => c.includes('cabinet')) || familyName.includes('cabinet') || familyName.includes('keto') || familyName.includes('bruno');
+  }
+  if (rawQuery === 'wall lamp') {
+    return categoryNames.some(c => c.includes('wall')) || familyName.includes('wall');
+  }
+  if (rawQuery === 'floodlight') {
+    return categoryNames.some(c => c.includes('flood')) || familyName.includes('flood');
+  }
+  if (rawQuery === 'bulkhead') {
+    return categoryNames.some(c => c.includes('bulkhead') || c.includes('bunker')) || familyName.includes('bulkhead') || familyName.includes('bunker');
+  }
+  if (rawQuery === 'garden lighting') {
+    return categoryNames.some(c => c.includes('garden')) || familyName.includes('garden') || familyName.includes('bollard') || familyName.includes('spike');
   }
 
   const allStrings = [
