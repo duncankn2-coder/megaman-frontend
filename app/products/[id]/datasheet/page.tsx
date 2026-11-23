@@ -479,7 +479,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
     { label: 'Dimmable', value: getMultiSpec(['dimmable', 'light_source_dimmable']) },
     { label: 'Warm Up Time 60% of Full Light', value: getMultiSpec(['warm_up_time_sec', 'warmup_time', 'warm_up_time_up_to_60_of_the_full_light_output_sec']) },
     { label: 'Starting Time', value: getMultiSpec(['starting_time_sec', 'starting_time', 'start_time']) },
-    { label: 'Working Temperature', value: getMultiSpec(['operating_temperature', 'temperature_of_ambient']) },
+    { label: 'Working Temperature', value: getMultiSpec(['operating_temperature', 'working_temperature', 'temperature_of_ambient']) },
     { label: 'Housing Colour', value: getMultiSpec(['fitting_colour', 'colour', 'color']) },
     { label: 'Cover Design', value: getMultiSpec(['diffuser_material', 'cover_design']) },
     { label: 'Flammability of Plastic Component', value: getMultiSpec(['glow_wire', 'flammability_of_plastic_component']) },

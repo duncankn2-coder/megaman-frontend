@@ -775,8 +775,8 @@ const getSpecValue = (sku: any, paramKey: string): string => {
       return gw !== '—' ? gw.replace(/°c|°|\s*degc\b/gi, '').trim() : '—';
     }
     case 'operatingTemperature': {
-      const ot = findVal(['operating_temperature']);
-      return ot !== '—' ? ot.replace(/°c/gi, '').trim() : '—';
+      const ot = findVal(['operating_temperature', 'working_temperature', 'temperature_of_ambient']);
+      return ot !== '—' ? ot.replace(/°c|℃/gi, '').trim() : '—';
     }
     case 'standards':
       return findVal(['standards', 'scg_standards_compliance']);

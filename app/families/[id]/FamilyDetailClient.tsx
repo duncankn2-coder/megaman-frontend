@@ -352,7 +352,7 @@ const expandSpecNames = (specNames: string[]): string[] => {
       );
     }
     if (lower.includes('operat') || lower.includes('ambient')) {
-      expanded.push('operating_temperature', 'temperature_of_ambient');
+      expanded.push('operating_temperature', 'working_temperature', 'temperature_of_ambient');
     }
     if ((lower.includes('colour') || lower.includes('color')) && !lower.includes('temp') && !lower.includes('cct') && !lower.includes('rendering') && !lower.includes('consistency')) {
       expanded.push('fitting_colour', 'colour', 'color', 'luminaires_color');
