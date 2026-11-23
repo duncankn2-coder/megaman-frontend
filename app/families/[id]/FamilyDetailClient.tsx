@@ -2635,7 +2635,7 @@ export default function FamilyDetailClient({
                               </span>
                             )}
                           </div>
-                          <h3 className="text-xl uppercase tracking-widest font-light text-gray-900 font-sans">
+                          <h3 className="text-xl tracking-widest font-light text-gray-900 font-sans">
                             {modelNo && modelNo !== '—' ? modelNo : activeDrawerProduct.name}
                           </h3>
                         </div>
