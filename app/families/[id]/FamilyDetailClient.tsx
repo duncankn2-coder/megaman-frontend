@@ -2792,10 +2792,20 @@ export default function FamilyDetailClient({
                                   </p>
                                 )}
 
-                                {/* Product Symbols & Certifications */}
+                                {/* Product & Family Feature Symbols */}
                                 {(() => {
-                                  const drawerSymbols = getSymbolsForProduct(activeDrawerProduct);
-                                  if (!drawerSymbols || drawerSymbols.length === 0) return null;
+                                  const productDrawerSymbols = getSymbolsForProduct(activeDrawerProduct);
+                                  const familyDrawerSymbols = (family.symbols || [])
+                                    .map(resolveSymbol)
+                                    .filter((s): s is SymbolItem => Boolean(s && s.name));
+                                  const seenSymIds = new Set<string>();
+                                  const drawerSymbols = [...productDrawerSymbols, ...familyDrawerSymbols].filter((s) => {
+                                    const key = String(s.id || s.name);
+                                    if (seenSymIds.has(key)) return false;
+                                    seenSymIds.add(key);
+                                    return true;
+                                  });
+                                  if (drawerSymbols.length === 0) return null;
                                   return (
                                     <div className="pt-4 border-t border-gray-200 space-y-2">
                                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#005288] font-sans">
