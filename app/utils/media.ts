@@ -9,14 +9,15 @@ export function getPayloadUrl(): string {
 }
 
 function rewriteLocalhostUrl(url: string, baseUrl: string): string {
-  const isLocalhostUrl = url.includes('localhost:3000') || url.includes('127.0.0.1:3000');
+  const normalized = url.includes('%25') ? url.replace(/%25([0-9A-Fa-f]{2})/g, '%$1') : url;
+  const isLocalhostUrl = normalized.includes('localhost:3000') || normalized.includes('127.0.0.1:3000');
   const isBaseUrlLocalhost = baseUrl.includes('localhost:3000') || baseUrl.includes('127.0.0.1:3000');
   if (isLocalhostUrl && !isBaseUrlLocalhost) {
-    return url
+    return normalized
       .replace(/^https?:\/\/localhost:3000/, baseUrl)
       .replace(/^https?:\/\/127\.0\.0\.1:3000/, baseUrl);
   }
-  return url;
+  return normalized;
 }
 
 export function getImageUrl(

@@ -81,7 +81,8 @@ const getImageUrl = (image: any): string => {
   if (!image) return '/placeholder.png';
   const baseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
-  const resolveAbsoluteUrl = (url: string): string => {
+  const resolveAbsoluteUrl = (rawUrl: string): string => {
+    const url = rawUrl.includes('%25') ? rawUrl.replace(/%25([0-9A-Fa-f]{2})/g, '%$1') : rawUrl;
     if (url.startsWith('http') || url.startsWith('//')) {
       const isLocalhostUrl = url.includes('localhost:3000') || url.includes('127.0.0.1:3000');
       const isBaseUrlLocalhost = baseUrl.includes('localhost:3000') || baseUrl.includes('127.0.0.1:3000');
