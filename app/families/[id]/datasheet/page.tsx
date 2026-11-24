@@ -15,6 +15,7 @@ const PARAM_LABELS: Record<string, string> = {
   colour: 'Colour',
   wattage: 'Power (W)',
   luminousFlux: 'Luminous Flux (lm)',
+  usefulLuminousFlux: 'Useful Luminous Flux (lm)',
   colourTemperature: 'CCT (K)',
   cri: 'CRI (Ra)',
   efficacy: 'Efficacy (lm/W)',
@@ -554,6 +555,8 @@ const getRawSpecValue = (sku: any, paramKey: string): string => {
       return findVal(['correlated_colour_temperature', 'cct_k', 'colour_temperature', 'colourTemperature', 'CCT', 'colour_temp', 'colortemp']);
     case 'luminousFlux':
       return findVal(['total_luminous_flux_lm', 'useful_luminous_flux_lm', 'luminousFlux', 'flux']);
+    case 'usefulLuminousFlux':
+      return findVal(['useful_luminous_flux_90_cone', 'useful_luminous_flux_120_cone']);
     case 'inrushCurrent':
       return findVal(['inrush_current_a', 'inrushCurrent', 'inrush_current', 'Inrush Current (A)', 'Inrush current']);
     case 'inrushDuration':

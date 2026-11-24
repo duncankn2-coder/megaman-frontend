@@ -2133,6 +2133,7 @@ export default function FamilyDetailClient({
                     {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Finish / Colour')}</th>}
                     {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Power (W)', true)}</th>}
                     {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Luminous Flux (lm)', true)}</th>}
+                    {activeParams.includes('usefulLuminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Useful Luminous Flux (lm)', true)}</th>}
                     {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('CCT (K)', true)}</th>}
                     {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('CRI (Ra)', true)}</th>}
                     {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Efficacy (lm/W)', true)}</th>}
@@ -2259,6 +2260,17 @@ export default function FamilyDetailClient({
                                   {subFlux}
                                 </td>
                               )}
+                              {activeParams.includes('usefulLuminousFlux') && (() => {
+                                const rawUsefulCone = getSkuSpec(sku, ['useful_luminous_flux_90_cone', 'useful_luminous_flux_120_cone'], '—');
+                                const displayUsefulCone = rawUsefulCone !== '—' && rawUsefulCone.includes('@')
+                                  ? getFluxForCct(rawUsefulCone, subCct, cctIndex, allCcts.length)
+                                  : rawUsefulCone;
+                                return (
+                                  <td className="py-2.5 px-4 text-center font-normal text-black whitespace-nowrap">
+                                    {displayUsefulCone}
+                                  </td>
+                                );
+                              })()}
                               {activeParams.includes('colourTemperature') && (
                                 <td className="py-2.5 px-4 text-center font-normal text-black whitespace-nowrap">
                                   {subCct}
