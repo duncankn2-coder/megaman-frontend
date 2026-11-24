@@ -325,7 +325,7 @@ const expandSpecNames = (specNames: string[]): string[] => {
     if (lower.includes('model') || lower.includes('item_no') || lower.includes('art_nr')) {
       expanded.push('customer_model_no_new', 'model_number', 'yk_model_no', 'customer_model_no_old', 'modelNo');
     }
-    if (lower.includes('flux') || lower.includes('lumen')) {
+    if ((lower.includes('flux') || lower.includes('lumen')) && !lower.includes('cone')) {
       expanded.push(
         'total_luminous_flux_lm',
         'useful_luminous_flux_lm',
@@ -3036,11 +3036,21 @@ export default function FamilyDetailClient({
                                 <div className="border border-gray-250 overflow-hidden shadow-sm">
                                   <table className="w-full text-left border-collapse">
                                     <tbody className="divide-y divide-gray-150 bg-white">
-                                      {[
-                                        { label: 'Total Luminous Flux (lm)', value: formattedFlux },
-                                        { label: 'Luminous Efficacy (lm/W)', value: efficacyVal },
-                                        { label: 'Rated Life (hrs)', value: getRatedLife(activeDrawerProduct) }
-                                      ].map((row, index) => (
+                                      {(() => {
+                                        const usefulConeFlux = getSkuSpec(
+                                          activeDrawerProduct,
+                                          ['useful_luminous_flux_90_cone', 'useful_luminous_flux_120_cone'],
+                                          '—'
+                                        );
+                                        return [
+                                          { label: 'Total Luminous Flux (lm)', value: formattedFlux },
+                                          ...(usefulConeFlux && usefulConeFlux !== '—'
+                                            ? [{ label: 'Useful Luminous Flux (lm)', value: formatMultiCondition(usefulConeFlux) }]
+                                            : []),
+                                          { label: 'Luminous Efficacy (lm/W)', value: efficacyVal },
+                                          { label: 'Rated Life (hrs)', value: getRatedLife(activeDrawerProduct) }
+                                        ];
+                                      })().map((row, index) => (
                                         <tr key={index} className={index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}>
                                           <td className="py-2 px-4 font-bold text-gray-500 w-1/2">{row.label}</td>
                                           <td className="py-2 px-4 text-gray-900 font-medium">{row.value}</td>
