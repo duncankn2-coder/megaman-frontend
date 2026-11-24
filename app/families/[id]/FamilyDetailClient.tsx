@@ -138,6 +138,8 @@ interface Family {
   photometryIes?: MediaFile | null;
   datasheet?: {
     enabled?: boolean;
+    mode?: 'editor' | 'upload' | null;
+    uploadedPdf?: MediaFile | any | null;
     title?: string | null;
     subtitle?: string | null;
     headerImage?: any;
@@ -1647,7 +1649,16 @@ export default function FamilyDetailClient({
                       View {accessoriesList.length} {accessoriesList.length === 1 ? 'Accessory' : 'Accessories'} &darr;
                     </a>
                   )}
-                  {Boolean(family.datasheet?.enabled) && (
+                  {family.datasheet?.mode === 'upload' && isValidFile(family.datasheet?.uploadedPdf) ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadFile(family.datasheet!.uploadedPdf, `${family.name} Family Datasheet`)}
+                      className="bg-white border border-[#005288] text-[#005288] hover:bg-[#005288] hover:text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 transition-all duration-300 shadow-sm inline-flex items-center justify-center gap-2 text-center cursor-pointer"
+                    >
+                      <FontAwesomeIcon icon={faFilePdf} className="text-xs" />
+                      Family Datasheet
+                    </button>
+                  ) : Boolean(family.datasheet?.enabled) ? (
                     <Link
                       href={`/families/${family.slug || family.id}/datasheet`}
                       target="_blank"
@@ -1656,7 +1667,7 @@ export default function FamilyDetailClient({
                       <FontAwesomeIcon icon={faFilePdf} className="text-xs" />
                       Family Datasheet
                     </Link>
-                  )}
+                  ) : null}
                   {Boolean(family.userManual) && (
                     <button
                       type="button"
