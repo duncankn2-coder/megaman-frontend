@@ -3042,10 +3042,18 @@ export default function FamilyDetailClient({
                                           ['useful_luminous_flux_90_cone', 'useful_luminous_flux_120_cone'],
                                           '—'
                                         );
+                                        const peakIntensity = getSkuSpec(
+                                          activeDrawerProduct,
+                                          ['peak_luminous_intensity', 'max_luminous_intensity', 'luminous_intensity'],
+                                          '—'
+                                        );
                                         return [
                                           { label: 'Total Luminous Flux (lm)', value: formattedFlux },
                                           ...(usefulConeFlux && usefulConeFlux !== '—'
                                             ? [{ label: 'Useful Luminous Flux (lm)', value: formatMultiCondition(usefulConeFlux) }]
+                                            : []),
+                                          ...(peakIntensity && peakIntensity !== '—'
+                                            ? [{ label: 'Max. Luminous Intensity (cd)', value: formatMultiCondition(peakIntensity) }]
                                             : []),
                                           { label: 'Luminous Efficacy (lm/W)', value: efficacyVal },
                                           { label: 'Rated Life (hrs)', value: getRatedLife(activeDrawerProduct) }
