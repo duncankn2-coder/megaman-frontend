@@ -166,9 +166,9 @@ export const LOCATIONS: LocationOption[] = [
     id: 'uk',
     name: 'United Kingdom',
     shortCode: 'UK',
-    domain: 'megamanuk.com',
+    domain: 'uk.megaman.cc',
     flag: '🇬🇧',
-    description: 'United Kingdom Site (megamanuk.com)',
+    description: 'United Kingdom Site (uk.megaman.cc)',
   },
 ];
 
@@ -204,11 +204,13 @@ export default function Header({ initialSiteContext = 'international' }: HeaderP
   // Close menus on resize and detect location
   useEffect(() => {
     // Detect site context
-    const host = window.location.hostname;
-    if (host.includes('megamanuk.com') || host.includes('uk.')) {
+    const host = window.location.hostname.toLowerCase();
+    if (host.includes('megamanuk.com') || host === 'uk.megaman.cc' || host.startsWith('uk.')) {
       setCurrentLocation('uk');
-    } else if (host.includes('hk.megaman.cc') || host.startsWith('hk.')) {
+    } else if (host === 'hk.megaman.cc' || host.startsWith('hk.')) {
       setCurrentLocation('hk');
+    } else if (host === 'megaman.cc' || host === 'www.megaman.cc') {
+      setCurrentLocation('international');
     } else {
       const match = document.cookie.match(/x-site-context=([^;]+)/);
       if (match && (match[1] === 'hk' || match[1] === 'uk' || match[1] === 'international')) {
@@ -242,10 +244,10 @@ export default function Header({ initialSiteContext = 'international' }: HeaderP
     document.cookie = `x-site-context=${site}; path=/; max-age=31536000`;
     setIsLocationOpen(false);
 
-    const host = window.location.hostname;
+    const host = window.location.hostname.toLowerCase();
     if (host.includes('megaman.cc') || host.includes('megamanuk.com')) {
       if (site === 'uk') {
-        window.location.href = 'https://megamanuk.com';
+        window.location.href = 'https://uk.megaman.cc';
         return;
       } else if (site === 'hk') {
         window.location.href = 'https://hk.megaman.cc';

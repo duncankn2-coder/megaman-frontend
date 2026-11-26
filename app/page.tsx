@@ -5,19 +5,35 @@ import { getSiteContext } from './utils/siteContext';
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: 'MEGAMAN | LED, Luminaires, Components, Smart Lighting & Energy-efficient Lighting',
-  description: 'Pioneering energy-efficient architectural and smart home LED lighting systems worldwide since 1994. Explore Siena, Toledo, Triona, and Ingenium Matter solutions.',
-  openGraph: {
-    siteName: 'megaman.cc',
+export async function generateMetadata(): Promise<Metadata> {
+  const siteContext = await getSiteContext();
+  const canonicalUrl =
+    siteContext === 'uk'
+      ? 'https://uk.megaman.cc'
+      : siteContext === 'hk'
+        ? 'https://hk.megaman.cc'
+        : 'https://megaman.cc';
+  const siteName =
+    siteContext === 'uk'
+      ? 'uk.megaman.cc'
+      : siteContext === 'hk'
+        ? 'hk.megaman.cc'
+        : 'megaman.cc';
+
+  return {
     title: 'MEGAMAN | LED, Luminaires, Components, Smart Lighting & Energy-efficient Lighting',
     description: 'Pioneering energy-efficient architectural and smart home LED lighting systems worldwide since 1994. Explore Siena, Toledo, Triona, and Ingenium Matter solutions.',
-    url: 'https://megaman.cc',
-  },
-  alternates: {
-    canonical: 'https://megaman.cc',
-  },
-};
+    openGraph: {
+      siteName,
+      title: 'MEGAMAN | LED, Luminaires, Components, Smart Lighting & Energy-efficient Lighting',
+      description: 'Pioneering energy-efficient architectural and smart home LED lighting systems worldwide since 1994. Explore Siena, Toledo, Triona, and Ingenium Matter solutions.',
+      url: canonicalUrl,
+    },
+    alternates: {
+      canonical: canonicalUrl,
+    },
+  };
+}
 
 async function getHomePageData() {
   try {
