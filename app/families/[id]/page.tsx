@@ -229,11 +229,32 @@ export default async function FamilyDetailPage({
   });
   const accProductIds = Array.from(accIdSet);
 
-  const [initialSkus, initialAccessorySkus, initialSymbols] = await Promise.all([
+  const [rawInitialSkus, rawInitialAccessorySkus, initialSymbols] = await Promise.all([
     fetchSkusByProductIds(mainProductIds, mainProductsById),
     fetchSkusByProductIds(accProductIds, accProductsById),
     fetchAllSymbols(),
   ]);
+
+  // Guard against SKUs mis-linked to an active product when their spec model belongs to a site-excluded product
+  const excludedProductNames = new Set<string>(
+    [...(family.products || []), ...((family as any).accessoryProducts || [])]
+      .filter((p: any) => typeof p === 'object' && p !== null && !matchesSite(p) && p.name)
+      .map((p: any) => String(p.name).trim().toLowerCase())
+  );
+
+  const isSkuAllowedForSite = (sku: any): boolean => {
+    const specModel =
+      sku?.specifications?.customer_model_no_new ||
+      sku?.specifications?.new_erp_model_no ||
+      sku?.specifications?.model_number;
+    if (specModel && excludedProductNames.has(String(specModel).trim().toLowerCase())) {
+      return false;
+    }
+    return true;
+  };
+
+  const initialSkus = rawInitialSkus.filter(isSkuAllowedForSite);
+  const initialAccessorySkus = rawInitialAccessorySkus.filter(isSkuAllowedForSite);
 
   return (
     <FamilyDetailClient
