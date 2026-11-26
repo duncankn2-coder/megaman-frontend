@@ -76,14 +76,14 @@ export default async function ProductsPage() {
 
   // Filter families and products in each family to match the current site context and sort by priority
   const filteredFamilies = families
-    .filter(family => !family.sites || family.sites.length === 0 || family.sites.includes(siteContext))
+    .filter(family => (!family.sites || family.sites.length === 0 ? siteContext !== 'hk' : family.sites.includes(siteContext)))
     .map(family => {
       const rawProducts = family.products || [];
       if (rawProducts.length === 0) {
         return family;
       }
       const matchingProducts = rawProducts.filter(product => {
-        return !product.sites || product.sites.length === 0 || product.sites.includes(siteContext);
+        return (!product.sites || product.sites.length === 0) ? siteContext !== 'hk' : product.sites.includes(siteContext);
       });
       return {
         ...family,

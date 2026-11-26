@@ -34,7 +34,7 @@ export default async function ProjectsPage() {
   ]);
 
   const filteredProjects = projects.filter(
-    (project: { sites?: string[] }) => !project.sites || project.sites.length === 0 || project.sites.includes(siteContext),
+    (project: { sites?: string[] }) => (!project.sites || project.sites.length === 0 ? siteContext !== 'hk' : project.sites.includes(siteContext)),
   );
 
   return (
