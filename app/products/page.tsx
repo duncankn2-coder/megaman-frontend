@@ -31,6 +31,7 @@ interface Family {
   name: string;
   description?: string;
   priority?: number;
+  sites?: string[];
   media: MediaItem[];
   products: Product[];
   categories?: {
@@ -47,6 +48,7 @@ async function getFamilies(): Promise<Family[]> {
       'select[name]=true',
       'select[slug]=true',
       'select[priority]=true',
+      'select[sites]=true',
       'select[description]=true',
       'select[categories]=true',
       'select[media]=true',
@@ -72,8 +74,9 @@ export default async function ProductsPage() {
     getSiteContext(),
   ]);
 
-  // Filter products in each family to match the current site context and sort by priority
+  // Filter families and products in each family to match the current site context and sort by priority
   const filteredFamilies = families
+    .filter(family => !family.sites || family.sites.length === 0 || family.sites.includes(siteContext))
     .map(family => {
       const rawProducts = family.products || [];
       if (rawProducts.length === 0) {

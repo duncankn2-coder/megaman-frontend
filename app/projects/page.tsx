@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import ProjectsListClient from './ProjectsListClient';
+import { getSiteContext } from '../utils/siteContext';
 
 export const revalidate = 300;
 
@@ -27,11 +28,18 @@ async function getProjects() {
 }
 
 export default async function ProjectsPage() {
-  const projects = await getProjects();
+  const [projects, siteContext] = await Promise.all([
+    getProjects(),
+    getSiteContext(),
+  ]);
+
+  const filteredProjects = projects.filter(
+    (project: { sites?: string[] }) => !project.sites || project.sites.length === 0 || project.sites.includes(siteContext),
+  );
 
   return (
     <Suspense fallback={<div className="container mx-auto px-6 py-24 text-center font-mono text-xs uppercase tracking-widest text-gray-400">Loading portfolio...</div>}>
-      <ProjectsListClient initialProjects={projects} />
+      <ProjectsListClient initialProjects={filteredProjects} />
     </Suspense>
   );
 }
