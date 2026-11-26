@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import FamilyDetailClient from './FamilyDetailClient';
+import { getSiteContext } from '../../utils/siteContext';
 
 export const revalidate = 300;
 
@@ -99,25 +100,6 @@ const getFamily = cache(async function getFamily(idOrSlug: string): Promise<Fami
   }
 });
 
-export async function generateStaticParams() {
-  try {
-    const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-    const res = await fetch(`${payloadUrl}/api/families?limit=100&depth=0`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.docs || []).flatMap((fam: any) => {
-      const entries: { id: string }[] = [];
-      if (fam.id) entries.push({ id: String(fam.id) });
-      if (fam.slug) entries.push({ id: String(fam.slug) });
-      return entries;
-    });
-  } catch {
-    return [];
-  }
-}
-
 export async function generateMetadata({
   params
 }: {
@@ -180,19 +162,45 @@ export default async function FamilyDetailPage({
   params: Promise<{ id: string }>
 }) {
   const resolvedParams = await params;
-  const family = await getFamily(resolvedParams.id);
+  const [family, siteContext] = await Promise.all([
+    getFamily(resolvedParams.id),
+    getSiteContext(),
+  ]);
 
   if (!family) {
     notFound();
   }
 
+  const matchesSite = (item: any): boolean => {
+    if (!item || typeof item !== 'object') return true;
+    if (!Array.isArray(item.sites) || item.sites.length === 0) {
+      return siteContext !== 'hk';
+    }
+    return item.sites.includes(siteContext);
+  };
+
+  const filteredFamily: any = {
+    ...family,
+    products: (family.products || []).filter(matchesSite),
+    accessoryProducts: Array.isArray((family as any).accessoryProducts)
+      ? (family as any).accessoryProducts.filter(matchesSite)
+      : (family as any).accessoryProducts,
+    layout: Array.isArray((family as any).layout)
+      ? (family as any).layout.map((block: any) =>
+          block && Array.isArray(block.products)
+            ? { ...block, products: block.products.filter(matchesSite) }
+            : block
+        )
+      : (family as any).layout,
+  };
+
   const accessoryIdSet = new Set<string>(
-    ((family as any).accessoryProducts || [])
+    (filteredFamily.accessoryProducts || [])
       .map((p: any) => (typeof p === 'object' && p?.id ? String(p.id) : String(p)))
       .filter(Boolean)
   );
 
-  const mainProducts = (family.products || []).filter(
+  const mainProducts = (filteredFamily.products || []).filter(
     (p: any) => typeof p === 'object' && p !== null && !accessoryIdSet.has(String(p.id))
   );
   const mainProductIds = mainProducts.map((p: any) => String(p.id));
@@ -200,7 +208,7 @@ export default async function FamilyDetailPage({
 
   const accIdSet = new Set<string>();
   const accProductsById = new Map<string, any>();
-  ((family as any).accessoryProducts || []).forEach((p: any) => {
+  (filteredFamily.accessoryProducts || []).forEach((p: any) => {
     if (typeof p === 'object' && p?.id) {
       accIdSet.add(String(p.id));
       accProductsById.set(String(p.id), p);
@@ -208,13 +216,13 @@ export default async function FamilyDetailPage({
       accIdSet.add(p);
     }
   });
-  ((family as any).accessories || []).forEach((acc: any) => {
+  (filteredFamily.accessories || []).forEach((acc: any) => {
     if (acc?.product) {
       const pid = typeof acc.product === 'object' && acc.product?.id ? String(acc.product.id) : String(acc.product);
       if (pid) accIdSet.add(pid);
     }
   });
-  (family.products || []).forEach((p: any) => {
+  (filteredFamily.products || []).forEach((p: any) => {
     if (p && typeof p === 'object' && p.id) {
       accProductsById.set(String(p.id), p);
     }
@@ -229,7 +237,7 @@ export default async function FamilyDetailPage({
 
   return (
     <FamilyDetailClient
-      family={family}
+      family={filteredFamily}
       initialSkus={initialSkus}
       initialAccessorySkus={initialAccessorySkus}
       initialSymbols={initialSymbols}
