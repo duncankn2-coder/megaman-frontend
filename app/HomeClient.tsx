@@ -244,7 +244,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
               return (
                 <section 
                   key={`hero-${blockIdx}`}
-                  className={`relative bg-gray-50 border-b border-gray-200 min-h-[640px] md:h-[75vh] flex items-center overflow-hidden group ${currentSlideData.ctaLink ? 'cursor-pointer' : ''}`}
+                  className={`relative bg-gray-50 border-b border-gray-200 w-full overflow-hidden group ${!currentSlideData.image ? 'min-h-[320px]' : ''} ${currentSlideData.ctaLink ? 'cursor-pointer' : ''}`}
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                 >
@@ -267,8 +267,8 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                     )
                   )}
 
-                  {/* Slide Background Image or Video */}
-                  <div className="absolute inset-0 z-0">
+                  {/* Slide Background Image or Video (fit to width; hero height follows natural banner ratio) */}
+                  <div className="relative w-full z-0">
                     {(() => {
                       const media = currentSlideData.image;
                       if (!media) return null;
@@ -284,7 +284,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                             loop
                             muted
                             playsInline
-                            className="w-full h-full object-cover transition-opacity duration-700 sharpen-media"
+                            className="w-full h-auto block transition-opacity duration-700 sharpen-media"
                           />
                         );
                       } else {
@@ -293,11 +293,12 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                           <Image 
                             src={url} 
                             alt={getImageAlt(media, currentSlideData.title || 'Slide')} 
-                            fill
-                            quality={85}
+                            width={typeof media === 'object' && media?.width ? media.width : 1920}
+                            height={typeof media === 'object' && media?.height ? media.height : 580}
+                            quality={95}
                             sizes="100vw"
                             unoptimized={isSvg}
-                            className="object-cover transition-opacity duration-700 sharpen-media"
+                            className="w-full h-auto block transition-opacity duration-700 sharpen-media"
                             priority={activeSlide === 0}
                           />
                         );
@@ -305,74 +306,76 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                     })()}
                   </div>
 
-                  <div className="container mx-auto max-w-7xl px-6 md:px-12 relative z-20 w-full pointer-events-none">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                      
-                      {/* Left: Text Details */}
-                      <div className="lg:col-span-6 space-y-6">
-                        {currentSlideData.subtitle && (() => {
-                          const subColor = resolveSubtitleColor(currentSlideData.subtitleColor, currentSlideData.subtitleCustomColor, 'text-[#005288]');
-                          const subSize = resolveSubtitleSize(currentSlideData.subtitleSize, 'text-[10px]');
-                          return (
-                            <div className="flex items-center gap-3">
-                              <span 
-                                className={`h-[2px] w-10 ${subColor.barClass || ''}`}
-                                style={subColor.barStyle}
-                              />
-                              <p 
-                                className={`${subSize} uppercase tracking-[0.25em] font-bold ${subColor.className}`}
-                                style={subColor.style}
+                  <div className="absolute inset-0 z-20 flex items-center pointer-events-none">
+                    <div className="container mx-auto max-w-7xl px-6 md:px-12 w-full">
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
+                        
+                        {/* Left: Text Details */}
+                        <div className="lg:col-span-6 space-y-2 md:space-y-4 lg:space-y-6">
+                          {currentSlideData.subtitle && (() => {
+                            const subColor = resolveSubtitleColor(currentSlideData.subtitleColor, currentSlideData.subtitleCustomColor, 'text-[#005288]');
+                            const subSize = resolveSubtitleSize(currentSlideData.subtitleSize, 'text-[10px]');
+                            return (
+                              <div className="flex items-center gap-3">
+                                <span 
+                                  className={`h-[2px] w-10 ${subColor.barClass || ''}`}
+                                  style={subColor.barStyle}
+                                />
+                                <p 
+                                  className={`${subSize} uppercase tracking-[0.25em] font-bold ${subColor.className}`}
+                                  style={subColor.style}
+                                >
+                                  {currentSlideData.subtitle}
+                                </p>
+                              </div>
+                            );
+                          })()}
+
+                          {!currentSlideData.hideTitle && currentSlideData.title && (() => {
+                            const tColor = resolveTitleColor(currentSlideData.titleColor, currentSlideData.titleCustomColor, 'text-gray-900');
+                            const tSize = resolveTitleSize(currentSlideData.titleSize, 'text-4xl md:text-5xl');
+                            const isExplicitColor = currentSlideData.titleColor && currentSlideData.titleColor !== 'default';
+                            return (
+                              <h1 
+                                className={`${tSize} font-light uppercase tracking-widest leading-[1.1] ${tColor.className}`}
+                                style={tColor.style}
                               >
-                                {currentSlideData.subtitle}
-                              </p>
+                                {currentSlideData.title.split(' ').map((word, i) => {
+                                  const isBlue = word.toLowerCase() === 'downloads' || word.toLowerCase() === 'circular' || word.toLowerCase() === 'elegance' || word.toLowerCase() === 'smart' || word.toLowerCase() === 'home' || word.toLowerCase() === 'iot';
+                                  return (
+                                    <span key={i} className={isBlue ? (isExplicitColor ? "font-bold" : "font-bold text-[#005288]") : ""}>
+                                      {word}{' '}
+                                      {i === 1 && (currentSlideData.title?.split(' ').length ?? 0) > 2 && <br />}
+                                    </span>
+                                  );
+                                })}
+                              </h1>
+                            );
+                          })()}
+
+                          {currentSlideData.description && (
+                            <p className="text-sm md:text-base text-gray-500 font-light max-w-md leading-relaxed">
+                              {currentSlideData.description}
+                            </p>
+                          )}
+
+                          {/* CTA button (Visual button, whole banner is clickable) */}
+                          {!currentSlideData.hideButton && currentSlideData.ctaText && (
+                            <div className="pt-2 md:pt-6">
+                              <span 
+                                className="bg-[#005288] group-hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
+                              >
+                                <FontAwesomeIcon icon={faArrowRight} />
+                                {currentSlideData.ctaText}
+                              </span>
                             </div>
-                          );
-                        })()}
+                          )}
+                        </div>
 
-                        {!currentSlideData.hideTitle && currentSlideData.title && (() => {
-                          const tColor = resolveTitleColor(currentSlideData.titleColor, currentSlideData.titleCustomColor, 'text-gray-900');
-                          const tSize = resolveTitleSize(currentSlideData.titleSize, 'text-4xl md:text-5xl');
-                          const isExplicitColor = currentSlideData.titleColor && currentSlideData.titleColor !== 'default';
-                          return (
-                            <h1 
-                              className={`${tSize} font-light uppercase tracking-widest leading-[1.1] ${tColor.className}`}
-                              style={tColor.style}
-                            >
-                              {currentSlideData.title.split(' ').map((word, i) => {
-                                const isBlue = word.toLowerCase() === 'downloads' || word.toLowerCase() === 'circular' || word.toLowerCase() === 'elegance' || word.toLowerCase() === 'smart' || word.toLowerCase() === 'home' || word.toLowerCase() === 'iot';
-                                return (
-                                  <span key={i} className={isBlue ? (isExplicitColor ? "font-bold" : "font-bold text-[#005288]") : ""}>
-                                    {word}{' '}
-                                    {i === 1 && (currentSlideData.title?.split(' ').length ?? 0) > 2 && <br />}
-                                  </span>
-                                );
-                              })}
-                            </h1>
-                          );
-                        })()}
+                        {/* Right: Empty Column / Spacer to let full bleed background show */}
+                        <div className="lg:col-span-6 w-full"></div>
 
-                        {currentSlideData.description && (
-                          <p className="text-sm md:text-base text-gray-500 font-light max-w-md leading-relaxed">
-                            {currentSlideData.description}
-                          </p>
-                        )}
-
-                        {/* CTA button (Visual button, whole banner is clickable) */}
-                        {!currentSlideData.hideButton && currentSlideData.ctaText && (
-                          <div className="pt-6">
-                            <span 
-                              className="bg-[#005288] group-hover:bg-[#003c64] text-white py-3.5 px-8 text-xs font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-all shadow-sm"
-                            >
-                              <FontAwesomeIcon icon={faArrowRight} />
-                              {currentSlideData.ctaText}
-                            </span>
-                          </div>
-                        )}
                       </div>
-
-                      {/* Right: Empty Column / Spacer to let full bleed background show */}
-                      <div className="lg:col-span-6 w-full"></div>
-
                     </div>
                   </div>
 
@@ -384,7 +387,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                           e.stopPropagation();
                           handlePrevSlide();
                         }}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-30 pointer-events-auto"
+                        className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-30 pointer-events-auto"
                       >
                         <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
                       </button>
@@ -393,7 +396,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
                           e.stopPropagation();
                           handleNextSlide();
                         }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-30 pointer-events-auto"
+                        className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 border border-gray-200 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-all cursor-pointer focus:outline-none shadow-sm z-30 pointer-events-auto"
                       >
                         <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
                       </button>
@@ -402,7 +405,7 @@ export default function HomeClient({ layoutData, initialProductsCount, initialLa
 
                   {/* Bottom Slide Indicators */}
                   {slides.length > 1 && (
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30 pointer-events-auto">
+                    <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30 pointer-events-auto">
                       {slides.map((_, idx) => (
                         <button
                           key={idx}
