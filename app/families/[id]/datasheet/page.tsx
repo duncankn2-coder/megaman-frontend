@@ -584,8 +584,10 @@ const getSpecValue = (sku: any, paramKey: string): string => {
   };
 
   switch (paramKey) {
-    case 'mmCode':
-      return sku.name || '—';
+    case 'mmCode': {
+      const rawName = String(sku.name || '').trim();
+      return !rawName || /^tbd:/i.test(rawName) || /^[-–—]+$/.test(rawName) ? '—' : rawName;
+    }
     case 'modelNo':
       return findVal(['customer_model_no_new', 'model_number', 'yk_model_no', 'model_identifier', 'modelNo', 'name']);
     case 'optionCode':

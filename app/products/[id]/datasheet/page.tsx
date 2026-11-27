@@ -243,7 +243,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   const isFilled = (val: any): boolean => {
     if (val === undefined || val === null) return false;
     const s = String(val).trim();
-    return s !== '' && s !== '—' && s !== '-' && s.toLowerCase() !== 'undefined' && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'n/a';
+    return s !== '' && s !== '—' && !/^[-–—]+$/.test(s) && !/^tbd:/i.test(s) && s.toLowerCase() !== 'undefined' && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'n/a';
   };
 
   const getRawSpec = (specName: string, defaultValue = '—'): string => {
@@ -402,7 +402,7 @@ export default async function ProductDatasheetPage({ params, searchParams }: Pag
   const luminaireProductInfoSpecs = filterSpecs([
     { label: 'Model Number', value: product.name || selectedSku?.modelNumber || getSpec('customer_model_no_new') || getSpec('customer_model_no_old') },
     { label: 'Product Code', value: selectedSku?.optionCode || getSpec('option_code') || getSpec('yk_product_code') || '—' },
-    { label: 'MM Code', value: selectedSku?.name || getSpec('model_identifier') || '—' },
+    { label: 'MM Code', value: (selectedSku?.name && isFilled(selectedSku.name) ? selectedSku.name : '') || getSpec('model_identifier') || '—' },
     { label: 'Housing Colour', value: getSpec('fitting_colour') },
     { label: 'IP Rating', value: getSpec('ip') },
     { label: 'Series', value: familyName },

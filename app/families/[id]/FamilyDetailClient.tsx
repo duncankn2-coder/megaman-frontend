@@ -454,13 +454,18 @@ const parseDescriptionSpecs = (desc: string): Record<string, string> => {
   return specs;
 };
 
-const formatMmCode = (raw?: string | null): string => {
-  if (!raw) return '—';
+const isPlaceholderMmCode = (raw?: string | null): boolean => {
+  if (!raw) return true;
   const trimmed = String(raw).trim();
-  if (!trimmed) return '—';
+  return !trimmed || /^tbd:/i.test(trimmed) || /^[-–—]+$/.test(trimmed);
+};
+
+const formatMmCode = (raw?: string | null): string => {
+  if (isPlaceholderMmCode(raw)) return '—';
+  const trimmed = String(raw).trim();
   if (trimmed.includes('/')) {
     const afterSlash = trimmed.split('/').pop()?.trim();
-    if (afterSlash) return afterSlash;
+    if (afterSlash && !isPlaceholderMmCode(afterSlash)) return afterSlash;
   }
   return trimmed;
 };
@@ -548,7 +553,7 @@ const getRawSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string
   // 1. MM Code check: MM code is the ONLY parameter that comes from the SKU document
   for (const name of expandedNames) {
     if (name === 'mm_code' || name === 'sku_name' || name === 'yk_product_code') {
-      if (isFieldFilled(sku.name)) return String(sku.name).trim();
+      if (isFieldFilled(sku.name) && !isPlaceholderMmCode(sku.name)) return String(sku.name).trim();
     }
   }
 
@@ -589,7 +594,7 @@ const getRawSkuSpec = (sku: any, specNames: string[], defaultValue = ''): string
     if (name === 'customer_model_no_new' || name === 'model_number' || name === 'modelNo' || name === 'model_identifier' || name === 'customer_model_no_old') {
       if (isFieldFilled(parent?.name)) return String(parent.name).trim();
       if (isFieldFilled(sku.modelNumber)) return String(sku.modelNumber).trim();
-      if (isFieldFilled(sku.name)) return String(sku.name).trim();
+      if (isFieldFilled(sku.name) && !isPlaceholderMmCode(sku.name)) return String(sku.name).trim();
     }
     if (name === 'colour' || name === 'color' || name === 'Colour' || name === 'Color' || name === 'fitting_colour' || name === 'luminaires_color') {
       const col = sku.colour || sku.color || parent?.colour || parent?.color;
@@ -1401,7 +1406,7 @@ export default function FamilyDetailClient({
 
       const parentName = typeof sku.product === 'object' ? sku.product?.name : '';
       const matchesSearch = searchQuery === '' ||
-        (sku.name && sku.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (sku.name && !isPlaceholderMmCode(sku.name) && sku.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (sku.modelNumber && sku.modelNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (parentName && parentName.toLowerCase().includes(searchQuery.toLowerCase()));
 
