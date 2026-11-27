@@ -27,7 +27,10 @@ import {
   faChevronLeft,
   faChevronRight,
   faProjectDiagram,
-  faExternalLinkAlt
+  faExternalLinkAlt,
+  faSort,
+  faSortUp,
+  faSortDown
 } from '@fortawesome/free-solid-svg-icons';
 
 interface MediaFile {
@@ -810,6 +813,114 @@ const renderParamHeader = (label: string, isCenter = false) => {
   );
 };
 
+const NUMERIC_SORT_KEYS = new Set([
+  'wattage',
+  'luminousFlux',
+  'usefulLuminousFlux',
+  'colourTemperature',
+  'cri',
+  'efficacy',
+  'beamAngle',
+  'ip',
+  'ik',
+  'length',
+  'width',
+  'height',
+  'diameter',
+  'recessedCutOut',
+  'weight',
+  'inrushCurrent',
+  'inrushDuration',
+  'maxNoOfLuminaire',
+  'mcbB10',
+  'mcbB16',
+  'mcbC10',
+  'mcbC16',
+  'thd',
+]);
+
+const getSortValueForColumn = (sku: any, key: string): string => {
+  const parent = typeof sku.product === 'object' && sku.product !== null ? sku.product : null;
+  switch (key) {
+    case 'mmCode':
+      return formatMmCode(sku.name);
+    case 'modelNo':
+      return getSkuSpec(sku, ['customer_model_no_new', 'model_number', 'yk_model_no', 'modelNo'], parent?.name || sku.modelNumber || '—');
+    case 'colour':
+      return getSkuSpec(sku, ['fitting_colour', 'colour', 'color', 'luminaires_color'], '—');
+    case 'wattage':
+      return getSkuSpec(sku, ['on_mode_power_w', 'power', 'System power', 'wattage'], '—');
+    case 'luminousFlux':
+      return getSkuSpec(sku, ['total_luminous_flux_lm', 'useful_luminous_flux_lm', 'luminousFlux', 'Luminous flux', 'flux', 'lumens'], '—');
+    case 'usefulLuminousFlux':
+      return getSkuSpec(sku, ['useful_luminous_flux_90_cone', 'useful_luminous_flux_120_cone'], '—');
+    case 'colourTemperature': {
+      const cct = getSkuSpec(sku, ['correlated_colour_temperature', 'cct_k', 'colourTemperature', 'Color Temperature', 'CCT', 'colour_temperature'], '—');
+      const allCcts = parseCcts(cct);
+      return allCcts[0] || cct;
+    }
+    case 'cri':
+      return getSkuSpec(sku, ['ra', 'cri', 'CRI', 'Colour rendering index'], '—');
+    case 'efficacy': {
+      let efficacy = getSkuSpec(sku, ['total_mains_efficacy_lmw', 'efficacy', 'luminous_efficacy'], '—');
+      if (efficacy === '—') {
+        const flux = getSkuSpec(sku, ['total_luminous_flux_lm', 'useful_luminous_flux_lm', 'luminousFlux', 'Luminous flux', 'flux', 'lumens'], '—');
+        const power = getSkuSpec(sku, ['on_mode_power_w', 'power', 'System power', 'wattage'], '—');
+        const numF = parseInt(flux);
+        const numP = parseFloat(power);
+        if (!isNaN(numF) && !isNaN(numP) && numP > 0) {
+          efficacy = String(Math.round(numF / numP));
+        }
+      }
+      return efficacy;
+    }
+    case 'beamAngle':
+      return formatBeamAngle(getSkuSpec(sku, ['beam_angle', 'beamAngle', 'beam_angle_deg'], '—'));
+    case 'ip':
+      return formatIpRating(getSkuSpec(sku, ['ip', 'ipRating', 'IP rating', 'IP Rating', 'ip_rating'], '—'));
+    case 'ik':
+      return getSkuSpec(sku, ['ik', 'ikRating', 'ik_rating'], '—');
+    case 'length':
+      return getSkuSpec(sku, ['length_mm', 'length'], '—');
+    case 'width':
+      return getSkuSpec(sku, ['width_mm', 'width', 'width_w', 'light_source_outer_dimensions_width_mm'], '—');
+    case 'height':
+      return getSkuSpec(sku, ['height_mm', 'height', 'height_h', 'depth_mm', 'depth_d', 'light_source_outer_dimensions_high_mm'], '—');
+    case 'diameter':
+      return getSkuSpec(sku, ['diameter_mm', 'diameter'], '—');
+    case 'dimensions':
+      return getSkuSpec(sku, ['dimensions', 'dimension_mm'], '—');
+    case 'recessedCutOut':
+      return getSkuSpec(sku, ['recessed_cut_out_mm', 'recessed_cut_out', 'cut_out_mm'], '—');
+    case 'weight':
+      return getSkuSpec(sku, ['net_weight_g', 'weight'], '—');
+    case 'connector':
+      return getSkuSpec(sku, ['control_gear', 'driver_type', 'driver_model', 'dimming_type', 'type_terminal block', 'controlGear', 'connector'], '—');
+    case 'lampBase':
+      return getSkuSpec(sku, ['cap_type', 'lamp_holder_type', 'lamp_source', 'lampBase'], '—');
+    case 'voltage':
+      return getSkuSpec(sku, ['rated_voltage_v', 'voltage', 'Voltage'], '—');
+    case 'inrushCurrent':
+      return getRawSkuSpec(sku, ['inrush_current_a', 'inrushCurrent']) || '—';
+    case 'inrushDuration':
+      return getRawSkuSpec(sku, ['inrush_current_duration_uS', 'inrushDuration']) || '—';
+    case 'maxNoOfLuminaire':
+      return getRawSkuSpec(sku, ['max_no_lum', 'maxNoOfLuminaire']) || '—';
+    case 'mcbB10':
+      return getRawSkuSpec(sku, ['mcb_b10', 'mcbB10']) || '—';
+    case 'mcbB16':
+      return getRawSkuSpec(sku, ['mcb_b16', 'mcbB16']) || '—';
+    case 'mcbC10':
+      return getRawSkuSpec(sku, ['mcb_c10', 'mcbC10']) || '—';
+    case 'mcbC16':
+      return getRawSkuSpec(sku, ['mcb_c16', 'mcbC16']) || '—';
+    case 'thd':
+      return getRawSkuSpec(sku, ['thd']) || '—';
+    default:
+      return '—';
+  }
+};
+
 export default function FamilyDetailClient({
   family,
   initialSkus,
@@ -840,7 +951,16 @@ export default function FamilyDetailClient({
   const [baseFilter, setBaseFilter] = useState('All');
   const [voltageFilter, setVoltageFilter] = useState('All');
   const [gearFilter, setGearFilter] = useState('All');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [activeModalTab, setActiveModalTab] = useState<'overview' | 'technical' | 'photometrics'>('overview');
+
+  const handleSort = (key: string) => {
+    setSortConfig(prev => {
+      if (!prev || prev.key !== key) return { key, direction: 'asc' };
+      if (prev.direction === 'asc') return { key, direction: 'desc' };
+      return null;
+    });
+  };
   const [skus, setSkus] = useState<any[]>(() => initialSkus || []);
   const [accessorySkus, setAccessorySkus] = useState<any[]>(() => initialAccessorySkus || []);
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
@@ -1413,6 +1533,38 @@ export default function FamilyDetailClient({
       return matchesPower && matchesColorTemp && matchesFinish && matchesIp && matchesBase && matchesVoltage && matchesGear && matchesSearch;
     });
   }, [family.products, skus, powerFilter, colorTempFilter, finishFilter, ipFilter, baseFilter, voltageFilter, gearFilter, searchQuery]);
+
+  const sortedSkus = useMemo(() => {
+    if (!sortConfig) return filteredSkus;
+    const { key, direction } = sortConfig;
+    const multiplier = direction === 'asc' ? 1 : -1;
+    const isNumericCol = NUMERIC_SORT_KEYS.has(key);
+    const isEmptySortVal = (v: string) => !v || v === '—' || v === '-';
+
+    return [...filteredSkus].sort((a, b) => {
+      const valA = String(getSortValueForColumn(a, key) || '').trim();
+      const valB = String(getSortValueForColumn(b, key) || '').trim();
+      const emptyA = isEmptySortVal(valA);
+      const emptyB = isEmptySortVal(valB);
+      if (emptyA && emptyB) return 0;
+      if (emptyA) return 1;
+      if (emptyB) return -1;
+
+      if (isNumericCol) {
+        const matchA = valA.match(/[\d]+(?:\.[\d]+)?/);
+        const matchB = valB.match(/[\d]+(?:\.[\d]+)?/);
+        if (matchA && matchB) {
+          const numA = parseFloat(matchA[0]);
+          const numB = parseFloat(matchB[0]);
+          if (numA !== numB) {
+            return (numA - numB) * multiplier;
+          }
+        }
+      }
+
+      return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' }) * multiplier;
+    });
+  }, [filteredSkus, sortConfig]);
 
   const hasAnyProductSymbols = useMemo(() => {
     return (family.products || []).some(p => {
@@ -2144,41 +2296,75 @@ export default function FamilyDetailClient({
               <table className="w-full text-left border-collapse font-mono">
                 <thead className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 shadow-md">
                   <tr className="border-b border-gray-300 bg-gray-100 text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    {activeParams.includes('mmCode') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MM Code')}</th>}
-                    {activeParams.includes('modelNo') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Model No.')}</th>}
-                    {activeParams.includes('colour') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Finish / Colour')}</th>}
-                    {activeParams.includes('wattage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Power (W)', true)}</th>}
-                    {activeParams.includes('luminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Luminous Flux (lm)', true)}</th>}
-                    {activeParams.includes('usefulLuminousFlux') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Useful Luminous Flux (lm)', true)}</th>}
-                    {activeParams.includes('colourTemperature') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('CCT (K)', true)}</th>}
-                    {activeParams.includes('cri') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('CRI (Ra)', true)}</th>}
-                    {activeParams.includes('efficacy') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Efficacy (lm/W)', true)}</th>}
-                    {activeParams.includes('beamAngle') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Beam Angle (°)', true)}</th>}
-                    {activeParams.includes('ip') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('IP', true)}</th>}
-                    {activeParams.includes('ik') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('IK Rating', true)}</th>}
-                    {activeParams.includes('length') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Length (mm)', true)}</th>}
-                    {activeParams.includes('width') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Width (mm)', true)}</th>}
-                    {activeParams.includes('height') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Height (mm)', true)}</th>}
-                    {activeParams.includes('diameter') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Diameter (mm)', true)}</th>}
-                    {activeParams.includes('dimensions') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Dimensions (mm)', true)}</th>}
-                    {activeParams.includes('recessedCutOut') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Cut-out (mm)', true)}</th>}
-                    {activeParams.includes('weight') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Weight (g)', true)}</th>}
-                    {activeParams.includes('connector') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Control Gear', true)}</th>}
-                    {activeParams.includes('lampBase') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Lamp Base', true)}</th>}
-                    {activeParams.includes('voltage') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Voltage (V)', true)}</th>}
-                    {activeParams.includes('inrushCurrent') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Inrush Current (A)', true)}</th>}
-                    {activeParams.includes('inrushDuration') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Inrush Duration (µs)', true)}</th>}
-                    {activeParams.includes('maxNoOfLuminaire') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Max. Luminaires on MCB', true)}</th>}
-                    {activeParams.includes('mcbB10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MCB B10', true)}</th>}
-                    {activeParams.includes('mcbB16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MCB B16', true)}</th>}
-                    {activeParams.includes('mcbC10') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MCB C10', true)}</th>}
-                    {activeParams.includes('mcbC16') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('MCB C16', true)}</th>}
-                    {activeParams.includes('thd') && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('THD (%)', true)}</th>}
-                    {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Features', true)}</th>}
+                    {(() => {
+                      const renderSortableHeaderCell = (paramKey: string, label: string, isCenter = false) => {
+                        const isActive = sortConfig?.key === paramKey;
+                        const ariaSort: 'ascending' | 'descending' | 'none' = isActive
+                          ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending')
+                          : 'none';
+                        const sortIcon = isActive
+                          ? (sortConfig.direction === 'asc' ? faSortUp : faSortDown)
+                          : faSort;
+
+                        return (
+                          <th
+                            key={paramKey}
+                            onClick={() => handleSort(paramKey)}
+                            aria-sort={ariaSort}
+                            title={`Sort by ${label}`}
+                            className={`sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom cursor-pointer select-none hover:bg-gray-200/70 transition-colors group ${isCenter ? 'text-center' : ''} ${isActive ? 'text-[#005288]' : ''}`}
+                          >
+                            <div className={`inline-flex items-end gap-1.5 ${isCenter ? 'justify-center' : 'justify-start'}`}>
+                              {renderParamHeader(label, isCenter)}
+                              <FontAwesomeIcon
+                                icon={sortIcon}
+                                className={`text-[11px] mb-0.5 transition-opacity ${isActive ? 'text-[#005288] opacity-100' : 'text-gray-400 opacity-40 group-hover:opacity-90'}`}
+                              />
+                            </div>
+                          </th>
+                        );
+                      };
+
+                      return (
+                        <>
+                          {activeParams.includes('mmCode') && renderSortableHeaderCell('mmCode', 'MM Code')}
+                          {activeParams.includes('modelNo') && renderSortableHeaderCell('modelNo', 'Model No.')}
+                          {activeParams.includes('colour') && renderSortableHeaderCell('colour', 'Finish / Colour')}
+                          {activeParams.includes('wattage') && renderSortableHeaderCell('wattage', 'Power (W)', true)}
+                          {activeParams.includes('luminousFlux') && renderSortableHeaderCell('luminousFlux', 'Luminous Flux (lm)', true)}
+                          {activeParams.includes('usefulLuminousFlux') && renderSortableHeaderCell('usefulLuminousFlux', 'Useful Luminous Flux (lm)', true)}
+                          {activeParams.includes('colourTemperature') && renderSortableHeaderCell('colourTemperature', 'CCT (K)', true)}
+                          {activeParams.includes('cri') && renderSortableHeaderCell('cri', 'CRI (Ra)', true)}
+                          {activeParams.includes('efficacy') && renderSortableHeaderCell('efficacy', 'Efficacy (lm/W)', true)}
+                          {activeParams.includes('beamAngle') && renderSortableHeaderCell('beamAngle', 'Beam Angle (°)', true)}
+                          {activeParams.includes('ip') && renderSortableHeaderCell('ip', 'IP', true)}
+                          {activeParams.includes('ik') && renderSortableHeaderCell('ik', 'IK Rating', true)}
+                          {activeParams.includes('length') && renderSortableHeaderCell('length', 'Length (mm)', true)}
+                          {activeParams.includes('width') && renderSortableHeaderCell('width', 'Width (mm)', true)}
+                          {activeParams.includes('height') && renderSortableHeaderCell('height', 'Height (mm)', true)}
+                          {activeParams.includes('diameter') && renderSortableHeaderCell('diameter', 'Diameter (mm)', true)}
+                          {activeParams.includes('dimensions') && renderSortableHeaderCell('dimensions', 'Dimensions (mm)', true)}
+                          {activeParams.includes('recessedCutOut') && renderSortableHeaderCell('recessedCutOut', 'Cut-out (mm)', true)}
+                          {activeParams.includes('weight') && renderSortableHeaderCell('weight', 'Weight (g)', true)}
+                          {activeParams.includes('connector') && renderSortableHeaderCell('connector', 'Control Gear', true)}
+                          {activeParams.includes('lampBase') && renderSortableHeaderCell('lampBase', 'Lamp Base', true)}
+                          {activeParams.includes('voltage') && renderSortableHeaderCell('voltage', 'Voltage (V)', true)}
+                          {activeParams.includes('inrushCurrent') && renderSortableHeaderCell('inrushCurrent', 'Inrush Current (A)', true)}
+                          {activeParams.includes('inrushDuration') && renderSortableHeaderCell('inrushDuration', 'Inrush Duration (µs)', true)}
+                          {activeParams.includes('maxNoOfLuminaire') && renderSortableHeaderCell('maxNoOfLuminaire', 'Max. Luminaires on MCB', true)}
+                          {activeParams.includes('mcbB10') && renderSortableHeaderCell('mcbB10', 'MCB B10', true)}
+                          {activeParams.includes('mcbB16') && renderSortableHeaderCell('mcbB16', 'MCB B16', true)}
+                          {activeParams.includes('mcbC10') && renderSortableHeaderCell('mcbC10', 'MCB C10', true)}
+                          {activeParams.includes('mcbC16') && renderSortableHeaderCell('mcbC16', 'MCB C16', true)}
+                          {activeParams.includes('thd') && renderSortableHeaderCell('thd', 'THD (%)', true)}
+                          {showSymbolsColumn && <th className="sticky top-[68px] lg:top-[76px] z-30 bg-gray-100 py-3 px-4 text-center border-b border-gray-300 shadow-sm whitespace-nowrap align-bottom">{renderParamHeader('Features', true)}</th>}
+                        </>
+                      );
+                    })()}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200/70 text-black font-normal">
-                  {filteredSkus.map((sku, modelIndex) => {
+                  {sortedSkus.map((sku, modelIndex) => {
                     const parent = typeof sku.product === 'object' && sku.product !== null ? sku.product : null;
                     const mmCode = formatMmCode(sku.name);
                     const modelNo = getSkuSpec(sku, ['customer_model_no_new', 'model_number', 'yk_model_no', 'modelNo'], parent?.name || sku.modelNumber || '—');
